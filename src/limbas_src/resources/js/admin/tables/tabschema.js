@@ -305,7 +305,6 @@ var viewsortid = null;
 
 // Ajax table request
 function lmbAjax_ViewEditorPattern(setdrag) {
-    console.log("vieweditorpattern");
     if (setdrag) {
         document.form1.setdrag.value = setdrag + ";add";
     }

@@ -9,20 +9,14 @@
 
 use Limbas\lib\db\Database;
 
-require_once(COREPATH . 'lib/db/db_wrapper.lib');
-require_once(COREPATH . 'lib/include.lib');
-//require_once("lib/session.lib");
-
 $db = Database::get();
 
-
-# get company name
-$sqlquery2 = "SELECT ID,FORM_NAME,NORM FROM LMB_UMGVAR WHERE FORM_NAME = 'company' OR FORM_NAME = 'page_title'";
-$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,'login',__FILE__,__LINE__);
+# get page and company name
+$rs = Database::query('SELECT ID,FORM_NAME,NORM FROM LMB_UMGVAR WHERE FORM_NAME = \'company\' OR FORM_NAME = \'page_title\'');
 
 $umgvar = [];
-while(lmbdb_fetch_row($rs2)){
-    $umgvar[lmbdb_result($rs2,'FORM_NAME')] = lmbdb_result($rs2,'NORM');
+while(lmbdb_fetch_row($rs)){
+    $umgvar[lmbdb_result($rs,'FORM_NAME')] = lmbdb_result($rs,'NORM');
 }
 $pageTitleText = 'Login';
 $pageTitle = $umgvar['page_title'] ? sprintf($umgvar['page_title'], $pageTitleText) : $pageTitleText;
@@ -62,7 +56,7 @@ $pageTitle = $umgvar['page_title'] ? sprintf($umgvar['page_title'], $pageTitleTe
     
                             <div class="input-group mb-3">
                                 <span class="input-group-text rounded-start"><i class="fas fa-user"></i></span>
-                                <input type="text" class="form-control form-control-lg rounded-end" id="username" name="username" placeholder="Username">
+                                <input type="text" class="form-control form-control-lg rounded-end" id="username" name="username" placeholder="Username" autofocus>
                             </div>
     
                             <div class="input-group mb-4">

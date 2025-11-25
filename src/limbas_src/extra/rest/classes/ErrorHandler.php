@@ -9,7 +9,8 @@
 namespace Limbas\extra\rest\classes;
 
 use Limbas\extra\rest\classes\RequestHandlers\RequestHandler;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
+use Limbas\lib\general\Log\LogMessage;
 
 class ErrorHandler {
 
@@ -39,12 +40,22 @@ class ErrorHandler {
         self::$errors[] = array('code' => $code, 'message' => $message);
     }
 
+    /**
+     * Get all errors
+     * @return array
+     */
+    public static function getErrors(): array
+    {
+        return self::$errors;
+    }
+
     public static function checkLmbLog(): void
     {
-        $log = lmb_log::getLog(true);
+        $log = Log::getLogger()->getLog(true);
         if ($log) {
+            /** @var LogMessage $logEntry */
             foreach ($log as &$logEntry) {
-                self::addError(400 /* TODO */, $logEntry['message']);
+                self::addError(400 /* TODO */, $logEntry->message);
             }
             self::printError();
             die();

@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\lib\db\functions\Dbf;
 
 
 /* --- Tabellenarray ------------------------------- */
@@ -162,7 +163,7 @@ if(!$diag_bis){$diag_bis = date("d.m.Y");}
                         
                         
                     <?php
-                        $sqlquery =  "SELECT DISTINCT ID,LOGIN_DATE, UPDATE_DATE, IP, HOST, ".dbf_9(array('LOGIN_DATE','UPDATE_DATE'))." AS DAUER FROM LMB_HISTORY_USER WHERE USERID = $userid $where ORDER BY LOGIN_DATE";
+                        $sqlquery =  "SELECT DISTINCT ID,LOGIN_DATE, UPDATE_DATE, IP, HOST, ".Dbf::sqlTimeDiff('LOGIN_DATE','UPDATE_DATE')." AS DAUER FROM LMB_HISTORY_USER WHERE USERID = $userid $where ORDER BY LOGIN_DATE";
                         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                         while(lmbdb_fetch_row($rs)): ?>
                             

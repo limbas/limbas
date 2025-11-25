@@ -46,7 +46,7 @@ function arg_refresh($gtabid,$fieldid) {
     $gresult = get_gresult($gtabid,1,$filter);
 
     foreach($gresult[$gtabid]['id'] as $bzm => $ID) {
-        $arg_result = ftyp_13($ID, $gresult, $fieldid, $gtabid, null, null, null, null, $bzm);
+        lmbGetArgumentValue($gtabid, $fieldid, $ID, $gresult, $bzm, 1);
     }
 
     return true;

@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\lib\db\functions\Dbf;
 
 
 function multiselectRefreshCountField($gtabid,$field_id,$tabname,$fieldname,$datatype){
@@ -39,7 +39,7 @@ function multiselectRefreshCount($gtabid=null,$field_id=null){
 	WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND (LMB_CONF_FIELDS.DATA_TYPE = 18 OR LMB_CONF_FIELDS.DATA_TYPE = 31 OR LMB_CONF_FIELDS.DATA_TYPE = 32 OR LMB_CONF_FIELDS.DATA_TYPE = 46) $whr";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)){
-		multiselectRefreshCountField(lmbdb_result($rs,"TAB_ID"),lmbdb_result($rs,"FIELD_ID"),dbf_4(lmbdb_result($rs,"TABELLE")),dbf_4(lmbdb_result($rs,"FIELD_NAME")), dbf_4(lmbdb_result($rs,"DATA_TYPE")));
+		multiselectRefreshCountField(lmbdb_result($rs,"TAB_ID"),lmbdb_result($rs,"FIELD_ID"),Dbf::handleCaseSensitive(lmbdb_result($rs,"TABELLE")),Dbf::handleCaseSensitive(lmbdb_result($rs,"FIELD_NAME")), Dbf::handleCaseSensitive(lmbdb_result($rs,"DATA_TYPE")));
 	}
 }
 
@@ -97,10 +97,10 @@ function relationRefreshCount($gtabid=null,$field_id=null){
 	    if($verkntabid){
 	        $sqlquery1 = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = $verkntabid";
 	        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-	        $verkntab = dbf_4(lmbdb_result($rs1,"TABELLE"));
+	        $verkntab = Dbf::handleCaseSensitive(lmbdb_result($rs1,"TABELLE"));
         }
 
-		relationRefreshCountField(dbf_4(lmbdb_result($rs,"TABELLE")),dbf_4(lmbdb_result($rs,"FIELD_NAME")),dbf_4(lmbdb_result($rs,"MD5TAB")),$verkntab,dbf_4(lmbdb_result($rs,"VERKNTABLETYPE")),lmbdb_result($rs,"DATA_TYPE"),$archive);
+		relationRefreshCountField(Dbf::handleCaseSensitive(lmbdb_result($rs,"TABELLE")),Dbf::handleCaseSensitive(lmbdb_result($rs,"FIELD_NAME")),Dbf::handleCaseSensitive(lmbdb_result($rs,"MD5TAB")),$verkntab,Dbf::handleCaseSensitive(lmbdb_result($rs,"VERKNTABLETYPE")),lmbdb_result($rs,"DATA_TYPE"),$archive);
 	}
 }
 

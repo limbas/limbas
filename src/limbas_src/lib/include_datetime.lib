@@ -11,7 +11,7 @@
 
 
 #$weekday = array("$lang[873]","$lang[874]","$lang[875]","$lang[876]","$lang[877]","$lang[878]","$lang[879]");
-
+use Limbas\lib\db\functions\Dbf;
 
 
 /**
@@ -182,13 +182,13 @@ function convert_time($db_time){
  * convert date for database
  * 
  * @param string $date_string
- * @return date string
+ * @return string date
  */
-function convert_date($date_string,$t=0){
+function convert_date($date_string,$t=0): string {
 	if(!$date_string){return "";}
 	$pdt = dateToStamp($date_string);
 	if($pdt === false){return "";}
-	return dbf_1($pdt,$t);
+	return Dbf::convertToDbTimestamp($pdt,boolval($t));
 }
 
 
@@ -196,10 +196,10 @@ function convert_date($date_string,$t=0){
  * convert stamp for database
  *
  * @param number $stamp
- * @return date string
+ * @return string date
  */
-function convert_stamp($stamp,$t=0){
-	return dbf_1($stamp,$t);
+function convert_stamp($stamp,$t=0): string {
+	return Dbf::convertToDbTimestamp($stamp,boolval($t));
 }
 
 

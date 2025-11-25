@@ -4,18 +4,18 @@
         <div class="card mb-3">
             <div class="card-body">
 
-                <h1 class="text-center mb-4"><?=lang('Welcome to')?> <span class="fw-bold">L<span style="color:#f18e00">I</span>MBAS</span> Version <?=e($version)?></h1>
+                <h1 class="text-center mb-4"><?=iLang('Welcome to')?> <span class="fw-bold">L<span style="color:#f18e00">I</span>MBAS</span> Version <?=e($version)?></h1>
                 
-                <p><?=lang('Before getting started, you will need to know the following items.')?></p>
+                <p><?=iLang('Before getting started, you will need to know the following items.')?></p>
 
-                <p><?=lang('Database type')?><br>
-                    <?=lang('Database name')?><br>
-                    <?=lang('Database user')?><br>
-                    <?=lang('Database password')?><br>
-                    <?=lang('Database host')?></p>
+                <p><?=iLang('Database type')?><br>
+                    <?=iLang('Database name')?><br>
+                    <?=iLang('Database user')?><br>
+                    <?=iLang('Database password')?><br>
+                    <?=iLang('Database host')?></p>
                 
 
-                <p><?=lang('You can probably find this information in your web hosting account. If you don\'t have it handy, contact the company hosting your website before proceeding.')?></p>
+                <p><?=iLang('You can probably find this information in your web hosting account. If you don\'t have it handy, contact the company hosting your website before proceeding.')?></p>
 
                 <?php if(!$isDocker): ?>
                     <div class="accordion">
@@ -23,11 +23,11 @@
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#systemInformation" aria-expanded="true" aria-controls="collapseOne">
                                     <?php if($serverStatus === InstallMessage::ERROR): ?>
-                                        <i class="fas fa-circle-xmark text-danger fa-2x me-3"></i> <?=lang('Unfortunately, your server does not fulfil the requirements of Limbas.')?> (<?=lang('Details')?>)
+                                        <i class="fas fa-circle-xmark text-danger fa-2x me-3"></i> <?=iLang('Unfortunately, your server does not fulfil the requirements of Limbas.')?> (<?=iLang('Details')?>)
                                     <?php elseif($serverStatus === InstallMessage::WARN): ?>
-                                        <i class="fas fa-circle-exclamation text-warning fa-2x me-3"></i> <?=lang('Your server is not ideally configured, but you can continue.')?> (<?=lang('Details')?>)
+                                        <i class="fas fa-circle-exclamation text-warning fa-2x me-3"></i> <?=iLang('Your server is not ideally configured, but you can continue.')?> (<?=iLang('Details')?>)
                                     <?php else: ?>
-                                        <i class="fas fa-circle-check text-success fa-2x me-3"></i> <?=lang('Your server fulfils all Limbas requirements.')?> (<?=lang('Details')?>)
+                                        <i class="fas fa-circle-check text-success fa-2x me-3"></i> <?=iLang('Your server fulfils all Limbas requirements.')?> (<?=iLang('Details')?>)
                                     <?php endif; ?>
                                 </button>
                             </h2>
@@ -47,9 +47,9 @@
             </div>
             <div class="card-footer text-center">
                 <?php if($serverStatus === InstallMessage::ERROR): ?>
-                    <a class="btn btn-warning" href="?lang=<?=e(LANG)?>"><?=lang('Reload and check again')?></a>
+                    <a class="btn btn-warning" href="?lang=<?=e(LANG)?>"><?=iLang('Reload and check again')?></a>
                 <?php else: ?>
-                    <a class="btn btn-primary" href="?lang=<?=e(LANG)?>&step=2"><?=lang('Start now')?></a>
+                    <a class="btn btn-primary" href="?lang=<?=e(LANG)?>&step=2"><?=iLang('Start now')?></a>
                 <?php endif; ?>
             </div>
         </div>

@@ -7,6 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+global $DBA;
+
+use Limbas\lib\db\functions\Dbf;
 
 ?>
 
@@ -109,7 +112,7 @@ function start_syncExportPost(data,el,syncid,stamp){
 
         // adding status error text
         if(resultObj.log){
-            $('.sync-status').filter('div[data-id='+syncid+']').append("<a target='_new' href='USER/<?=$session["user_id"]?>/temp/syncexp_"+syncid+".html'><i>"+notice+"</i></a>");
+            $('.sync-status').filter('div[data-id='+syncid+']').append("<a target='_new' href='"+url+"'><i>"+notice+"</i></a>");
         }
 
         // rstart next sync process
@@ -153,7 +156,7 @@ $slaves = lmb_GetSyncSlaves();
             <div class="tab-content border border-top-0 bg-contrast mb-3">
 
                 <?php /* --- Teilexport ------------------------------- */?>
-                <div class="tab-pane p-3 <?=($openTab == 1)?'show active':''?>" id="part-exp"role="tabpanel" aria-labelledby="part-exp-tab">
+                <div class="tab-pane p-3 <?=($openTab == 1)?'show active':''?>" id="part-exp" role="tabpanel" aria-labelledby="part-exp-tab">
 
                     <FORM ACTION="main_admin.php" METHOD="post" name="form1">
                         <INPUT TYPE="hidden" NAME="action" VALUE="setup_export">
@@ -166,7 +169,7 @@ $slaves = lmb_GetSyncSlaves();
                                 <p class="fw-bold"><?=$lang[961]?></p>
                                 <select NAME="exptable[]" MULTIPLE class="form-select form-select-sm" size="16" >
                                     <?php
-                                    $odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
+                                    $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE','VIEW'");
                                     foreach($odbc_table["table_name"] as $tkey => $tvalue) {
                                         if($exptable){
                                             if(in_array($tvalue,$exptable)){$slct = "SELECTED";}else{$slct = "";}
@@ -202,7 +205,7 @@ $slaves = lmb_GetSyncSlaves();
                                 <div class="form-check mb-4">
                                     <input class="form-check-input" type="radio" name="format" id="part-exp-system" value="system" <?=($format == 'system')?'checked':''?>>
                                     <label class="form-check-label" for="part-exp-system">
-                                        <img src="assets/images/limbasicon.png" title="<?=$lang[964]?>" alt="<?=$lang[964]?>">
+                                        <img src="assets/images/logo.svg" title="<?=$lang[964]?>" alt="<?=$lang[964]?>" style="height: 1.1em">
                                     </label>
                                 </div>
 
@@ -246,7 +249,7 @@ $slaves = lmb_GetSyncSlaves();
                         <div class="form-check mb-2">
                             <input class="form-check-input" type="radio" name="format" id="full-exp-system" value="system" checked>
                             <label class="form-check-label" for="full-exp-system">
-                                <img src="assets/images/limbasicon.png" title="<?=$lang[964]?>" alt="<?=$lang[964]?>">
+                                <img src="assets/images/logo.svg" title="<?=$lang[964]?>" alt="<?=$lang[964]?>" style="height: 1.1em">
                             </label>
                         </div>                        
 

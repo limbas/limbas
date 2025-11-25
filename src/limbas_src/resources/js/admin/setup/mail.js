@@ -38,7 +38,9 @@ function showMailModal(e) {
         $('#mail-status').val(1).change();
         $('#mail-default').prop('checked',false);
         $('#mail-hidden').prop('checked',false);
+        $('#mail-selected').prop('selected',false);
         $('#mail-table').prop('selectedIndex',0);
+        $('#mail-signature').prop('selectedIndex',0);
     } else {
         let $mailAccount = $('#account-' + id);
         $('#mail-name').val($mailAccount.data('mail-name'));
@@ -56,24 +58,55 @@ function showMailModal(e) {
         $('#mail-smtp-user').val($mailAccount.data('mail-smtp-user'));
         $('#mail-smtp-password').val($mailAccount.data('mail-smtp-password'));
         $('#mail-status').val($mailAccount.data('mail-status')).change();
-        $('#mail-default').prop('checked',$mailAccount.data('mail-default'));
         $('#mail-hidden').prop('checked',$mailAccount.data('mail-hidden'));
+        $('#mail-selected').prop('checked',$mailAccount.data('mail-selected'));
         $('#mail-table').val($mailAccount.data('mail-table')).change();
+        $('#mail-signature').val($mailAccount.data('mail-signature')).change();
+        
+        const $mailDefault = $('#mail-default');
+        $mailDefault.prop('checked',$mailAccount.data('mail-default'));
+        
+        const userId = parseInt($mailAccount.data('mail-user-id') ?? 0);
+        if(userId > 0) {
+            $mailDefault.closest('.row').hide();
+        }
+        else {
+            $mailDefault.closest('.row').show();
+        }
     }
     
 }
 
 function saveMailAccount() {
 
+    const $mailUser = $('#mail-user');
+    const $mailTenant = $('#mail-tenant');
+    const $mailDefault = $('#mail-default');
+    const $mailSelected = $('#mail-selected');
+    
     let id = $(this).data('id');
-
+    let tenantId = $mailTenant.val();
+    let userId = $mailUser.val();
+    
+    if($mailDefault.prop('checked')) {
+        $('[data-default="' + tenantId + '"]').remove();
+        
+    }
+    if($mailDefault.prop('checked')) {
+        $('[data-default="' + tenantId + '"]').remove();
+    }
+    if($mailSelected.prop('checked')) {
+        $('[data-selected="u' + userId + '"]').remove();
+        $('[data-selected="t' + tenantId + '"]').remove();
+    }
+    
     sendMailAction({
         action: 'save',
         id: id,
         name: $('#mail-name').val(),
         email: $('#mail-email').val(),
-        user: $('#mail-user').val(),
-        tenant: $('#mail-tenant').val(),
+        user: userId,
+        tenant: tenantId,
         type: $('#mail-type').val(),
         imap_host: $('#mail-imap-host').val(),
         imap_port: $('#mail-imap-port').val(),
@@ -85,9 +118,11 @@ function saveMailAccount() {
         smtp_user: $('#mail-smtp-user').val(),
         smtp_password: $('#mail-smtp-password').val(),
         status: $('#mail-status').val(),
-        default: $('#mail-default').prop('checked') ? 1 : 0,
+        default: $mailDefault.prop('checked') ? 1 : 0,
         hidden: $('#mail-hidden').prop('checked') ? 1 : 0,
-        mail_table: $('#mail-table').val()
+        selected: $mailSelected.prop('checked') ? 1 : 0,
+        mail_table: $('#mail-table').val(),
+        mail_signature: $('#mail-signature').val()
     }).then(function(data) {
         $('#modal-add-mail-account').modal('hide');
         if (data.success) {

@@ -10,7 +10,7 @@
 namespace Limbas\extra\template\base\HtmlParts;
 
 use Limbas\extra\template\base\TemplateConfig;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
 
 /**
  * Class TableRow
@@ -94,7 +94,7 @@ class TableRow extends AbstractHtmlPart {
 
             // check inner repeating base table
             if ($this->relationDataPlaceholder->isModeFetchBaseTable() && $subTableRow->relationDataPlaceholder->isModeFetchBaseTable()) {
-                lmb_log::error("Listform table rows must not be contained in each other!", "Listform table rows must not be contained in each other!");
+                Log::limbasError("Listform table rows must not be contained in each other!", "Listform table rows must not be contained in each other!");
             }
 
             // sub table row not dependent on this table row?

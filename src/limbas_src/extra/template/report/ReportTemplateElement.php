@@ -69,6 +69,7 @@ class ReportTemplateElement extends TemplateElement {
             $gsr = array();
             $filter = array();
             $extension = array();
+            unset($placeholder);
             foreach ($placeholders as $key => &$placeholder) {
                 if ($placeholder->isModeFetchIDs()) {
                     $tableRowPlaceholders[] = $placeholder;
@@ -82,7 +83,8 @@ class ReportTemplateElement extends TemplateElement {
             # collect fieldlist by trace
             $fieldlist = array();
             $i = 0;
-            foreach ($placeholders as &$placeholder) {
+            unset($placeholder);
+            foreach ($placeholders as $placeholder) {
                 $fieldlist[$i] = $placeholder->getFieldlist();
                 if ($placeholder->isModeFetchArr()) {
                     $fieldlist[$i][2] = str_repeat(';', 33) . 'true'; // listmode
@@ -124,6 +126,7 @@ class ReportTemplateElement extends TemplateElement {
 
             # set placeholder value
             $i = 0;
+            unset($placeholder);
             foreach ($placeholders as &$placeholder) {
                 if ($placeholder->isModeFetchArr()) {
                     $placeholder->setValue($data[$i]);

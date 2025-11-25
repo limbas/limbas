@@ -7,39 +7,51 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\admin\setup\schema\ColorSchema;
 use Limbas\layout\Layout;
 
 require_once 'color_schema.lib';
 
 /* --- load frontend variables --------------------------------------------- */
-global $color_schemas;
 $layouts = Layout::getAvailableLayouts();
-$color_schemas = lmbcs_load_schema();
 
 /* --- css neu generieren --------------------------------------------- */
-if($regenerate AND $id){
-    if ($color_schemas[$id] && $color_schemas[$id]['regenerate']) {
-    	$regenstat = lmbcs_generate_css($color_schemas[$id]);
-    	if ($regenstat !== true) {
-        	$scerrormsg = 'CSS konnte nicht generiert werden:<br>'.$regenstat;
+if($regenerate && $id){
+    $colorSchema = ColorSchema::get(intval($id));
+    if ($colorSchema && $colorSchema->regenerate) {
+        $regenStat = $colorSchema->reset();
+    	if ($regenStat !== true) {
+        	$scerrormsg = 'CSS konnte nicht generiert werden:<br>'.$regenStat;
         }
 	}
 }
 
 /* --- colors hinzufügen --------------------------------------------- */
 if($add && in_array($layout,$layouts)){
-    lmbcs_add_schema($name,$layout);
+    $colorSchema = new ColorSchema(0,$name,$layout, 'light');
+    $colorSchema->save();
 }
 
 /* --- colors löschen --------------------------------------------- */
-if($del !== null AND $id){
-    lmbcs_delete_schema($id);
+if($del !== null && $id){
+    $colorSchema = ColorSchema::get(intval($id));
+    if($colorSchema) {
+        $colorSchema->delete();
+    }
 }
 
-if($change !== null AND $id){
-    lmbcs_save_colors($id,$addvartitle,$addvarvalue);
+if($change !== null && $id){
+    $colorSchema = ColorSchema::get(intval($id));
+    if($colorSchema) {
+        $colorSchema->saveColors($addvartitle,$addvarvalue);
+    }    
 }
 
-if($resetdefault !== null AND $id){
-    lmbcs_reset($id);
+if($resetdefault !== null && $id){
+    $colorSchema = ColorSchema::get(intval($id));
+    if($colorSchema) {
+        $colorSchema->reset();
+    }
 }
+
+$colorSchemas = ColorSchema::all();

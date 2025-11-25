@@ -10,10 +10,12 @@
 
 namespace Limbas\admin\tools\update\updates;
 
+use Limbas\admin\setup\schema\ColorSchema;
 use Limbas\admin\tools\update\Update;
 use Limbas\admin\tools\update\Updater;
 
 use Limbas\lib\db\Database;
+use Limbas\lib\db\functions\Dbf;
 use Throwable;
 
 class Update5m0 extends Update
@@ -133,7 +135,7 @@ class Update5m0 extends Update
     protected function patch9(): bool
     {
         global $DBA;
-        $sqlquery = dbq_15(array($DBA, 'LMB_CONF_FIELDS', 'FIELD_NAME', 'VARCHAR(120)'));
+        $sqlquery = Dbf::modifyColumnTypeSql('LMB_CONF_FIELDS', 'FIELD_NAME', 'VARCHAR(120)');
         return $this->databaseUpdate($sqlquery);
     }
 
@@ -240,7 +242,7 @@ class Update5m0 extends Update
     {
         global $DBA;
 
-        $odbc_table = dbf_20(array($DBA["DBSCHEMA"], 'LMB_COLORVARS', "'TABLE','VIEW'"));
+        $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"], 'LMB_COLORVARS', "'TABLE','VIEW'");
         if (!$odbc_table) {
             $sqlquery = 'CREATE TABLE LMB_COLORVARS (
             ID ' . LMB_DBTYPE_SMALLINT . ' NOT NULL  ' . LMB_DBFUNC_PRIMARY_KEY . ',
@@ -260,7 +262,8 @@ class Update5m0 extends Update
     protected function patch21(): bool
     {
 
-        $odbc_table = dbf_20(array($DBA["DBSCHEMA"], 'LMB_SYNC_CACHE', "'TABLE','VIEW'"));
+        global $DBA;
+        $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"], 'LMB_SYNC_CACHE', "'TABLE','VIEW'");
         if ($odbc_table) {
             return $this->databaseUpdate('ALTER TABLE LMB_SYNC_CACHE ADD PROCESS_KEY ' . LMB_DBTYPE_INTEGER);
         }
@@ -485,13 +488,13 @@ class Update5m0 extends Update
         $rs = lmbdb_exec($db, $sqlquery);
         $field = 'LMB_STATUS';
         while (lmbdb_fetch_row($rs)) {
-            $table = dbf_4(lmbdb_result($rs, "TABELLE"));
+            $table = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABELLE"));
 
-            if (!dbf_20(array($DBA["DBSCHEMA"], $table, "'TABLE'"))) {
+            if (!Dbf::getTableList($DBA["DBSCHEMA"], $table, "'TABLE'")) {
                 continue;
             }
 
-            if (!dbf_5(array($DBA['DBSCHEMA'], $table, $field))) {
+            if (!Dbf::getColumns($DBA['DBSCHEMA'], $table, $field)) {
                 $sqlquery1 = 'ALTER TABLE ' . $table . ' ADD ' . $field . ' ' . LMB_DBTYPE_FIXED . '(1) DEFAULT 0';
                 if (!$rs1 = lmbdb_exec($db, $sqlquery1)) {
                     $this->patches[$this->patch]['error'] = lmbdb_errormsg($db);
@@ -534,7 +537,7 @@ class Update5m0 extends Update
     protected function patch40(): bool
     {
         global $DBA;
-        $qu = dbq_15(array($DBA["DBSCHEMA"], 'LMB_USERDB', 'MULTITENANT', 'VARCHAR(255)'));
+        $qu = Dbf::modifyColumnTypeSql('LMB_USERDB', 'MULTITENANT', 'VARCHAR(255)');
         return $this->databaseUpdate($qu);
     }
 
@@ -545,7 +548,7 @@ class Update5m0 extends Update
     protected function patch41(): bool
     {
         global $DBA;
-        $qu = dbq_9(array($DBA["DBSCHEMA"], 'LMB_CONF_TABLES', 'KEYFIELD', null));
+        $qu = Dbf::setColumnDefaultSql($DBA["DBSCHEMA"], 'LMB_CONF_TABLES', 'KEYFIELD', null);
         return $this->databaseUpdate($qu);
     }
 
@@ -556,7 +559,7 @@ class Update5m0 extends Update
     protected function patch42(): bool
     {
         global $DBA;
-        $qu = dbq_15(array($DBA["DBSCHEMA"], 'LMB_CONF_FIELDS', 'BESCHREIBUNG', 'INTEGER'));
+        $qu = Dbf::modifyColumnTypeSql('LMB_CONF_FIELDS', 'BESCHREIBUNG', 'INTEGER');
         return $this->databaseUpdate($qu);
     }
 
@@ -567,7 +570,7 @@ class Update5m0 extends Update
     protected function patch43(): bool
     {
         global $DBA;
-        $qu = dbq_15(array($DBA["DBSCHEMA"], 'LMB_CONF_FIELDS', 'SPELLING', 'INTEGER'));
+        $qu = Dbf::modifyColumnTypeSql('LMB_CONF_FIELDS', 'SPELLING', 'INTEGER');
         return $this->databaseUpdate($qu);
     }
 
@@ -657,7 +660,7 @@ class Update5m0 extends Update
     protected function patch50(): bool
     {
         global $DBA;
-        $qu = dbq_15(array($DBA["DBSCHEMA"], 'LMB_CUSTMENU', 'NAME', LMB_DBTYPE_INTEGER));
+        $qu = Dbf::modifyColumnTypeSql('LMB_CUSTMENU', 'NAME', LMB_DBTYPE_INTEGER);
         return $this->databaseUpdate($qu);
     }
 
@@ -668,7 +671,7 @@ class Update5m0 extends Update
     protected function patch51(): bool
     {
         global $DBA;
-        $qu = dbq_15(array($DBA["DBSCHEMA"], 'LMB_CUSTMENU', 'TITLE', LMB_DBTYPE_INTEGER));
+        $qu = Dbf::modifyColumnTypeSql('LMB_CUSTMENU', 'TITLE', LMB_DBTYPE_INTEGER);
         return $this->databaseUpdate($qu);
     }
 
@@ -702,13 +705,11 @@ class Update5m0 extends Update
 
         if ($success) {
             try {
-                require_once(COREPATH . 'admin/setup/color_schema.lib');
-
-                $colorSchemas = lmbcs_load_schema();
+                $colorSchemas = ColorSchema::all();
                 foreach ($colorSchemas as $colorSchema) {
-                    lmbcs_generate_css($colorSchema);
+                    $colorSchema->generateCss();
                 }
-            } catch (Throwable $t) {
+            } catch (Throwable) {
                 $success = false;
                 $this->patches[$this->patch]['error'] = 'Generation of css failed';
             }
@@ -724,7 +725,8 @@ class Update5m0 extends Update
     protected function patch54(): bool
     {
 
-        $odbc_table = dbf_20(array($DBA["DBSCHEMA"], 'LMB_FIELD_TYPES_DEPEND', "'TABLE','VIEW'"));
+        global $DBA;
+        $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"], 'LMB_FIELD_TYPES_DEPEND', "'TABLE','VIEW'");
         if ($odbc_table) {
             return $this->databaseUpdate('ALTER TABLE LMB_FIELD_TYPES_DEPEND ADD CATEGORIE ' . LMB_DBTYPE_SMALLINT);
         }
@@ -786,8 +788,8 @@ class Update5m0 extends Update
     {
         global $DBA;
         $sqlQueries = [
-            dbq_15(array($DBA, 'LMB_CONF_GROUPS', 'BESCHREIBUNG', LMB_DBTYPE_INTEGER)),
-            dbq_15(array($DBA, 'LMB_CONF_GROUPS', 'NAME', LMB_DBTYPE_INTEGER))
+            Dbf::modifyColumnTypeSql('LMB_CONF_GROUPS', 'BESCHREIBUNG', LMB_DBTYPE_INTEGER),
+            Dbf::modifyColumnTypeSql('LMB_CONF_GROUPS', 'NAME', LMB_DBTYPE_INTEGER)
         ];
 
         return $this->databaseUpdate($sqlQueries);
@@ -818,7 +820,7 @@ class Update5m0 extends Update
     protected function patch60(): bool
     {
         global $DBA;
-        if (!dbq_16(array($DBA["DBSCHEMA"]))) {
+        if (!Dbf::createLimbasVknFunction($DBA["DBSCHEMA"])) {
             return false;
         }
 
@@ -929,9 +931,9 @@ class Update5m0 extends Update
     {
         global $DBA;
 
-        $sequence = dbf_26(array($DBA["DBSCHEMA"], 'seq'));
+        $sequence = Dbf::getSequences($DBA["DBSCHEMA"]);
         foreach ($sequence as $key => $squname) {
-            dbf_22(array($DBA["DBSCHEMA"], dbf_4($squname)));
+            Dbf::dropSequence(Dbf::handleCaseSensitive($squname));
         }
 
         return lmb_rebuildSequences(null,null,1);

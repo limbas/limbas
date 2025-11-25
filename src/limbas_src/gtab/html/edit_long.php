@@ -70,7 +70,7 @@ if($gfield[$gtabid]["field_name"][$field_id] AND $gtab["table"][$gtabid] AND $ID
         }else{
             $params = 1;
         }
-        echo lmbInitTinyMce($formname, tabId: intval($gtabid));
+        echo lmbInitTinyMce($formname, tabId: intval($gtabid), tinyMceConfigId: intval($gfield[$gtabid]['wysiwyg_config'][$field_id]));
         ?>
 
 

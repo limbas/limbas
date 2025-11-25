@@ -8,7 +8,7 @@
  */
 
 
-
+use Limbas\lib\db\functions\Dbf;
 
 if($relation_extension){
 	$prepare_string = "UPDATE LMB_CONF_FIELDS SET RELEXT = ? WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
@@ -40,13 +40,13 @@ if($rfield['verkntabid']){
 	if($fkys["keyname"]){
 	foreach ($fkys["keyname"] as $key => $value){
 	    // TAB.ID -> ID
-	    if($fkys["tablename"][$key] == dbf_4($rfield['md5tab']) AND $fkys["columnname"][$key] == dbf_4("ID") AND $fkys["reftablename"][$key] == dbf_4($rfield['tabname']) AND $fkys["refcolumnname"][$key] == dbf_4("ID")){
+	    if($fkys["tablename"][$key] == Dbf::handleCaseSensitive($rfield['md5tab']) AND $fkys["columnname"][$key] == Dbf::handleCaseSensitive("ID") AND $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($rfield['tabname']) AND $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive("ID")){
 			$rfield['f1'] = $fkys["keyname"][$key];
 		// VERKN_ID -> TAB-ID
-	    }elseif($fkys["tablename"][$key] == dbf_4($rfield['md5tab']) AND $fkys["columnname"][$key] == dbf_4("VERKN_ID") AND $fkys["reftablename"][$key] == dbf_4($rfield['verkntabname']) AND $fkys["refcolumnname"][$key] == dbf_4("ID")){
+	    }elseif($fkys["tablename"][$key] == Dbf::handleCaseSensitive($rfield['md5tab']) AND $fkys["columnname"][$key] == Dbf::handleCaseSensitive("VERKN_ID") AND $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($rfield['verkntabname']) AND $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive("ID")){
 			$rfield['f2']  = $fkys["keyname"][$key];
 		// direct 1:n
-		}elseif($fkys["tablename"][$key] == dbf_4($rfield['verkntabname']) AND $fkys["columnname"][$key] == dbf_4($rfield['md5tab']) AND $fkys["reftablename"][$key] == dbf_4($rfield['tabname']) AND $fkys["refcolumnname"][$key] == dbf_4("ID")){
+		}elseif($fkys["tablename"][$key] == Dbf::handleCaseSensitive($rfield['verkntabname']) AND $fkys["columnname"][$key] == Dbf::handleCaseSensitive($rfield['md5tab']) AND $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($rfield['tabname']) AND $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive("ID")){
 			$rfield['f3']  = $fkys["keyname"][$key];
 		}
 	}}

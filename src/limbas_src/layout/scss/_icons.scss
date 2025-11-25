@@ -6,16 +6,6 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
-@font-face {
-  font-family: 'FontAwesome';
-  src: url($fa-font-path + '/fontawesome-webfont.eot?v=4.5.0');
-  src: url($fa-font-path + '/fontawesome-webfont.eot?#iefix&v=4.5.0') format('embedded-opentype'), url($fa-font-path + '/fontawesome-webfont.woff2?v=4.5.0') format('woff2'), url($fa-font-path + '/fontawesome-webfont.woff?v=4.5.0') format('woff'), url($fa-font-path + '/fontawesome-webfont.ttf?v=4.5.0') format('truetype'), url($fa-font-path + '/fontawesome-webfont.svg?v=4.5.0#fontawesomeregular') format('svg');
-  font-weight: normal;
-  font-style: normal;
-}
-
 @font-face {
   font-family: 'LMBFont';
   src: url($fa-font-path + '/lmb-font.eot?v=1.0');
@@ -30,12 +20,16 @@
 .lmb-icon, .ui-widget .ui-widget-header .ui-icon { /* former .fa */
   display: inline-block;
   /* edit by matthias - earlier 1.3em - even earlier 14px*/
-  font: normal normal normal 1.3em/1 FontAwesome;
+  font: normal normal normal 1.3em/1 "Font Awesome 6 Free";
   text-rendering: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   width: 1.28571429em; /* fixed width */
   text-align: center; /* fixed width */
+
+  &::before {
+    content: var(--fa);
+  }  
 }
 
 .lmb-icon-cus { /* for the lmb-custom icons */
@@ -58,20 +52,20 @@
 
 .lmb-icon-8 {
   display: inline-block;
-  font: normal normal normal 14px/1 FontAwesome;
+  font: normal normal normal 10px/1 "Font Awesome 6 Free";
   text-rendering: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 0.9em;
+  font-size: 0.625rem !important;
 }
 
 .lmb-icon-32 {
   display: inline-block;
-  font: normal normal normal 14px/1 FontAwesome;
+  font: normal normal normal 40px/1 "Font Awesome 6 Free";
   text-rendering: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 2.6em;
+  font-size: 2.5rem !important;
 }
 
 @-webkit-keyframes rotating /* Safari and Chrome */
@@ -1354,7 +1348,7 @@
   content: "\e942";
 }
 
-.lmb-icon-32.lmb-calendar::before { /* former .fa-calendar */
+.lmb-icon.lmb-calendar::before { /* former .fa-calendar */
   content: "\f073";
 }
 
@@ -1424,12 +1418,11 @@
   content: "\e945";
 }
 
-.lmb-icon-32.lmb-crm::before,
 .lmb-icon.lmb-crm::before { /* former .fa-group */
   content: "\f0c0";
 }
 
-.lmb-icon-32.lmb-file-manager::before { /* former .fa-folder-open-o */
+.lmb-icon.lmb-file-manager::before { /* former .fa-folder-open-o */
   content: "\f115";
 }
 
@@ -1441,7 +1434,7 @@
   content: "\e926";
 }
 
-.lmb-icon-cus.lmb-icon-32.lmb-workflow-menu::before {
+.lmb-icon-cus.lmb-workflow-menu::before {
   content: "\e941";
 }
 

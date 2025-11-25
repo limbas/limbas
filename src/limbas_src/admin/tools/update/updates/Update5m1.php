@@ -11,6 +11,7 @@
 namespace Limbas\admin\tools\update\updates;
 
 use Limbas\admin\tools\update\Update;
+use Limbas\lib\db\functions\Dbf;
 
 class Update5m1 extends Update
 {
@@ -80,7 +81,7 @@ class Update5m1 extends Update
     protected function patch4(): bool
     {
         global $DBA;
-        return $this->databaseUpdate(dbq_15(array($DBA["DBSCHEMA"],'LMB_SNAP','NAME','VARCHAR(50)')));
+        return $this->databaseUpdate(Dbf::modifyColumnTypeSql('LMB_SNAP','NAME','VARCHAR(50)'));
     }
 
     /**

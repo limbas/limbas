@@ -7,27 +7,40 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+global $DBA;
 
-
+use Limbas\lib\db\functions\Dbf;
 
 $tbzm = $result_gtab[$tabgroup]["argresult"][$tabid];
 if($gtab["typ"][$tabid] == 5){$isview = 1;}
-$col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
+$col = Dbf::getColumns($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm] ?? '', null);
 
+$parentrelation = getRalationParents($tabid);
+global $lmfieldtype;
 
 	
 ?>
 <form action="main_dyns_admin.php" method="post" name="form3" id="form3">
     <input type="hidden" name="val">
+    <input type="hidden" name="active_tab" value="<?=$active_tab?>">
     <input type="hidden" name="tabgroup" value="<?=$tabgroup?>">
 
-<ul class="nav nav-tabs" id="myTab" role="tablist">
+
+<ul class="nav nav-tabs" role="tablist" id="activetab">
     <li class="nav-item" role="presentation">
-        <a class="nav-link active" id="options-tab" data-bs-toggle="tab" href="#options" role="tab"><?=$lang[2795]?></a>
+        <a class="nav-link active" data-bs-toggle="tab" id="options-tab" href="#options" role="tab"><?=$lang[2795]?></a>
     </li>
     <li class="nav-item" role="presentation">
-        <a class="nav-link" id="info-tab" data-bs-toggle="tab" href="#info" role="tab"><?=$lang[2836]?></a>
+        <a class="nav-link" data-bs-toggle="tab" id="menusetting-tab" href="#menusetting" role="tab">Menu</a>
     </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" data-bs-toggle="tab" id="info-tab" href="#info" role="tab"><?=$lang[2836]?></a>
+    </li>
+    <?php if($parentrelation){ ?>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" data-bs-toggle="tab" id="ralations-tab" href="#ralations" role="tab"><?=$lang[1460]?></a>
+    </li>
+    <?php }?>
 </ul>
 <div class="tab-content">
     <div class="tab-pane show active py-3" id="options" role="tabpanel">
@@ -220,6 +233,18 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
 
                 <?php // custmenu ?>
                 <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3200]?></label>
+                    <div class="col-sm-8">
+                        <select class="form-select form-select-sm" onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','global_searchmodus')">
+                            <option value="1" <?= (!$result_gtab[$tabgroup]['global_searchmodus'][$tbzm] ? 'selected' : '')?>><?=$lang[3198]?></option>
+                            <option value="2" <?= ($result_gtab[$tabgroup]['global_searchmodus'][$tbzm] == 1 ? 'selected' : '')?>><?=$lang[3199]?></option>
+                        </select>
+                        <small class="form-text text-muted"><?=$lang[3201]?></small>
+                    </div>
+                </div>
+
+                <?php // custmenu ?>
+                <div class="mb-3 row">
                     <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3187]?></label>
                     <div class="col-sm-8">
                         <select class="form-select form-select-sm" onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','custmenu')">
@@ -272,6 +297,45 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                     <div class="col" class="tabHeaderItem"><?= $lang[2852] ?></div>
                 </div>
 
+                <div class="row">
+                    <?php /* resource calendar */ ?>
+                    <div class="col">Resource calendar</div>
+                    <div class="col d-flex justify-content-end">
+                        <input type="checkbox" value="1" name="param2[resourcecalendar]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['resourcecalendar'] ? 'checked' : '' ?>>
+                    </div>
+                </div>
+
+                <?php $isResourceCalendar = (bool) $result_gtab[$tabgroup]["params2"][$tbzm]['resourcecalendar']; ?>
+
+                    <?php if ($isResourceCalendar) { ?>
+                        <div class="row">
+                            <div class="col"><?= $lang[2850] ?></div>
+                            <div class="col d-flex justify-content-end">
+                                <select class='form-select form-select-sm' onchange="ajaxEditTable(this,<?= $tabid ?>,<?= $tabgroup ?>,'params1')">
+                                    <option></option>
+                                    <?php
+                                    foreach ($gfield[$tabid]['field_name'] as $key => $value) {
+                                        if ($gfield[$tabid]['field_type'][$key] != 11) {
+                                            continue;
+                                        }
+
+                                        $selected = '';
+                                        if ($result_gtab[$tabgroup]["params1"][$tbzm] == $key) {
+                                            $selected = 'selected';
+                                        }
+                                        ?>
+                                        <option value="<?= $key ?>" <?= $selected ?>><?= $value ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col"></div>
+                            <div class="col"><i style="color:#AAAAAA"><?= $lang[2851] ?></i></div>
+                        </div>
+                    <?php } else { ?>
+
+
                 <?php /* viewmode */ ?>
                 <?php ${'viewmode_' . $result_gtab[$tabgroup]["params2"][$tbzm]['viewmode']} = 'selected'; ?>
                 <div class="row pt-2">
@@ -305,28 +369,29 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                     </div>
                 </div>
 
-                <?php /* search Calendar -- disabled ?>
-                <div class="row pt-2">
-                    <div class="col" valign="top">searchCalendar</div>
-                    <div class="col">
-                        <select
-                                class="form-select form-select-sm"
-                                multiple
-                                name="param2[searchCalendar]"
-                                onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
-                            <option></option>
-                            <?php foreach ($gfield[$tabid]['field_name'] as $key => $value) {
-                                echo "<option value=\"$key\"";
-                                if (is_array($result_gtab[$tabgroup]["params2"][$tbzm]['searchCalendar']) && in_array($key, $result_gtab[$tabgroup]["params2"][$tbzm]['searchCalendar'])) {
-                                    echo 'selected';
-                                }
-                                echo ">$value</option>";
-                            } ?>
-                        </select>
-                    </div>
-                </div>
-                <?php  */ ?>
-
+                        <div class="row pt-2">
+                            <?php /* slotminutes */ ?>
+                            <div class="col">slotMinutes</div>
+                            <div class="col">
+                                <select
+                                        class="form-select form-select-sm"
+                                        name="param2[slotMinutes]"
+                                        onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                                    <option></option>
+                                    <?php for ($i = 5; $i <= 240; $i = $i + 5):
+                                        $hours = str_pad((string) floor($i / 60), 2, '0', STR_PAD_LEFT);
+                                        $remMins = str_pad((string) ($i % 60), 2, '0', STR_PAD_LEFT);
+                                        $timeString = "$hours:$remMins";
+                                        ?>
+                                        <option <?= $result_gtab[$tabgroup]["params2"][$tbzm]['slotMinutes'] == $timeString ? 'selected' : '' ?>>
+                                            <?= $timeString ?>
+                                        </option>";
+                                    <?php
+                                    endfor; ?>
+                                </select>
+                            </div>
+                        </div>
+                    <?php } ?>
                <?php /* minTime */ ?>
                     <div class="row pt-3">
                                 <div class="col">minTime</div>
@@ -369,29 +434,67 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                         </div>
                     </div>
 
-
-                    <div class="row pt-2">
-                        <?php /* slotminutes */ ?>
-                        <div class="col">slotMinutes</div>
-                        <div class="col">
-                            <select
-                                    class="form-select form-select-sm"
-                                    name="param2[slotMinutes]"
-                                    onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
-                                <option></option>
-                                <?php for ($i = 5; $i <= 240; $i = $i + 5):
-                                    $hours = str_pad((string) floor($i / 60), 2, '0', STR_PAD_LEFT);
-                                    $remMins = str_pad((string) ($i % 60), 2, '0', STR_PAD_LEFT);
-                                    $timeString = "$hours:$remMins";
-                                    ?>
-                                    <option <?= $result_gtab[$tabgroup]["params2"][$tbzm]['slotMinutes'] == $timeString ? 'selected' : '' ?>>
-                                        <?= $timeString ?>
-                                    </option>";
-                                <?php
-                                endfor; ?>
-                            </select>
+                <?php if ($isResourceCalendar) { ?>
+                        <?php # striping ?>
+                        <div class="row pt-3">
+                            <div class="col">Striping</div>
+                            <div class="col">
+                                <select
+                                        class="form-select form-select-sm"
+                                        name="param2[striping]"
+                                        onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                                    <?php
+                                    foreach (['none' => $lang[993], 'columns' => $lang[1245], 'rows' => $lang[1244]] as $stripingValue => $stripingText) {
+                                        $selected = $result_gtab[$tabgroup]["params2"][$tbzm]['striping'] == $stripingValue ? 'selected' : ''; ?>
+                                        <option value="<?= $stripingValue ?>" <?= $selected ?>><?= $stripingText ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
                         </div>
-                    </div>
+                        <div class="row pt-2 pb-0"><div class="col"><b>Subdivisions</b></div></div>
+                        <div class="row row-cols-4 pt-1 pb-2">
+                            <div class="col pe-0"><?= $lang[1436] # Week ?></div>
+                            <div class="col ps-0">
+                                <select
+                                        class="form-select form-select-sm"
+                                        name="param2[subdivision_week]"
+                                        onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                                    <?php
+                                    foreach ([1, 2, 3, 4, 6, 8, 12, 24] as $subdivision) {
+                                        $selected = $result_gtab[$tabgroup]["params2"][$tbzm]['subdivision_week'] == $subdivision ? 'selected' : ''; ?>
+                                        <option value="<?= $subdivision ?>" <?= $selected ?>><?= $subdivision ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="col pe-0"><?= $lang[1437] # Month ?></div>
+                            <div class="col ps-0">
+                                <select
+                                        class="form-select form-select-sm"
+                                        name="param2[subdivision_month]"
+                                        onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                                    <?php
+                                    foreach ([1, 2, 3, 4, 6, 8] as $subdivision) {
+                                        $selected = $result_gtab[$tabgroup]["params2"][$tbzm]['subdivision_month'] == $subdivision ? 'selected' : ''; ?>
+                                        <option value="<?= $subdivision ?>" <?= $selected ?>><?= $subdivision ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="col pe-0"><?= $lang[1435] # Day ?></div>
+                            <div class="col ps-0">
+                                <select
+                                        class="form-select form-select-sm"
+                                        name="param2[subdivision_day]"
+                                        onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                                    <?php
+                                    foreach ([1, 2, 3, 4, 6, 8] as $subdivision) {
+                                        $selected = $result_gtab[$tabgroup]["params2"][$tbzm]['subdivision_day'] == $subdivision ? 'selected' : ''; ?>
+                                        <option value="<?= $subdivision ?>" <?= $selected ?>><?= $subdivision ?></option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                <?php } ?>
+
 
                 <div class="row row-cols-4 pt-2">
                             <?php /* editable */ ?>
@@ -406,18 +509,20 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                                     <input type="checkbox" value="1" name="param2[selectable]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['selectable'] ? 'checked' : '' ?>>
                                 </div>
 
+                    <?php if(!$isResourceCalendar) { ?>
                             <?php /* weekNumbers */ ?>
                                 <div class="col">weekNumbers</div>
                                 <div class="col d-flex justify-content-end">
                                     <input type="checkbox" value="1" name="param2[weekNumbers]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['weekNumbers'] ? 'checked' : '' ?>>
                                 </div>
-
+                    <?php } ?>
                                 <?php /* weekends */ ?>
                                 <div class="col">weekends</div>
                                 <div class="col d-flex justify-content-end">
                                     <input type="checkbox" value="1" name="param2[weekends]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['weekends'] ? 'checked' : '' ?>>
                                 </div>
 
+                            <?php if(!$isResourceCalendar) { ?>
                             <?php /* repetition */ ?>
                                 <div class="col">repetition</div>
                                 <div class="col d-flex justify-content-end">
@@ -429,6 +534,7 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                                 <div class="col d-flex justify-content-end">
                                     <input type="checkbox" value="1" name="param2[defaultAllDay]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['defaultAllDay'] ? 'checked' : '' ?>>
                                 </div>
+                    <?php } ?>
 
                     <?php /* nowIndicator */ ?>
                     <div class="col">nowIndicator</div>
@@ -508,7 +614,7 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
 
                         <div class="fst-italic text-muted"><small>(
                             <?php
-                            echo dbf_4("LMB_".$result_gtab[$tabgroup]['tabelle'][$tbzm]."_ID");
+                            echo Dbf::handleCaseSensitive("LMB_".$result_gtab[$tabgroup]['tabelle'][$tbzm]."_ID");
                             ?>
                         </small>)</div>
                     </div>
@@ -590,7 +696,16 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                         </div>
                     </div>
 
-                    <?php // groupable ?>
+                    <?php // searchbar ?>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3202]?></label>
+                        <div class="col-sm-8">
+                            <input type="checkbox" value="1" <?=($result_gtab[$tabgroup]['searchbar'][$tbzm] == 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','searchbar')">
+                            <small class="form-text text-muted"><?=$lang[3203]?></small>
+                        </div>
+                    </div>
+
+                    <?php // checkboxselect ?>
                     <div class="mb-3 row">
                         <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3182]?></label>
                         <div class="col-sm-8">
@@ -648,7 +763,7 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                     </div>
                 </div>
 
-                
+
                 
                 <?php endif; ?>
 
@@ -707,12 +822,85 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
             </div>
         </div>
 
-                    
-        
-        
         
     </div>
-    <div class="tab-pane" id="info" role="tabpanel">
+
+    <div class="tab-pane py-3" id="menusetting" role="tabpanel">
+
+
+                <div class="mb-3 row m-0 p-0">
+
+                    <label class="col-sm-4 col-form-label col-form-label-sm m-0 p-0"></label>
+
+                    <div class="col-sm-4 fw-bold m-0 p-0">
+                        <?=$lang[301]?>
+                    </div>
+                    <div class="col-sm-4 fw-bold m-0 p-0">
+                        <?=$lang[358]?>
+                    </div>
+                </div>
+
+                <?php
+                $menusetting = array(
+                    9,173,197,1,201,158,157,235,23,313,164,166,271,270,11,                     // Datei
+                    14,28,161,236,287,                                                          // bearbeiten
+                    281,240,160,286,243,237,312,261,165,314,273,233,309,267,275,328, 3,6,10,282,    // Ansicht
+                    132,315,232,193,133,188,7,242,109,266,277,239                                   // Extras
+                );
+                ?>
+
+                <?php
+                foreach($menusetting as $mkey => $link_id){
+
+                    if($link_id == 9 OR $link_id == 14 OR $link_id == 281 OR $link_id == 132){
+                        ?>
+                            <div class="mb-2 row m-0 p-0">
+                            <div class="col-sm-4 fw-bold m-0 p-0">
+                                <?php
+                                if($link_id == 9) {       // Datei
+                                    echo $lang[545];
+                                    $link_id_ = 'file';
+                                }elseif($link_id == 14) {   // bearbeiten
+                                    echo $lang[843];
+                                    $link_id_ = 'edit';
+                                }elseif($link_id == 281) {  // Ansicht
+                                    echo $lang[1625];
+                                    $link_id_ = 'view';
+                                }elseif($link_id == 132) {  // Extras
+                                    echo $lang[1939];
+                                    $link_id_ = 'extra';
+                                }
+                                ?>
+                            </div>
+
+                            <div class="col-sm-4 m-0 p-0">
+                                <input type="checkbox" class="m-0 p-0" value="1" <?=($result_gtab[$tabgroup]['menudisplay'][$tbzm][1][$link_id_] != 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','menu_1_<?=$link_id_?>')">
+                            </div>
+                            <div class="col-sm-4 m-0 p-0">
+                                <input type="checkbox" class="m-0 p-0" value="1" <?=($result_gtab[$tabgroup]['menudisplay'][$tbzm][2][$link_id_] != 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','menu_2_<?=$link_id_?>')">
+                            </div>
+
+                            </div>
+                        <?php
+                    }
+
+                ?>
+                <div class="mb-1 row m-0 p-0">
+                    <label class="col-sm-4 col-form-label col-form-label-sm m-0 p-0"><?=$lang[$LINK["name"][$link_id]]?></label>
+                    <div class="col-sm-4 m-0 p-0">
+                        <input type="checkbox" value="1" <?=($result_gtab[$tabgroup]['menudisplay'][$tbzm][1][$link_id] != 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','menu_1_<?=$link_id?>')">
+                    </div>
+                    <div class="col-sm-4 m-0 p-0">
+                        <input type="checkbox" value="1" <?=($result_gtab[$tabgroup]['menudisplay'][$tbzm][2][$link_id] != 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','menu_2_<?=$link_id?>')">
+                    </div>
+                </div>
+                <?php
+                }
+                ?>
+
+    </div>
+
+    <div class="tab-pane py-3" id="info" role="tabpanel">
         
         <table class="table table-sm table-striped table-hover">
             <?php
@@ -734,5 +922,32 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
         </table>
         
     </div>
+
+    <div class="tab-pane py-3" id="ralations" role="tabpanel">
+
+        <table class="table table-sm table-striped table-hover">
+            <?php
+            if($parentrelation):
+                foreach ($parentrelation['tabid'] as $pkey => $pvalue): ?>
+
+                <tr>
+                    <th><?=$gtab['table'][$pvalue]?></th>
+                    <td><?=$gfield[$pvalue]['field_name'][$parentrelation['fieldid'][$pkey]]?></td>
+                    <td><?=$parentrelation['md5tab'][$pkey]?></td>
+                    <td><?=$lmfieldtype["name"][$parentrelation['datatype'][$pkey]]?>
+                        <?php if($parentrelation['verkntabletype'][$pkey] == 2){ ?>
+                        <i class="lmb-icon lmb-long-arrow-left"></i>
+                        <?php }?>
+                    </td>
+                </tr>
+
+            <?php
+                endforeach;
+            endif;
+            ?>
+        </table>
+
+    </div>
+
 </div>
 </form>

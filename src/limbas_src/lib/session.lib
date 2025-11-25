@@ -7,6 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+/**
+ * @deprecated session.lib only used by cron.php and unsupported webdav / caldav
+ */
 use Limbas\lib\auth\Auth;
 use Limbas\lib\auth\Session;
 use Limbas\lib\db\Database;
@@ -18,7 +21,12 @@ require_once (COREPATH . 'lib/include.lib');
 
 (new Headers())->handle();
 
-Database::checkIfInstalled();
+$installed = Database::checkIfInstalled();
+if(!$installed) {
+    header('HTTP/1.1 302 Found (Moved Temporarily)');
+    header('Location: install/');
+    exit;
+}
 
 if (!isset($DBA['CHARSET'])) {
     $DBA['CHARSET'] = 'UTF-8';

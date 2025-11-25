@@ -8,6 +8,8 @@
  */
 
 
+use Limbas\lib\db\functions\Dbf;
+
 require_once(COREPATH . 'admin/tables/tabschema/tabschema.dao');
 
 function lmb_questerror($error, $view_def)
@@ -122,7 +124,7 @@ function lmb_QuestConfig($viewid, $view_group, $view_name)
         $view_group = lmbdb_result($rs, "TAB_GROUP");
     }
 
-    $field = dbf_5(array($DBA["DBSCHEMA"], $view_name));
+    $field = Dbf::getColumns($DBA["DBSCHEMA"], $view_name ?? '', null);
     if (!$field) {
         return false;
     }
@@ -135,11 +137,11 @@ function lmb_QuestConfig($viewid, $view_group, $view_name)
         $commit = 1;
     }
     while (lmbdb_fetch_row($rs)) {
-        if (!in_array(dbf_4(lmbdb_result($rs, "FIELD_NAME")), $field["columnname_lower"])) {
+        if (!in_array(Dbf::handleCaseSensitive(lmbdb_result($rs, "FIELD_NAME")), $field["columnname_lower"])) {
             # drop old conf value if not exist
             lmb_QuestDeleteConfig($viewid, lmbdb_result($rs, "FIELD_ID"));
         } else {
-            $cfield[] = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+            $cfield[] = Dbf::handleCaseSensitive(lmbdb_result($rs, "FIELD_NAME"));
         }
     }
 
@@ -151,7 +153,7 @@ function lmb_QuestConfig($viewid, $view_group, $view_name)
         $sort++;
 
         # skip if already exist
-        if (in_array(dbf_4($value), $cfield)) {
+        if (in_array(Dbf::handleCaseSensitive($value), $cfield)) {
             $sqlquery = "UPDATE LMB_CONF_FIELDS SET SORT = $sort WHERE TAB_ID = $viewid AND FIELD_NAME = '$value'";
             $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             if (!$rs) {
@@ -275,7 +277,7 @@ function lmb_deleteView($view_name)
 {
     global $db;
 
-    $sqlquery = dbq_20(array($view_name));
+    $sqlquery = Dbf::dropViewSql($view_name);
     $rs = lmbdb_exec($db, $sqlquery) or $error = str_replace("\n", "\\n", lmbdb_errormsg($db));
     if (!$rs) {
         errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
@@ -371,7 +373,7 @@ function lmb_createQuestView($viewid, $view_def, $view_public = null, $view_drop
     }
 
     // try to create or replace view
-    $sqlquery = dbq_19(array($view_name, $view_def_));
+    $sqlquery = Dbf::createViewSql($view_name, $view_def_);
     #$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $rs = lmbdb_exec($db, $sqlquery) or $error = str_replace("\n", "\\n", lmbdb_errormsg($db));
 
@@ -531,7 +533,7 @@ function lmb_getQuestValue($viewid)
         $gview["viewexists"] = 0;
     }
 
-    if ($s = dbf_20(array($DBA["DBSCHEMA"], $gview["viewname"], 'VIEW'))) {
+    if ($s = Dbf::getTableList($DBA["DBSCHEMA"], $gview["viewname"], 'VIEW')) {
         $gview["viewexists"] = 1;
     }
 
@@ -1134,7 +1136,7 @@ function viewschema_tab(&$pat, $tabname)
     echo "<ul class='list-group p-0 m-0'>";
 
     $tabname_ = explode("#", base64_decode($tabname));
-    $fields = dbf_5(array($DBA["DBSCHEMA"], $tabname_[0], null, null, 1));
+    $fields = Dbf::getColumns($DBA["DBSCHEMA"], $tabname_[0] ?? '', null, null, true);
     if ($fields["columnname"]) {
         foreach ($fields["columnname"] as $key => $fieldname) {
             echo "<li class='list-group-item py-0 px-1' id=\"opt_" . $tabname . "_" . str_replace("=", "", base64_encode($fieldname)) . "\" OnMouseOver=\"this.style.fontWeight='bold'\" OnMouseOut=\"this.style.fontWeight='normal'\" OnMousedown=\"iniDrag(event,document.getElementById('relationSign'),this);return false;\" OnMouseUp=\"iniRelation(event,this)\">";

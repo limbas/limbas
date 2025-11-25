@@ -10,9 +10,9 @@
 namespace Limbas\lib\db;
 
 use Exception;
+use Limbas\lib\db\functions\Dbf;
 use PDO;
 use PDOStatement;
-use function dbq_0;
 
 class Database
 {
@@ -35,7 +35,7 @@ class Database
         global $DBA;
         global $db; //legacy
         ob_start();
-        $db = dbq_0($DBA['DBHOST'],$DBA['DBNAME'],$DBA['DBUSER'],$DBA['DBPASS'],$DBA['ODBCDRIVER'],$DBA['PORT']);
+        $db = Dbf::connect($DBA['DBHOST'],$DBA['DBNAME'],$DBA['DBUSER'],$DBA['DBPASS'],$DBA['ODBCDRIVER'],intval($DBA['PORT']));
         ob_end_clean();
         return $db;
     }
@@ -50,12 +50,12 @@ class Database
         lmbdb_close_all();
     }
     
-    public static function checkIfInstalled(): void
+    public static function checkIfInstalled(): bool
     {
         $db = Database::get();
         
         if($db === false || $db === null) {
-            // config exists (checked in db_wrapper), but no connection to database
+            // config exists, but no connection to database
             throw new Exception('Database connection failed', 600);
         }
 
@@ -63,18 +63,15 @@ class Database
         $rs = lmbdb_exec($db, $sqlquery);
         
         if(!$rs) {
-            header('HTTP/1.1 302 Found (Moved Temporarily)');
-            header('Location: install/');
-            exit;
+            return false;
         }
         
         $data = lmbdb_fetch_array($rs);
         if (!is_array($data) || !array_key_exists('TABLE_NAME',$data) || empty($data['TABLE_NAME']) ) {
-            header('HTTP/1.1 302 Found (Moved Temporarily)');
-            header('Location: install/');
-            exit;
+            return false;
         }
         
+        return true;
     }
 
 

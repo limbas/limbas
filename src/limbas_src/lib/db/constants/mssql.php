@@ -1,0 +1,105 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+# LMB_DBTYPE #
+const LMB_DBTYPE_CHAR = 'CHAR';
+const LMB_DBTYPE_VARCHAR = 'VARCHAR';
+const LMB_DBTYPE_INTEGER = 'INT';
+const LMB_DBTYPE_SMALLINT = 'SMALLINT';
+const LMB_DBTYPE_BIGINT = 'BIGINT';
+const LMB_DBTYPE_FLOAT = 'FLOAT';
+const LMB_DBTYPE_FIXED = 'NUMERIC';
+const LMB_DBTYPE_NUMERIC = 'NUMERIC';
+const LMB_DBTYPE_BOOLEAN = 'BIT';
+const LMB_DBTYPE_DATE = 'SMALLDATETIME';
+const LMB_DBTYPE_TIME = 'DATETIME';
+const LMB_DBTYPE_TIMESTAMP = 'DATETIME';
+const LMB_DBTYPE_LONG = 'TEXT';
+const LMB_DBTYPE_ASCII = '';
+const LMB_DBTYPE_BYTE = '';
+const LMB_DBTYPE_SERIAL = 'IDENTITY';
+
+# LMB_DBDEF #
+const LMB_DBDEF_TIME = 'GETDATE()';
+const LMB_DBDEF_DATE = 'GETDATE()';
+const LMB_DBDEF_TIMESTAMP = 'GETDATE()';
+const LMB_DBDEF_FALSE = '\'FALSE\'';
+const LMB_DBDEF_TRUE = '\'TRUE\'';
+const LMB_DBDEF_NULL = 'NULL';
+const LMB_DBDEF_DTNULL = 'NULL';
+
+# LMB_DBRETYPE #
+const LMB_DBRETYPE_CHAR = 'CHAR';
+const LMB_DBRETYPE_VARCHAR = 'VARCHAR';
+const LMB_DBRETYPE_NVARCHAR = 'VARCHAR';
+const LMB_DBRETYPE_INT = 'INTEGER';
+const LMB_DBRETYPE_INTEGER = 'INTEGER';
+const LMB_DBRETYPE_SMALLINT = 'SMALLINT';
+const LMB_DBRETYPE_BIGINT = 'BIGINT';
+const LMB_DBRETYPE_FLOAT = 'FLOAT';
+const LMB_DBRETYPE_REAL = 'FLOAT';
+const LMB_DBRETYPE_NUMERIC = 'FIXED';
+const LMB_DBRETYPE_BIT = 'BOOLEAN';
+const LMB_DBRETYPE_BOOLEAN = 'BOOLEAN';
+const LMB_DBRETYPE_DATE = 'DATE';
+const LMB_DBRETYPE_TIME = 'TIME';
+const LMB_DBRETYPE_DATETIME = 'TIMESTAMP';
+const LMB_DBRETYPE_SMALLDATETIME = 'TIMESTAMP';
+const LMB_DBRETYPE_TIMESTAMP = 'TIMESTAMP';
+const LMB_DBRETYPE_TEXT = 'LONG';
+
+# LMB_DBREDEF #
+define('LMB_DBREDEF_GETDATE()','TIMESTAMP');
+const LMB_DBREDEF_0 = 'FALSE';
+const LMB_DBREDEF_1 = 'TRUE';
+const LMB_DBREDEF_FALSE = 'FALSE';
+const LMB_DBREDEF_TRUE = 'TRUE';
+
+# LMB_DBFUNC #
+const LMB_DBFUNC_ISNULL = 'IS NULL';
+const LMB_DBFUNC_PRIMARY_KEY = 'PRIMARY KEY';
+const LMB_DBFUNC_UNIQUE = 'UNIQUE';
+const LMB_DBFUNC_CONCAT = '+';
+const LMB_DBFUNC_UMASCB = '\\\\';
+const LMB_DBFUNC_LIMIT = '';
+const LMB_DBFUNC_ROWNO = '';
+const LMB_DBFUNC_SPLIT_TRIGGER = 'EXECUTE';
+const LMB_DBFUNC_ADD_COLUMN_FIRST = 'ADD';
+const LMB_DBFUNC_ADD_COLUMN_NEXT = '';
+const LMB_DBFUNC_DROP_COLUMN_FIRST = 'DROP COLUMN';
+const LMB_DBFUNC_DROP_COLUMN_NEXT = '';
+define("LMB_DBFUNC_DATE",$DBA["DBSCHEMA"].".DATE(");
+define("LMB_DBFUNC_TIME",$DBA["DBSCHEMA"].".TIME(");
+const LMB_DBFUNC_YEAR = 'YEAR(';
+const LMB_DBFUNC_MONTH = 'MONTH(';
+const LMB_DBFUNC_DAY = 'DAY(';
+const LMB_DBFUNC_HOUR = 'HOUR(';
+const LMB_DBFUNC_MINUTE = 'MINUTE(';
+
+#const LMB_DBFUNC_NULLHANDLE = 0;
+const LMB_DBFUNC_LONGHANDLE = 0;
+const LMB_DBFUNC_PROCEDUREHANDLE = 1;
+const LMB_DBFUNC_FKEYHANDLE = 1;
+const LMB_DBFUNC_FLOATHANDLE = 0;
+const LMB_DBFUNC_PREPAREHANDLE = 0;
+const LMB_DBFUNC_TIMEHANDLE = 0;
+const LMB_DBFUNC_NUMROWS = 0;
+const LMB_DBFUNC_VIEWGALIAS = 0;
+const LMB_DBFUNC_SEQUENCE = 0;
+const LMB_DBFUNC_VIEWDEPENDENCY = 0;
+const LMB_DBFUNC_MAXFIELDNAMESIZE = 120;
+const LMB_DBFUNC_MAXTABLENAMESIZE = 30;
+const LMB_DBFUNC_TRANSACTION = 1;
+const LMB_DBFUNC_TRANSACTION_WITH_SCHEMA = 1;
+
+# DBCURSOR #
+const LMB_DBCURSOR = 1;
+const LMB_DBFUNC_WITH_RECURSIVE = 'WITH';

@@ -8,22 +8,27 @@
  */
 
 # rebuild index
+use Limbas\lib\db\functions\Dbf;
+
+global $db;
+global $DBA;
+
 if(($rebuild OR $delete) AND $use_index){
     foreach ($use_index as $indname => $value){
         $indspec = explode('#',$value);
-        $indt = dbf_4($indspec[0]);
-        $indf = dbf_4($indspec[1]);
-        $indname = dbf_4($indname);
+        $indt = Dbf::handleCaseSensitive($indspec[0]);
+        $indf = Dbf::handleCaseSensitive($indspec[1]);
+        $indname = Dbf::handleCaseSensitive($indname);
         if(!$indname OR !$indt OR !$indf){continue;}
         # drop index
-        $sqlquery = dbq_5(array($DBA["DBSCHEMA"],$indname,$indt));
+        $sqlquery = Dbf::dropIndexSql($indname,$indt);
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if($rs){lmb_alert("index $indname deleted");}
 
         if($rebuild){
             # create index
             $indname = lmb_getConstraintName('LMB_INDV',$indt,$indf);
-            $sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$indt,$indf));
+            $sqlquery = Dbf::createIndexSql($indname,$indt,$indf);
             $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             if($rs){lmb_alert("index $indname created");}
         }
@@ -35,12 +40,12 @@ if(($rebuild OR $delete) AND $use_index){
 if(($delete_constraint AND $use_constraint)){
     foreach ($use_constraint as $constraint_name => $value){
         $indspec = explode('#',$value);
-        $indt = dbf_4($indspec[0]);
-        $indf = dbf_4($indspec[1]);
-        $constraint_name = dbf_4($constraint_name);
+        $indt = Dbf::handleCaseSensitive($indspec[0]);
+        $indf = Dbf::handleCaseSensitive($indspec[1]);
+        $constraint_name = Dbf::handleCaseSensitive($constraint_name);
         if(!$constraint_name OR !$indt OR !$indf){continue;}
-        # drop constraint
-        $sqlquery = dbq_25(array($indt,$indf,$constraint_name));
+
+        $sqlquery = Dbf::dropConstraintSql($indt, $constraint_name);
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if($rs){lmb_alert("contraint $constraint_name deleted");}
     }
@@ -51,12 +56,12 @@ if(($delete_constraint AND $use_constraint)){
 if(($delete_fkey AND $use_fkey)){
     foreach ($use_fkey as $fkey_name => $value){
         $indspec = explode('#',$value);
-        $indt = dbf_4($indspec[0]);
-        $indf = dbf_4($indspec[1]);
-        $fkey_name = dbf_4($fkey_name);
+        $indt = Dbf::handleCaseSensitive($indspec[0]);
+        $indf = Dbf::handleCaseSensitive($indspec[1]);
+        $fkey_name = Dbf::handleCaseSensitive($fkey_name);
         if(!$fkey_name OR !$indt OR !$indf){continue;}
         # drop constraint
-        $sqlquery = dbq_6(array($indt,$fkey_name));
+        $sqlquery = Dbf::dropForeignKeySql($indt,$fkey_name);
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if($rs){lmb_alert("Foreign Keys $fkey_name deleted");}
     }
@@ -129,7 +134,7 @@ function ind_sort(val){
                     /* -------- indexes --------*/
 
                     # get indexes
-                    $sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1));
+                    $sqlquery = Dbf::getIndicesSql($DBA["DBSCHEMA"], null, null, null, true);
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                     $bzm = 1;
                     while(lmbdb_fetch_row($rs)) {
@@ -272,8 +277,7 @@ function ind_sort(val){
                     </thead>
 
                     <?php
-                    # get primary keys
-                    $pkey = dbq_23(array($DBA["DBSCHEMA"]));
+                    $pkey = Dbf::getPrimaryKeys($DBA['DBSCHEMA']);
 
                     if($pkey["PK_NAME"]){
                         foreach ($pkey["PK_NAME"] as $key => $value){
@@ -306,8 +310,7 @@ function ind_sort(val){
 
                     <?php
 
-                    # get unique constraints
-                    $constr = dbq_26(array($DBA["DBSCHEMA"]));
+                    $constr = Dbf::getUniqueConstraints($DBA["DBSCHEMA"]);
 
                     if($constr["TABLE_NAME"]):
                         foreach ($constr["TABLE_NAME"] as $key => $value):

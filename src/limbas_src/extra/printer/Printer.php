@@ -12,17 +12,21 @@ namespace Limbas\extra\printer;
 class Printer
 {
 
-    public static function getOptionsFromRequest(array $request): array
+    public static function getOptionsFromRequest(array $request): PrinterOptions|null
     {
         $options = [];
         
-        foreach(['report_printer','pageCount','directPrint'] as $option) {
+        foreach(['printerId','pageCount','directPrint'] as $option) {
             if(array_key_exists($option,$request)) {
                 $options[$option] = $request[$option];
             }
         }
+
+        if (empty($options['printerId'])) {
+            return null;
+        }
         
-        return $options;
+        return new PrinterOptions(...$options);
     }
     
 }

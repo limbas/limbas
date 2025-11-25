@@ -11,7 +11,7 @@ namespace Limbas\extra\report;
 
 use Limbas\extra\diagram\LmbChart;
 use Limbas\extra\template\report\ReportTemplateRender;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
 use ParseError;
 
 class ReportTcpdf extends Report
@@ -420,7 +420,7 @@ class ReportTcpdf extends Report
                         $arg_result = $rval;
                     }
                 } catch (ParseError $e) {
-                    lmb_log::error($e->getMessage());
+                    Log::limbasError($e->getMessage());
                     $arg_result = array();
                 }
                 foreach ($arg_result as $key => $value) {
@@ -443,7 +443,7 @@ class ReportTcpdf extends Report
                     try {
                         eval($report['parameter'][$el]);
                     } catch (ParseError $e) {
-                        lmb_log::error($e->getMessage());
+                        Log::limbasError($e->getMessage());
                     }
                 }
 
@@ -481,7 +481,7 @@ class ReportTcpdf extends Report
                     $arg_result = $rval;
                 }
             } catch (ParseError $e) {
-                lmb_log::error($e->getMessage());
+                Log::limbasError($e->getMessage());
                 $arg_result = '';
             }
         }
@@ -583,7 +583,7 @@ class ReportTcpdf extends Report
             try {
                 eval($report['parameter'][$el]);
             } catch (ParseError $e) {
-                lmb_log::error($e->getMessage());
+                Log::limbasError($e->getMessage());
             }
         }
 
@@ -809,7 +809,7 @@ class ReportTcpdf extends Report
                                         $arg_result = $rval;
                                     }
                                 } catch (ParseError $e) {
-                                    lmb_log::error($e->getMessage());
+                                    Log::limbasError($e->getMessage());
                                     $arg_result = '';
                                 }
                                 $GLOBALS['glob_el'][$cellElement['EL_ID']][$ROWNR] = $arg_result;

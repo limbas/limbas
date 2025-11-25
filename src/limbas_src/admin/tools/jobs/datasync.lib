@@ -8,7 +8,7 @@
  */
 
 
-use Limbas\admin\tools\datasync\DatasyncClientProcess;
+use Limbas\admin\tools\datasync\DatasyncClientHandler;
 use Limbas\admin\tools\datasync\DatasyncProcess;
 
 define("IS_DATASYNC",1);
@@ -18,7 +18,7 @@ require_once(COREPATH . 'admin/tools/datasync/loaddatasync.php');
 global $additionalCronData;
 
 if (defined('IS_CRON') && $additionalCronData) {
-    $datasync = new DatasyncClientProcess($template);
+    $datasync = new DatasyncClientHandler($template);
     $datasync->runSyncWithMasterSocket($additionalCronData);
 }
 

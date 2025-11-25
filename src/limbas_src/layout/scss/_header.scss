@@ -34,6 +34,11 @@
   font-family: sans-serif;
 }
 
+.top-logo-img {
+  min-height: 2rem;
+  max-height: 2.5rem;
+}
+
 /* Frame Top 2 */
 
 .lmbMenuItemTop2Icon {
@@ -110,4 +115,10 @@
     height: auto;
   }
 
+}
+
+.center-navigation {
+  .nav-link, .navbar-brand {
+    color: $nav-center-color;
+  }
 }

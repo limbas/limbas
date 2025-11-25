@@ -8,6 +8,8 @@
  */
 
 
+use Limbas\lib\auth\Auth;
+
 $ID = $session["user_id"];
 
 
@@ -46,7 +48,7 @@ function htuseraccess($ID,$user,$pass){
 		}else{
 			if($pass){
 				$htpasswd_file = fopen($path."/.htpasswd","w");
-				$pass = crypt($pass);
+				$pass = crypt($pass,'');
 				$value = "{$user}:{$pass}\n";
 				fputs($htpasswd_file,$value);
 				fclose($htpasswd_file);

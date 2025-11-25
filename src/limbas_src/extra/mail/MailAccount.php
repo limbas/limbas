@@ -34,10 +34,12 @@ class MailAccount extends LimbasModel
      * @param int|null $userId
      * @param int|null $tenantId
      * @param int|null $id
-     * @param bool|null $isDefault
+     * @param bool|null $isDefault defines the system-wide default account, only one per tenant
      * @param bool|null $isActive
      * @param bool|null $isHidden
+     * @param bool|null $isSelected defines if the mail account is preselected when sending mails
      * @param int|null $mailTableId
+     * @param int|null $mailSignatureId
      */
     public function __construct(
         public string   $name,
@@ -58,7 +60,9 @@ class MailAccount extends LimbasModel
         public ?bool    $isDefault = false,
         public ?bool    $isActive = true,
         public ?bool    $isHidden = false,
-        public ?int     $mailTableId = null
+        public ?bool    $isSelected = false,
+        public ?int     $mailTableId = null,
+        public ?int     $mailSignatureId = null
     )
     {
 
@@ -183,7 +187,9 @@ class MailAccount extends LimbasModel
                 boolval(lmbdb_result($rs, 'IS_DEFAULT')),
                 boolval(lmbdb_result($rs, 'IS_ACTIVE')),
                 boolval(lmbdb_result($rs, 'IS_HIDDEN')),
-                intval(lmbdb_result($rs, 'MAIL_TABLE_ID'))
+                    intval(lmbdb_result($rs, 'IS_SELECTED')),
+                intval(lmbdb_result($rs, 'MAIL_TABLE_ID')),
+                    intval(lmbdb_result($rs, 'DEFAULT_SIGNATURE_ID'))
             );
 
         }
@@ -205,6 +211,7 @@ class MailAccount extends LimbasModel
             'EMAIL' => $this->email,
             'IS_ACTIVE' => $this->isActive ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE,
             'IS_HIDDEN' => $this->isHidden ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE,
+            'IS_SELECTED' => $this->isSelected ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE,
             'TRANSPORT_TYPE' => $this->transportType,
             'IMAP_HOST' => $this->imapHost,
             'IMAP_PORT' => $this->imapPort,
@@ -214,12 +221,20 @@ class MailAccount extends LimbasModel
             'SMTP_PORT' => $this->smtpPort,
             'SMTP_USER' => $this->smtpUser,
             'MAIL_TABLE_ID' => $this->mailTableId,
+            'DEFAULT_SIGNATURE_ID' => $this->mailSignatureId,
         ];
 
         if(!empty($this->mailTableId)) {
             $mailTable = $this->getMailTable();
             if(empty($mailTable)) {
                 $data['MAIL_TABLE_ID'] = 0;
+            }
+        }
+
+        if(!empty($this->mailSignatureId)) {
+            $mailSignature = $this->getMailSignature();
+            if(empty($mailSignature)) {
+                $data['DEFAULT_SIGNATURE_ID'] = null;
             }
         }
         
@@ -249,6 +264,7 @@ class MailAccount extends LimbasModel
 
         if ($result) {
             $this->updateDefault();
+            $this->updateSelected();
         }
 
         return $result;
@@ -263,6 +279,19 @@ class MailAccount extends LimbasModel
             Database::update('LMB_MAIL_ACCOUNTS', ['IS_DEFAULT' => 1], ['ID' => $this->id]);
         } else {
             Database::update('LMB_MAIL_ACCOUNTS', ['IS_DEFAULT' => 0], ['ID' => $this->id]);
+        }
+
+    }
+
+    private function updateSelected(): void
+    {
+
+        if ($this->isSelected && empty($this->userId)) {
+            Database::update('LMB_MAIL_ACCOUNTS', ['IS_SELECTED' => 0], ['TENANT_ID' => $this->tenantId, 'USER_ID' => null]);
+            Database::update('LMB_MAIL_ACCOUNTS', ['IS_SELECTED' => 1], ['ID' => $this->id]);
+        } else {
+            Database::update('LMB_MAIL_ACCOUNTS', ['IS_SELECTED' => 0], ['USER_ID' => $this->userId]);
+            Database::update('LMB_MAIL_ACCOUNTS', ['IS_SELECTED' => 1], ['ID' => $this->id]);
         }
 
     }
@@ -335,6 +364,11 @@ class MailAccount extends LimbasModel
     public function getMailTable(): ?MailTable
     {
         return $this->mailTableId !== null ? MailTable::get($this->mailTableId) : null;
+    }
+
+    public function getMailSignature(): ?MailSignature
+    {
+        return $this->mailSignatureId !== null ? MailSignature::get($this->mailSignatureId) : null;
     }
 
 }

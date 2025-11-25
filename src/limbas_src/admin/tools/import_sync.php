@@ -1,5 +1,10 @@
 <?php
 
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Logger;
+use Limbas\lib\general\Log\LogLevel;
+use Limbas\lib\general\Log\LogMessage;
+
 /**
  * @copyright Limbas GmbH <https://limbas.com>
  * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
@@ -12,6 +17,8 @@
 
 class importSync
 {
+    
+    private Logger $logger;
 
     public $htmloutput;
 
@@ -33,8 +40,6 @@ class importSync
         if (!$result['success'] || !$confirm_syncimport) {
             return $result;
         }
-
-        LimbasLogger::clear();
 
         # start transaction
         lmb_StartTransaction();
@@ -67,17 +72,20 @@ class importSync
      */
     public function sync_import($path_right_export = null, $precheck, $confirm_syncimport, $file_to_import, $file_uploaded_via_http = true, $reverse_diff = false)
     {
+        $this->logger = Logger::get('import_sync');
+        
         $success = $this->sync_import_inner($path_right_export, $confirm_syncimport==true ? false : $precheck, $confirm_syncimport, $file_to_import, $file_uploaded_via_http, $reverse_diff);
 
-        foreach (LimbasLogger::getLogLines() as $key => $log_) {
-            if($log_['level'] == LimbasLogger::LL_ERROR) {
-                $log['error'][] = $log_['message'];
-            }elseif($log_['level'] == LimbasLogger::LL_NOTICE) {
-                $log['notice'][] = $log_['message'];
+        /** @var LogMessage $logMessage */
+        foreach ($this->logger->getLog() as $logMessage) {
+            if($logMessage->level === LogLevel::ERROR) {
+                $log['error'][] = $logMessage->message;
+            }elseif($logMessage->level == LogLevel::NOTICE) {
+                $log['notice'][] = $logMessage->message;
             }
 
-            if($precheck == 2 AND $log_['level'] == LimbasLogger::LL_INFO) {
-                $log['info'][] = $log_['message'];
+            if($precheck == 2 && $logMessage->level == LogLevel::INFO) {
+                $log['info'][] = $logMessage->message;
             }
         }
 
@@ -116,7 +124,7 @@ class importSync
             # move file to import into temp folder
             $moveFunc = $file_uploaded_via_http ? 'move_uploaded_file' : 'rename';
             if (!$moveFunc($file_to_import, $path . 'export.tar.gz')) {
-                LimbasLogger::log("Could not move file '$file_to_import' to '{$path}export.tar.gz'!", LimbasLogger::LL_ERROR);
+                $this->logger->error("Could not move file '$file_to_import' to '{$path}export.tar.gz'!");
                 return false;
             }
 
@@ -126,20 +134,20 @@ class importSync
 
             # read configuration
             if (!file_exists($path . 'export.php')) {
-                LimbasLogger::log("Configuration file export.php in '$path' not found!", LimbasLogger::LL_ERROR);
+                $this->logger->error("Configuration file export.php in '$path' not found!");
                 return false;
             }
             include_once($path . 'export.php');
 
             # the configuration file should give $export_conf, $tosyn and $types
             if (!isset($export_conf, $tosyn, $types, $viewDefinitions, $callExtensionFunctionName)) {
-                LimbasLogger::log(
+                $this->logger->error(
                     "Configuration file invalid, following vars should be set:\n"
                     . ' - $export_conf: ' . json_encode($export_conf) . "\n"
                     . ' - $tosyn: ' . json_encode($tosyn) . "\n"
                     . ' - $types: ' . json_encode($types) . "\n"
                     . ' - $viewDefinitions: ' . json_encode($viewDefinitions) . "\n"
-                    . ' - $callExtensionFunctionName: ' . json_encode($callExtensionFunctionName), LimbasLogger::LL_ERROR);
+                    . ' - $callExtensionFunctionName: ' . json_encode($callExtensionFunctionName));
                 return false;
             }
 
@@ -157,7 +165,7 @@ class importSync
 
             # add tabs
             if (in_array('tabs', $types)) {
-                $odbc_table = dbf_20(array($DBA['DBSCHEMA'], null, "'TABLE'"));
+                $odbc_table = Dbf::getTableList($DBA['DBSCHEMA'], null, "'TABLE'");
                 foreach ($odbc_table['table_name'] as $tkey => $table) {
                     # stripos for case insensitivity
                     # dont include systemtables, system_files, ldms_*
@@ -165,151 +173,151 @@ class importSync
                         $expTablesConf[] = $table;
                     }
                 }
-                $exptables[] = dbf_4('lmb_conf_tables');
-                $exptables[] = dbf_4('lmb_conf_fields');
-                $exptables[] = dbf_4('lmb_conf_views');
-                #$exptables[] = dbf_4('lmb_conf_viewfields');
-                #$exptables[] = dbf_4('lmb_conf_groups');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_conf_tables');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_conf_fields');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_conf_views');
+                #$exptables[] = Dbf::handleCaseSensitive('lmb_conf_viewfields');
+                #$exptables[] = Dbf::handleCaseSensitive('lmb_conf_groups');
             }
 
             # add forms
             if (in_array('forms', $types)) {
-                $exptables[] = dbf_4('lmb_form_list');
-                $exptables[] = dbf_4('lmb_forms');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_form_list');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_forms');
             }
 
             # add reports
             if (in_array('rep', $types)) {
-                $exptables[] = dbf_4('lmb_report_list');
-                $exptables[] = dbf_4('lmb_reports');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_report_list');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_reports');
             }
 
             // chart
             if (in_array('charts', $types)) {
-                $exptables[] = dbf_4('lmb_chart_list');
-                $exptables[] = dbf_4('lmb_charts');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_chart_list');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_charts');
             }
 
             // workflow
             if (in_array('work', $types)) {
-                $exptables[] = dbf_4('lmb_wfl_task');
-                $exptables[] = dbf_4('lmb_wfl');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_wfl_task');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_wfl');
             }
 
             // group & rules
             if (in_array('group', $types)) {
-                $exptables[] = dbf_4('lmb_groups');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_groups');
                 if (in_array('tabs', $types)) {
-                    $exptables[] = dbf_4('lmb_rules_tables');
-                    $exptables[] = dbf_4('lmb_rules_fields');
-                    #$exptables[] = dbf_4('lmb_rules_dataset');
+                    $exptables[] = Dbf::handleCaseSensitive('lmb_rules_tables');
+                    $exptables[] = Dbf::handleCaseSensitive('lmb_rules_fields');
+                    #$exptables[] = Dbf::handleCaseSensitive('lmb_rules_dataset');
                 }
                 if (in_array('forms', $types) or in_array('rep', $types) or in_array('work', $types) or in_array('charts', $types) or in_array('reminder', $types)) {
-                    $exptables[] = dbf_4('lmb_rules_repform');
+                    $exptables[] = Dbf::handleCaseSensitive('lmb_rules_repform');
                 }
                 if (in_array('links', $types)) {
-                    $exptables[] = dbf_4('lmb_rules_action');
+                    $exptables[] = Dbf::handleCaseSensitive('lmb_rules_action');
                 }
                 if (in_array('dms', $types)) {
-                    $exptables[] = dbf_4('ldms_rules');
+                    $exptables[] = Dbf::handleCaseSensitive('ldms_rules');
                 }
             }
 
             // DMS
             if (in_array('dms', $types)) {
-                $exptables[] = dbf_4('ldms_structure');
-                $exptables[] = dbf_4('lmb_external_storage');
+                $exptables[] = Dbf::handleCaseSensitive('ldms_structure');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_external_storage');
             }
 
             // system --
             if (in_array('system', $types)) {
-                $exptables[] = dbf_4('lmb_field_types');
-                $exptables[] = dbf_4('lmb_fonts');
-                $exptables[] = dbf_4('lmb_mimetypes');
-                $exptables[] = dbf_4('lmb_lang');
-                $exptables[] = dbf_4('lmb_action');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_field_types');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_fonts');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_mimetypes');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_lang');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_action');
             }
 
             // === sonst ===
             // snapshot
             if (in_array('snapshots', $types)) {
-                $exptables[] = dbf_4('lmb_snap');
-                $exptables[] = dbf_4('lmb_snap_shared');
-                $exptables[] = dbf_4('lmb_snap_group');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_snap');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_snap_shared');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_snap_group');
             }
 
             // reminder
             if (in_array('reminder', $types)) {
-                $exptables[] = dbf_4('lmb_reminder_list');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_reminder_list');
             }
 
             // currency
             if (in_array('currency', $types)) {
-                $exptables[] = dbf_4('lmb_currency');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_currency');
             }
 
             // colorscheme
             if (in_array('colorscheme', $types)) {
-                $exptables[] = dbf_4('lmb_colorschemes');
-                $exptables[] = dbf_4('lmb_colorvars'); // todo ?
+                $exptables[] = Dbf::handleCaseSensitive('lmb_colorschemes');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_colorvars'); // todo ?
             }
 
             // usercolors
             if (in_array('usercolors', $types)) {
-                $exptables[] = dbf_4('lmb_user_colors');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_user_colors');
             }
 
             // crontab
             if (in_array('crontab', $types)) {
-                $exptables[] = dbf_4('lmb_crontab');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_crontab');
             }
 
             // trigger
             if (in_array('trigger', $types)) {
-                $exptables[] = dbf_4('lmb_trigger');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_trigger');
             }
 
             // links
             if (in_array('links', $types)) {
-                $exptables[] = dbf_4('lmb_action_depend');
-                $exptables[] = dbf_4('lmb_custmenu');
-                $exptables[] = dbf_4('lmb_custmenu_list');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_action_depend');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_custmenu');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_custmenu_list');
             }
 
             // pools
             if (in_array('pools', $types)) {
-                $exptables[] = dbf_4('lmb_select_p');
-                $exptables[] = dbf_4('lmb_select_w');
-                $exptables[] = dbf_4('lmb_attribute_p');
-                $exptables[] = dbf_4('lmb_attribute_w');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_select_p');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_select_w');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_attribute_p');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_attribute_w');
             }
 
             // rules&groups
             if (in_array('rules', $types)) {
-                $exptables[] = dbf_4('lmb_groups');
-                $exptables[] = dbf_4('lmb_rules_action');
-                $exptables[] = dbf_4('lmb_rules_repform');
-                $exptables[] = dbf_4('lmb_rules_tables');
-                $exptables[] = dbf_4('lmb_rules_fields');
-                #$exptables[] = dbf_4('lmb_rules_dataset');
-                $exptables[] = dbf_4('ldms_rules');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_groups');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_rules_action');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_rules_repform');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_rules_tables');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_rules_fields');
+                #$exptables[] = Dbf::handleCaseSensitive('lmb_rules_dataset');
+                $exptables[] = Dbf::handleCaseSensitive('ldms_rules');
             }
 
             // synchronisation
             if (in_array('synchronisation', $types)) {
-                $exptables[] = dbf_4('lmb_sync_conf');
-                $exptables[] = dbf_4('lmb_sync_template');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_sync_conf');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_sync_template');
             }
 
             // custvar
             if (in_array('custvar', $types)) {
-                $exptables[] = dbf_4('lmb_custvar');
+                $exptables[] = Dbf::handleCaseSensitive('lmb_custvar');
             }
 
             // === /sonst ===
 
             // always
-            #$exptables[] = dbf_4('lmb_dbpatch');
+            #$exptables[] = Dbf::handleCaseSensitive('lmb_dbpatch');
 
             # TODO add more here
 
@@ -320,28 +328,28 @@ class importSync
             } else {
                 // export local tables for comparison - configuration only
                 if ($expTablesConf AND lmbExport_ToSystem($expTablesConf, null, null, null, true) === false) {
-                    LimbasLogger::log("Could not export tableconf '" . json_encode($expTablesConf) . "' to system!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not export tableconf '" . json_encode($expTablesConf) . "' to system!");
                     return false;
                 }
                 // export local tables for comparison
                 if ($exptables AND lmbExport_ToSystem($exptables) === false) {
-                    LimbasLogger::log("Could not export tables '" . json_encode($exptables) . "' to system!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not export tables '" . json_encode($exptables) . "' to system!");
                     return false;
                 }
             }
         } else {
             # read configuration
             if (!file_exists($path . 'export.php')) {
-                LimbasLogger::log("Configuration file export.php in '$path' not found!", LimbasLogger::LL_ERROR);
+                $this->logger->error("Configuration file export.php in '$path' not found!");
                 return false;
             }
             require($path . 'export.php');
 
             # the configuration file should give $callExtensionFunctionName
             if (!isset($callExtensionFunctionName)) {
-                LimbasLogger::log(
+                $this->logger->error(
                     "Configuration file invalid, following vars should be set:\n"
-                    . ' - $callExtensionFunctionName', LimbasLogger::LL_ERROR);
+                    . ' - $callExtensionFunctionName');
                 return false;
             }
 
@@ -383,7 +391,7 @@ class importSync
                 }
             }
         } else {
-            LimbasLogger::log("Could not read directory '$path'!", LimbasLogger::LL_ERROR);
+            $this->logger->error("Could not read directory '$path'!");
             return false;
         }
 
@@ -402,7 +410,7 @@ class importSync
             }
             closedir($handle);
         } else {
-            LimbasLogger::log("Could not open directory '$path'!", LimbasLogger::LL_ERROR);
+            $this->logger->error("Could not open directory '$path'!");
             return false;
         }
 
@@ -437,7 +445,7 @@ class importSync
             }
             closedir($handle);
         } else {
-            LimbasLogger::log("Could not open directory '$pathtmp'!", LimbasLogger::LL_ERROR);
+            $this->logger->error("Could not open directory '$pathtmp'!");
             return false;
         }
 
@@ -447,19 +455,19 @@ class importSync
             # call function by passed name
             $extension = array();
             if ($callExtensionFunctionName('before',$extension) === false) {
-                LimbasLogger::log("Function '$callExtensionFunctionName' returned failure!", LimbasLogger::LL_ERROR);
+                $this->logger->error("Function '$callExtensionFunctionName' returned failure!");
                 return false;
             } else {
-                LimbasLogger::log("Function '$callExtensionFunctionName' returned success!", LimbasLogger::LL_NOTICE);
+                $this->logger->notice("Function '$callExtensionFunctionName' returned success!");
                 $output['createtab'][] = "Function '$callExtensionFunctionName' returned success!";
             }
         }
 
         // drop all views - resolve dependencies
         if (is_array($viewDefinitions) AND (in_array('tabs', $types) OR in_array('globalsynctables', $types)) AND $confirm_syncimport) {
-            LimbasLogger::log("function : drop dependency views", LimbasLogger::LL_NOTICE);
+            $this->logger->notice("function : drop dependency views");
             if (!lmb_dropAllViews()) {
-                LimbasLogger::log("Could not delete dependency views! - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                $this->logger->error("Could not delete dependency views! - Message:".lmbdb_errormsg($db));
                 return false;
             }
             $rebuild_dependency_views = 1;
@@ -468,7 +476,7 @@ class importSync
         // drop all foreign keys - resolve dependencies
         if ((in_array('funcforkey', $types) OR in_array('tabs', $types) OR in_array('globalsynctables', $types)) AND $confirm_syncimport) {
             if (!lmb_dropALLForeignKeys()) {
-                LimbasLogger::log("Could not delete Foreign Keys! - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                $this->logger->error("Could not delete Foreign Keys! - Message:".lmbdb_errormsg($db));
                 return false;
             }
             $rebuild_dependency_ForeignKeys = 1;
@@ -516,9 +524,9 @@ class importSync
 
                                     $pt = lmb_get_db_fieldtype(lmb_strtoupper($imptableconf[$table]['table'][$field]['datatype']));
                                     if (!lmb_convert_fieldtype(null, $pt, $field, $newsize, $datentyp, $table, 1)) {
-                                        LimbasLogger::log("field '$field' in table '$table' could not be converted to '$datentyp' - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                                        $this->logger->error("field '$field' in table '$table' could not be converted to '$datentyp' - Message:".lmbdb_errormsg($db));
                                         if (is_array($GLOBALS["alert"])) {
-                                            LimbasLogger::log(implode("\n", $GLOBALS["alert"]), LimbasLogger::LL_ERROR);
+                                            $this->logger->error(implode("\n", $GLOBALS["alert"]));
                                         }
                                         return false;
                                     }
@@ -532,9 +540,9 @@ class importSync
                                     $def = lmb_get_db_defaultValue($imptableconf[$table]['table'][$field]['default'],$exttableconf[$table]['table'][$field]['datatype']);
 
                                     // modify field
-                                    $sqlquery = dbq_9(array($DBA['DBSCHEMA'], $table, $field, $def));
+                                    $sqlquery = Dbf::setColumnDefaultSql($DBA['DBSCHEMA'], $table ?? '', $field ?? '', $def);
                                     if (!$rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__)){
-                                        LimbasLogger::log("execute query: $sqlquery - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                                        $this->logger->error("execute query: $sqlquery - Message:".lmbdb_errormsg($db));
                                     }
                                 }
                             }
@@ -563,10 +571,10 @@ class importSync
                                 $datentyp = 'TEXT';
                             }
 
-                            if ($sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $table, $field, $datentyp, $def))) {
+                            if ($sqlquery = Dbf::addColumnSql($table ?? '', $field ?? '', $datentyp ?? '', $def)) {
                                 $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                                 if (!$rs1) {
-                                    LimbasLogger::log("Could not add column '$field' in table '$table' with query '$sqlquery'! - Message:" . lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                                    $this->logger->error("Could not add column '$field' in table '$table' with query '$sqlquery'! - Message:" . lmbdb_errormsg($db));
                                     return false;
                                 }
                             }
@@ -581,11 +589,11 @@ class importSync
                         $output[$table]['deletefield'][] = '<p style="color:#f00">delete field ' . $field . '</p>'; // in table '.$table.'</p>';
                         $hasoutput['deletefield'] = 1;
 
-                        if ($confirm_syncimport AND dbf_5(array($DBA['DBSCHEMA'], $table, $field))) {
-                            if ($sqlquery = dbq_22(array($table, $field))) {
+                        if ($confirm_syncimport AND Dbf::getColumns($DBA['DBSCHEMA'], $table ?? '', $field)) {
+                            if ($sqlquery = Dbf::dropColumnSql($table ?? '', $field)) {
                                 $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                                 if (!$rs1) {
-                                    LimbasLogger::log("Could not drop column '$field' in table '$table' with query '$sqlquery'! - Message:" . lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                                    $this->logger->error("Could not drop column '$field' in table '$table' with query '$sqlquery'! - Message:" . lmbdb_errormsg($db));
                                     return false;
                                 }
                             }
@@ -605,36 +613,36 @@ class importSync
             $this->htmloutput[] = "<DIV class=\"lmbPositionContainerMain\">";
 
             # fields to ignore in diff
-            $defaultIgnore = array(dbf_4('erstdatum'), dbf_4('editdatum'), dbf_4('erstuser'), dbf_4('edituser'), dbf_4('lastmodified'));
+            $defaultIgnore = array(Dbf::handleCaseSensitive('erstdatum'), Dbf::handleCaseSensitive('editdatum'), Dbf::handleCaseSensitive('erstuser'), Dbf::handleCaseSensitive('edituser'), Dbf::handleCaseSensitive('lastmodified'));
 
             # compare table conf
             if (in_array('tabs', $types)) {
                 # filter: take only non-system values
                 $filterFunc = function ($key, $value, $columnIds) {
-                    $internId = $columnIds[dbf_4('intern')];
+                    $internId = $columnIds[Dbf::handleCaseSensitive('intern')];
                     return $value[$internId] != 0;
                 };
 
                 # get conf_tables diff
-                $lmbConfTablesDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_conf_tables') . '.tar.gz', array(dbf_4('tab_id')), $defaultIgnore, dbf_4('tabelle'));
+                $lmbConfTablesDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_conf_tables') . '.tar.gz', array(Dbf::handleCaseSensitive('tab_id')), $defaultIgnore, Dbf::handleCaseSensitive('tabelle'));
                 if ($lmbConfTablesDiff === false) {
-                    LimbasLogger::log("Could not compare lmb_conf_tables!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare lmb_conf_tables!");
                     return false;
                 }
                 $lmbConfTablesDiff = $this->groupBy1Key($lmbConfTablesDiff, 'table');
 
                 # get conf_fields diff
-                $lmbConfFieldsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_conf_fields') . '.tar.gz', array(dbf_4('tab_id'), dbf_4('field_id')), $defaultIgnore, dbf_4('field_name'));
+                $lmbConfFieldsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_conf_fields') . '.tar.gz', array(Dbf::handleCaseSensitive('tab_id'), Dbf::handleCaseSensitive('field_id')), $defaultIgnore, Dbf::handleCaseSensitive('field_name'));
                 if ($lmbConfFieldsDiff === false) {
-                    LimbasLogger::log("Could not compare lmb_conf_fields!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare lmb_conf_fields!");
                     return false;
                 }
                 $lmbConfFieldsDiff = $this->groupBy2Keys($lmbConfFieldsDiff, 'table', 'field');
 
                 # get conf_views diff
-                $lmbConfViewsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_conf_views') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, array(dbf_4('viewdef')));
+                $lmbConfViewsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_conf_views') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, array(Dbf::handleCaseSensitive('viewdef')));
                 if ($lmbConfViewsDiff === false) {
-                    LimbasLogger::log("Could not compare lmb_conf_views!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare lmb_conf_views!");
                     return false;
                 }
                 $lmbConfViewsDiff = $this->groupBy1Key($lmbConfViewsDiff, 'view');
@@ -643,17 +651,17 @@ class importSync
             # compare forms
             if (in_array('forms', $types) && $precheck == 2) {
                 # get forms diff
-                $lmbFormsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_forms') . '.tar.gz', array(dbf_4('form_id'), dbf_4('keyid')), array_merge($defaultIgnore, array(dbf_4('id'), dbf_4('z_index'))), dbf_4('inhalt'));
+                $lmbFormsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_forms') . '.tar.gz', array(Dbf::handleCaseSensitive('form_id'), Dbf::handleCaseSensitive('keyid')), array_merge($defaultIgnore, array(Dbf::handleCaseSensitive('id'), Dbf::handleCaseSensitive('z_index'))), Dbf::handleCaseSensitive('inhalt'));
                 if ($lmbFormsDiff === false) {
-                    LimbasLogger::log("Could not compare forms!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare forms!");
                 }
                 $lmbFormsDiff = $this->groupBy2Keys($lmbFormsDiff, 'form', 'ID');
                 ksort($lmbFormsDiff);
 
                 # get form list diff
-                $lmbFormListDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_form_list') . '.tar.gz', array(dbf_4('id')), array_merge($defaultIgnore, array(dbf_4('id'), dbf_4('z_index'))), dbf_4('name'));
+                $lmbFormListDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_form_list') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), array_merge($defaultIgnore, array(Dbf::handleCaseSensitive('id'), Dbf::handleCaseSensitive('z_index'))), Dbf::handleCaseSensitive('name'));
                 if ($lmbFormListDiff === false) {
-                    LimbasLogger::log("Could not compare form lists!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare form lists!");
                 }
                 $lmbFormListDiff = $this->groupBy1Key($lmbFormListDiff, 'form');
             }
@@ -661,17 +669,17 @@ class importSync
             # compare reports
             if (in_array('rep', $types) && $precheck == 2) {
                 # get reports diff
-                $lmbReportsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_reports') . '.tar.gz', array(dbf_4('bericht_id'), dbf_4('el_id')), array_merge($defaultIgnore, array(dbf_4('id'), dbf_4('z_index'))), dbf_4('inhalt'));
+                $lmbReportsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_reports') . '.tar.gz', array(Dbf::handleCaseSensitive('bericht_id'), Dbf::handleCaseSensitive('el_id')), array_merge($defaultIgnore, array(Dbf::handleCaseSensitive('id'), Dbf::handleCaseSensitive('z_index'))), Dbf::handleCaseSensitive('inhalt'));
                 if ($lmbReportsDiff === false) {
-                    LimbasLogger::log("Could not compare reports!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare reports!");
                 }
                 $lmbReportsDiff = $this->groupBy2Keys($lmbReportsDiff, 'report', 'ID');
                 ksort($lmbReportsDiff);
 
                 # get report list diff
-                $lmbReportListDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_report_list') . '.tar.gz', array(dbf_4('id')), array_merge($defaultIgnore, array(dbf_4('id'), dbf_4('z_index'))), dbf_4('name'));
+                $lmbReportListDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_report_list') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), array_merge($defaultIgnore, array(Dbf::handleCaseSensitive('id'), Dbf::handleCaseSensitive('z_index'))), Dbf::handleCaseSensitive('name'));
                 if ($lmbReportListDiff === false) {
-                    LimbasLogger::log("Could not compare report list!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare report list!");
                     return false;
                 }
                 $lmbReportListDiff = $this->groupBy1Key($lmbReportListDiff, 'report');
@@ -680,17 +688,17 @@ class importSync
             # compare charts
             if (in_array('charts', $types) && $precheck == 2) {
                 # get charts diff
-                $lmbChartsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_charts') . '.tar.gz', array(dbf_4('chart_id'), dbf_4('field_id')), $defaultIgnore);
+                $lmbChartsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_charts') . '.tar.gz', array(Dbf::handleCaseSensitive('chart_id'), Dbf::handleCaseSensitive('field_id')), $defaultIgnore);
                 if ($lmbChartsDiff === false) {
-                    LimbasLogger::log("Could not compare charts!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare charts!");
                 }
                 $lmbChartsDiff = $this->groupBy2Keys($lmbChartsDiff, 'chart', 'field');
                 ksort($lmbChartsDiff);
 
                 # get chart list diff
-                $lmbChartListDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_chart_list') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('diag_name'));
+                $lmbChartListDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_chart_list') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('diag_name'));
                 if ($lmbChartListDiff === false) {
-                    LimbasLogger::log("Could not compare chart list!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare chart list!");
                 }
                 $lmbChartListDiff = $this->groupBy1Key($lmbChartListDiff, 'chart');
             }
@@ -698,17 +706,17 @@ class importSync
             # compare workflow
             if (in_array('work', $types) && $precheck == 2) {
                 # get wfl task diff
-                $lmbWflTaskDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_wfl_task') . '.tar.gz', array(dbf_4('wfl_id'), dbf_4('id')), $defaultIgnore, dbf_4('name'));
+                $lmbWflTaskDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_wfl_task') . '.tar.gz', array(Dbf::handleCaseSensitive('wfl_id'), Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('name'));
                 if ($lmbWflTaskDiff === false) {
-                    LimbasLogger::log("Could not compare workflow tasks!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare workflow tasks!");
                 }
                 $lmbWflTaskDiff = $this->groupBy2Keys($lmbWflTaskDiff, 'workflow', 'task');
                 ksort($lmbWflTaskDiff);
 
                 # get wfl diff
-                $lmbWflDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_wfl') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('name'));
+                $lmbWflDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_wfl') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('name'));
                 if ($lmbWflDiff === false) {
-                    LimbasLogger::log("Could not compare workflow!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare workflow!");
                 }
                 $lmbWflDiff = $this->groupBy1Key($lmbWflDiff, 'workflow');
             }
@@ -716,9 +724,9 @@ class importSync
             # compare DMS
             if (in_array('dms', $types) && $precheck == 2) {
                 # get reports diff
-                $lmbDMSDiff = $this->compareTableData($path, $pathtmp, dbf_4('ldms_structure') . '.tar.gz', array(dbf_4('id')), array_merge($defaultIgnore, array(dbf_4('id'), dbf_4('readonly'))), dbf_4('name'));
+                $lmbDMSDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('ldms_structure') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), array_merge($defaultIgnore, array(Dbf::handleCaseSensitive('id'), Dbf::handleCaseSensitive('readonly'))), Dbf::handleCaseSensitive('name'));
                 if ($lmbDMSDiff === false) {
-                    LimbasLogger::log("Could not compare DMS!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare DMS!");
                 }
                 $lmbDMSDiff = $this->groupBy1Key($lmbDMSDiff, 'file');
             }
@@ -726,25 +734,25 @@ class importSync
             # compare snapshots
             if (in_array('snapshots', $types) && $precheck == 2) {
                 # get snapshots diff
-                $lmbSnapshotsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_snap') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('name'));
+                $lmbSnapshotsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_snap') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('name'));
                 if ($lmbSnapshotsDiff === false) {
-                    LimbasLogger::log("Could not compare snapshots!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare snapshots!");
                 }
                 $lmbSnapshotsDiff = $this->groupBy1Key($lmbSnapshotsDiff, 'snapshot');
 
                 # get shared snapshots diff
-                $lmbSharedSnapshotsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_snap_shared') . '.tar.gz', array(dbf_4('snapshot_id'), dbf_4('id')), $defaultIgnore, dbf_4('entity_type'));
+                $lmbSharedSnapshotsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_snap_shared') . '.tar.gz', array(Dbf::handleCaseSensitive('snapshot_id'), Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('entity_type'));
                 if ($lmbSharedSnapshotsDiff === false) {
-                    LimbasLogger::log("Could not compare shared snapshots!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare shared snapshots!");
                 }
                 $lmbSharedSnapshotsDiff = $this->groupBy2Keys($lmbSharedSnapshotsDiff, 'snapshot', 'share');
             }
 
             # get trigger diff
             if (in_array('trigger', $types) && $precheck == 2) {
-                $triggerDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_trigger') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, null, $filterFunc);
+                $triggerDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_trigger') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, null, $filterFunc);
                 if ($triggerDiff === false) {
-                    LimbasLogger::log("Could not compare triggers!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare triggers!");
                 }
                 $triggerDiff = $this->groupBy1Key($triggerDiff, 'trigger');
             }
@@ -752,9 +760,9 @@ class importSync
             # compare currency
             if (in_array('currency', $types) && $precheck == 2) {
                 # get currency diff
-                $lmbCurrencyDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_currency') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('currency'));
+                $lmbCurrencyDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_currency') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('currency'));
                 if ($lmbCurrencyDiff === false) {
-                    LimbasLogger::log("Could not compare currency!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare currency!");
                 }
                 $lmbCurrencyDiff = $this->groupBy1Key($lmbCurrencyDiff, 'currency');
             }
@@ -762,9 +770,9 @@ class importSync
             # compare reminder
             if (in_array('reminder', $types) && $precheck == 2) {
                 # get reminder diff
-                $lmbReminderDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_reminder_list') . '.tar.gz', array(dbf_4('tab_id'), dbf_4('id')), $defaultIgnore);
+                $lmbReminderDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_reminder_list') . '.tar.gz', array(Dbf::handleCaseSensitive('tab_id'), Dbf::handleCaseSensitive('id')), $defaultIgnore);
                 if ($lmbReminderDiff === false) {
-                    LimbasLogger::log("Could not compare reminders!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare reminders!");
                 }
                 $lmbReminderDiff = $this->groupBy2Keys($lmbReminderDiff, 'table', 'reminder');
             }
@@ -772,9 +780,9 @@ class importSync
             # compare colorschemes
             if (in_array('colorscheme', $types) && $precheck == 2) {
                 # get colorschemes diff
-                $lmbColorschemesDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_colorschemes') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('name'));
+                $lmbColorschemesDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_colorschemes') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('name'));
                 if ($lmbColorschemesDiff === false) {
-                    LimbasLogger::log("Could not compare colorschemes!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare colorschemes!");
                 }
                 $lmbColorschemesDiff = $this->groupBy1Key($lmbColorschemesDiff, 'scheme');
             }
@@ -782,9 +790,9 @@ class importSync
             # compare user colors
             if (in_array('usercolors', $types) && $precheck == 2) {
                 # get usercolor diff
-                $lmbUsercolorDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_user_colors') . '.tar.gz', array(dbf_4('userid'), dbf_4('id')), $defaultIgnore, dbf_4('wert'));
+                $lmbUsercolorDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_user_colors') . '.tar.gz', array(Dbf::handleCaseSensitive('userid'), Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('wert'));
                 if ($lmbUsercolorDiff === false) {
-                    LimbasLogger::log("Could not compare usercolors!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare usercolors!");
                 }
                 $lmbUsercolorDiff = $this->groupBy2Keys($lmbUsercolorDiff, 'user', 'color');
             }
@@ -792,9 +800,9 @@ class importSync
             # compare crontab
             if (in_array('crontab', $types) && $precheck == 2) {
                 # get crontab diff
-                $lmbCrontabDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_crontab') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('description'));
+                $lmbCrontabDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_crontab') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('description'));
                 if ($lmbCrontabDiff === false) {
-                    LimbasLogger::log("Could not compare crontab!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare crontab!");
                 }
                 $lmbCrontabDiff = $this->groupBy1Key($lmbCrontabDiff, 'cron entry');
             }
@@ -802,9 +810,9 @@ class importSync
             # compare menustructure
             if (in_array('links', $types) && $precheck == 2) {
                 # get menustructure diff
-                $lmbMenustructureDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_action_depend') . '.tar.gz', array(dbf_4('id')), $defaultIgnore);
+                $lmbMenustructureDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_action_depend') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore);
                 if ($lmbMenustructureDiff === false) {
-                    LimbasLogger::log("Could not compare lmb_action_depend!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare lmb_action_depend!");
                 }
                 $lmbMenustructureDiff = $this->groupBy1Key($lmbMenustructureDiff, 'menu entry');
             }
@@ -812,30 +820,30 @@ class importSync
             # compare pools
             if (in_array('pools', $types) && $precheck == 2) {
                 # get pool diff
-                $lmbPoolsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_attribute_p') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('name'));
+                $lmbPoolsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_attribute_p') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('name'));
                 if ($lmbPoolsDiff === false) {
-                    LimbasLogger::log("Could not compare pools!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare pools!");
                 }
                 $lmbPoolsDiff = $this->groupBy1Key($lmbPoolsDiff, 'pool');
 
                 # get pool values diff
-                $lmbPoolValuesDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_attribute_w') . '.tar.gz', array(dbf_4('pool'), dbf_4('id')), $defaultIgnore, dbf_4('wert'));
+                $lmbPoolValuesDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_attribute_w') . '.tar.gz', array(Dbf::handleCaseSensitive('pool'), Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('wert'));
                 if ($lmbPoolValuesDiff === false) {
-                    LimbasLogger::log("Could not compare pool values!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare pool values!");
                 }
                 $lmbPoolValuesDiff = $this->groupBy2Keys($lmbPoolValuesDiff, 'pool', 'value');
 
                 # get select diff
-                $lmbSelectDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_select_p') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('name'));
+                $lmbSelectDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_select_p') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('name'));
                 if ($lmbSelectDiff === false) {
-                    LimbasLogger::log("Could not compare selects!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare selects!");
                 }
                 $lmbSelectDiff = $this->groupBy1Key($lmbSelectDiff, 'select');
 
                 # get select value diff
-                $lmbSelectValueDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_select_w') . '.tar.gz', array(dbf_4('pool'), dbf_4('id')), $defaultIgnore, dbf_4('wert'));
+                $lmbSelectValueDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_select_w') . '.tar.gz', array(Dbf::handleCaseSensitive('pool'), Dbf::handleCaseSensitive('id')), $defaultIgnore, Dbf::handleCaseSensitive('wert'));
                 if ($lmbSelectValueDiff === false) {
-                    LimbasLogger::log("Could not compare select values!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare select values!");
                 }
                 $lmbSelectValueDiff = $this->groupBy2Keys($lmbSelectValueDiff, 'select', 'value');
             }
@@ -843,55 +851,55 @@ class importSync
             # compare rights
             if ((in_array('rules', $types) || in_array('lmb_groups', $exptables)) && $precheck == 2) {
                 # get group diff
-                $lmbGroupsDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_groups') . '.tar.gz', array(dbf_4('group_id')), $defaultIgnore, dbf_4('name'));
+                $lmbGroupsDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_groups') . '.tar.gz', array(Dbf::handleCaseSensitive('group_id')), $defaultIgnore, Dbf::handleCaseSensitive('name'));
                 if ($lmbGroupsDiff === false) {
-                    LimbasLogger::log("Could not compare groups!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare groups!");
                 }
                 $lmbGroupsDiff = $this->groupBy1Key($lmbGroupsDiff, 'group');
             }
             if ((in_array('rules', $types) || in_array('lmb_rules_action', $exptables)) && $precheck == 2) {
                 # get rules_action diff
-                $lmbRulesActionDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_rules_action') . '.tar.gz', array(dbf_4('group_id'), dbf_4('link_id')), $defaultIgnore);
+                $lmbRulesActionDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_rules_action') . '.tar.gz', array(Dbf::handleCaseSensitive('group_id'), Dbf::handleCaseSensitive('link_id')), $defaultIgnore);
                 if ($lmbRulesActionDiff === false) {
-                    LimbasLogger::log("Could not compare action rules!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare action rules!");
                 }
                 $lmbRulesActionDiff = $this->groupBy2Keys($lmbRulesActionDiff, 'group', 'link entry');
             }
             if ((in_array('rules', $types) || in_array('lmb_rules_repform', $exptables)) && $precheck == 2) {
                 # get rules_repform diff
-                $lmbRulesRepformDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_rules_repform') . '.tar.gz', array(dbf_4('group_id'), dbf_4('id')), $defaultIgnore);
+                $lmbRulesRepformDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_rules_repform') . '.tar.gz', array(Dbf::handleCaseSensitive('group_id'), Dbf::handleCaseSensitive('id')), $defaultIgnore);
                 if ($lmbRulesRepformDiff === false) {
-                    LimbasLogger::log("Could not compare repform rules!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare repform rules!");
                 }
                 $lmbRulesRepformDiff = $this->groupBy2Keys($lmbRulesRepformDiff, 'group', 'report/form entry');
             }
             if ((in_array('rules', $types) || in_array('lmb_rules_tables', $exptables)) && $precheck == 2) {
                 # get rules_repform diff
-                $lmbRulesTableDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_rules_tables') . '.tar.gz', array(dbf_4('group_id'), dbf_4('id')), $defaultIgnore);
+                $lmbRulesTableDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_rules_tables') . '.tar.gz', array(Dbf::handleCaseSensitive('group_id'), Dbf::handleCaseSensitive('id')), $defaultIgnore);
                 if ($lmbRulesTableDiff === false) {
-                    LimbasLogger::log("Could not compare table rules!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare table rules!");
                 }
                 $lmbRulesTableDiff = $this->groupBy2Keys($lmbRulesTableDiff, 'group', 'table entry');
             }
             if ((in_array('rules', $types) || in_array('lmb_rules_fields', $exptables)) && $precheck == 2) {
                 # get rules_repform diff
-                $lmbRulesTablefieldDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_rules_fields') . '.tar.gz', array(dbf_4('group_id'), dbf_4('id')), $defaultIgnore);
+                $lmbRulesTablefieldDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_rules_fields') . '.tar.gz', array(Dbf::handleCaseSensitive('group_id'), Dbf::handleCaseSensitive('id')), $defaultIgnore);
                 if ($lmbRulesTablefieldDiff === false) {
-                    LimbasLogger::log("Could not compare tablefield rules!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare tablefield rules!");
                 }
                 $lmbRulesTablefieldDiff = $this->groupBy2Keys($lmbRulesTablefieldDiff, 'group', 'tablefield entry');
             }
 
             if (in_array('synchronisation', $types) && $precheck == 2) {
-                $lmbSyncDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_sync_conf') . '.tar.gz', array(dbf_4('id')), $defaultIgnore);
+                $lmbSyncDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_sync_conf') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore);
                 if ($lmbSyncDiff === false) {
-                    LimbasLogger::log("Could not compare sync conf!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare sync conf!");
                 }
                 $lmbSyncDiff = $this->groupBy1Key($lmbSyncDiff, 'conf_id');
 
-                $lmbSyncTemplDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_sync_template') . '.tar.gz', array(dbf_4('id')), $defaultIgnore);
+                $lmbSyncTemplDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_sync_template') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore);
                 if ($lmbSyncTemplDiff === false) {
-                    LimbasLogger::log("Could not compare sync template!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare sync template!");
                 }
                 $lmbSyncTemplDiff = $this->groupBy1Key($lmbSyncTemplDiff, 'template_id');
             }
@@ -899,9 +907,9 @@ class importSync
 
             // todo check
             if (in_array('custvar', $types) && $precheck == 2) {
-                $lmbSyncDiff = $this->compareTableData($path, $pathtmp, dbf_4('lmb_custvar') . '.tar.gz', array(dbf_4('id')), $defaultIgnore);
+                $lmbSyncDiff = $this->compareTableData($path, $pathtmp, Dbf::handleCaseSensitive('lmb_custvar') . '.tar.gz', array(Dbf::handleCaseSensitive('id')), $defaultIgnore);
                 if ($lmbSyncDiff === false) {
-                    LimbasLogger::log("Could not compare sync custvar!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not compare sync custvar!");
                 }
                 $lmbCustvarDiff = $this->groupBy1Key($lmbSyncDiff, 'conf_id');
             }
@@ -1023,15 +1031,15 @@ class importSync
                 // delete table
                 if($import_overwrite == 'over') {
                     if (!deleteExistingTab($table)) {
-                        LimbasLogger::log("delete table $table - Message:" . lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                        $this->logger->error("delete table $table - Message:" . lmbdb_errormsg($db));
                         return false;
                     }
                 }
 
                if(import(false, $import_overwrite, null, null, null, null, 'export')){
-                    LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
+                   $this->logger->info("import table $table");
                }else{
-                    LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    $this->logger->error("import table $table - Message:".lmbdb_errormsg($db));
                     return false;
                }
 
@@ -1053,15 +1061,15 @@ class importSync
 
                 if($import_overwrite == 'over') {
                     if (!deleteExistingTab($table)) {
-                        LimbasLogger::log("delete table $table - Message:" . lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                        $this->logger->error("delete table $table - Message:" . lmbdb_errormsg($db));
                         return false;
                     }
                 }
 
                 if(import(false, $import_overwrite, null, null, null, null, 'export')){
-                    LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
+                    $this->logger->info("import table $table");
                 }else{
-                    LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    $this->logger->error("import table $table - Message:".lmbdb_errormsg($db));
                     return false;
                 }
 
@@ -1074,9 +1082,9 @@ class importSync
                 #    continue;
                 #}
                 if(deleteExistingTab($table)) {
-                    LimbasLogger::log("delete temporary tables", LimbasLogger::LL_INFO);
+                    $this->logger->info("delete temporary tables");
                 }else{
-                    LimbasLogger::log("delete table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    $this->logger->error("delete table $table - Message:".lmbdb_errormsg($db));
                     return false;
                 }
             }
@@ -1092,12 +1100,12 @@ class importSync
                 while (lmbdb_fetch_row($rs)) {
                     if (in_array('tabs', $types)) {
                         check_grouprights1(lmbdb_result($rs, "GROUP_ID"));
-                        LimbasLogger::log("check table rules for group " . lmbdb_result($rs, "NAME"), LimbasLogger::LL_NOTICE);
+                        $this->logger->notice("check table rules for group " . lmbdb_result($rs, "NAME"));
                     }
                     if (in_array('links', $types)) {
                         check_grouprights(lmbdb_result($rs, "GROUP_ID"));
                         del_grouprights(lmbdb_result($rs, "GROUP_ID"));
-                        LimbasLogger::log("check action rules for group " . lmbdb_result($rs, "NAME"), LimbasLogger::LL_NOTICE);
+                        $this->logger->notice("check action rules for group " . lmbdb_result($rs, "NAME"));
                     }
                 }
             }
@@ -1114,23 +1122,23 @@ class importSync
                     // create new view
 
                     if (!lmb_createView($viewDefinition, $viewName)) {
-                        LimbasLogger::log("Could not create view '$viewName'! - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                        $this->logger->error("Could not create view '$viewName'! - Message:".lmbdb_errormsg($db));
                         return false;
                     }
 
                     // add dependent views
                     #lmb_addDependViews($dv,$viewDefinitions);
                 }
-                LimbasLogger::log("function : rebuild dependency views", LimbasLogger::LL_NOTICE);
+                $this->logger->notice("function : rebuild dependency views");
             }
 
             // re-create foreign keys - resolve dependencies
             if ($rebuild_dependency_ForeignKeys) {
                 if (!lmb_rebuildForeignKey()) {
-                    LimbasLogger::log("Could not create Foreign Keys! - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    $this->logger->error("Could not create Foreign Keys! - Message:".lmbdb_errormsg($db));
                     return false;
                 }else{
-                    LimbasLogger::log("function : rebuild Foreign Keys", LimbasLogger::LL_NOTICE);
+                    $this->logger->notice("function : rebuild Foreign Keys");
                 }
             }
 
@@ -1141,10 +1149,10 @@ class importSync
                     $sqlquery = "UPDATE LMB_UMGVAR SET NORM='$value' WHERE FORM_NAME='$key'";
                     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                     if (!$rs) {
-                        LimbasLogger::log("Could not restore umgvar!", LimbasLogger::LL_ERROR);
+                        $this->logger->error("Could not restore umgvar!");
                         return false;
                     } else {
-                        LimbasLogger::log("Restored umgvar '$key' to '$value'", LimbasLogger::LL_INFO);
+                        $this->logger->info("Restored umgvar '$key' to '$value'");
                     }
                 }
             }*/
@@ -1154,26 +1162,26 @@ class importSync
             if (in_array('funcdelsession', $types)) {
                 $sqlquery = "DELETE FROM LMB_SESSION";
                 $rs = lmbdb_exec($db, $sqlquery);
-                LimbasLogger::log("function : delete sessions", LimbasLogger::LL_NOTICE);
+                $this->logger->notice("function : delete sessions");
             }
 
             if (in_array('funcmenurefresh', $types)) {
                 require_once(COREPATH . 'admin/group/group.lib');
                 check_grouprightsAll();
-                LimbasLogger::log("function : refresh link rules ", LimbasLogger::LL_NOTICE);
+                $this->logger->notice("function : refresh link rules ");
             }
 
             if (in_array('functablerefresh', $types)) {
                 require_once(COREPATH . 'admin/group/group.lib');
                 check_grouprights1All();
-                LimbasLogger::log("function : refresh table/field rules ", LimbasLogger::LL_NOTICE);
+                $this->logger->notice("function : refresh table/field rules ");
             }
 
             if (in_array('funcproz', $types)) {
-                if (dbq_16(array($DBA["DBSCHEMA"], 1))) {
-                    LimbasLogger::log("function : rebuild db prozedures ", LimbasLogger::LL_NOTICE);
+                if (Dbf::createLimbasVknFunction($DBA["DBSCHEMA"], true)) {
+                    $this->logger->notice("function : rebuild db prozedures ");
                 } else {
-                    LimbasLogger::log("function : rebuild db prozedures failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    $this->logger->error("function : rebuild db prozedures failed - Message:".lmbdb_errormsg($db));
                     return false;
                 }
             }
@@ -1183,9 +1191,9 @@ class importSync
                 if (in_array('funcindize_rebuild', $types)) {$rebuild = 1;}
 
                 if (lmb_rebuildIndex($rebuild)) {
-                    LimbasLogger::log("function : rebuild db indexes ", LimbasLogger::LL_NOTICE);
+                    $this->logger->notice("function : rebuild db indexes ");
                 } else {
-                    LimbasLogger::log("function : rebuild db indexes failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    $this->logger->error("function : rebuild db indexes failed - Message:".lmbdb_errormsg($db));
                     return false;
                 }
                 $rebuild = null;
@@ -1195,9 +1203,9 @@ class importSync
                 $rebuild = null;
                 if (in_array('funcsequ_rebuild', $types)) {$rebuild = 1;}
                 if (lmb_rebuildSequences(rebuild:$rebuild)) {
-                    LimbasLogger::log("function : rebuild sequences ", LimbasLogger::LL_NOTICE);
+                    $this->logger->notice("function : rebuild sequences ");
                 } else {
-                    LimbasLogger::log("function : rebuild sequences failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    $this->logger->error("function : rebuild sequences failed - Message:".lmbdb_errormsg($db));
                     return false;
                 }
                 $rebuild = null;
@@ -1206,10 +1214,10 @@ class importSync
             if (in_array('functrigger', $types) || in_array('functrigger_rebuild', $types)) {
                 $rebuild = null;
                 if (in_array('functrigger_rebuild', $types)) {$rebuild = 1;}
-                if (lmb_rebuildTrigger($rebuild)) {
-                    LimbasLogger::log("function : rebuild trigger ", LimbasLogger::LL_NOTICE);
+                if (lmb_TriggerRebuildSystem($rebuild)) {
+                    $this->logger->notice("function : rebuild trigger ");
                 } else {
-                    LimbasLogger::log("function : rebuild trigger failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    $this->logger->error("function : rebuild trigger failed - Message:".lmbdb_errormsg($db));
                     return false;
                 }
                 $rebuild = null;
@@ -1217,9 +1225,9 @@ class importSync
 
             if (in_array('functmpfiles', $types)) {
                 if (lmb_delete_user_filesave()) {
-                    LimbasLogger::log("function : delete temporary user files ", LimbasLogger::LL_NOTICE);
+                    $this->logger->notice("function : delete temporary user files ");
                 } else {
-                    LimbasLogger::log("function : delete temporary user files failed ", LimbasLogger::LL_ERROR);
+                    $this->logger->error("function : delete temporary user files failed ");
                     return false;
                 }
             }
@@ -1229,38 +1237,9 @@ class importSync
                 multiselectRefreshCount();
                 relationRefreshCount();
                 usergroupRefreshCount();
-                LimbasLogger::log("function : rebuild temporary tables values ", LimbasLogger::LL_NOTICE);
+                $this->logger->notice("function : rebuild temporary tables values ");
             }
 
-            if (in_array('source', $types)) {
-                $limbasSrcTarGz = $path . 'limbas_src.tar.gz';
-                if (file_exists($limbasSrcTarGz)) {
-                    $pathCore = COREPATH.'../';
-                    # extract new source
-                    system("tar xzf '$limbasSrcTarGz' -C '$pathCore'");
-                    LimbasLogger::log("overwrite limbas_src directory", LimbasLogger::LL_NOTICE);
-                }else{
-                    LimbasLogger::log("overwrite limbas_src directory failed, $limbasSrcTarGz does not exist!", LimbasLogger::LL_ERROR);
-                }
-                $limbasAssetsTarGz = $path . 'assets.tar.gz';
-                if (file_exists($limbasAssetsTarGz)) {
-                    $pathAssets = PUBLICPATH;
-                    # extract new assets
-                    system("tar xzf '$limbasAssetsTarGz' -C '$pathAssets'");
-                    LimbasLogger::log("overwrite assets directory", LimbasLogger::LL_NOTICE);
-                }else{
-                    LimbasLogger::log("overwrite assets directory failed, $limbasAssetsTarGz does not exist!", LimbasLogger::LL_ERROR);
-                }
-                $limbasVendorTarGz = $path . 'vendor.tar.gz';
-                if (file_exists($limbasVendorTarGz)) {
-                    $pathVendor = COREPATH.'../';
-                    # extract new assets
-                    system("tar xzf '$limbasVendorTarGz' -C '$pathVendor'");
-                    LimbasLogger::log("overwrite vendor directory", LimbasLogger::LL_NOTICE);
-                }else{
-                    LimbasLogger::log("overwrite vendor directory failed, $limbasVendorTarGz does not exist!", LimbasLogger::LL_ERROR);
-                }
-            }
 
             if (in_array('extensions', $types)) {
 
@@ -1270,16 +1249,17 @@ class importSync
                     $pathExt = DEPENDENTPATH.'EXTENSIONS';
 
                     # remove old extensions
-                    system("rm -r '$pathExt'", $returnCode);
-                    if ($returnCode != 0) {
-                        LimbasLogger::log("could not delete EXTENSIONS directory: return code $returnCode!", LimbasLogger::LL_ERROR);
-                    }
-
+                    #system("rm -r '$pathExt'", $returnCode);
+                    #if ($returnCode != 0) {
+                    #    $this->logger->error("could not delete EXTENSIONS directory: return code $returnCode!");
+                    #}
+                    // delete old extensions
+                    rmdirr($pathExt);
                     # extract new extensions
                     system("tar xzf '$extensionsTarGz' -C '".DEPENDENTPATH."'");
-                    LimbasLogger::log("overwrite EXTENSIONS directory", LimbasLogger::LL_NOTICE);
+                    $this->logger->notice("overwrite EXTENSIONS directory");
                 }else{
-                    LimbasLogger::log("overwrite EXTENSIONS directory failed, $extensionsTarGz does not exist!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("overwrite EXTENSIONS directory failed, $extensionsTarGz does not exist!");
                 }
 
                 # copy localassets
@@ -1290,14 +1270,50 @@ class importSync
                     # remove old extensions
                     system("rm -r '$pathLass'", $returnCode);
                     if ($returnCode != 0) {
-                        LimbasLogger::log("could not delete localassets directory: return code $returnCode!", LimbasLogger::LL_ERROR);
+                        $this->logger->error("could not delete localassets directory: return code $returnCode!");
                     }
 
                     # extract new extensions
                     system("tar xzf '$limbasLocalassetsTarGz' -C '".PUBLICPATH."'");
-                    LimbasLogger::log("overwrite localassets directory", LimbasLogger::LL_NOTICE);
+                    $this->logger->notice("overwrite localassets directory");
                 }else{
-                    LimbasLogger::log("overwrite localassets directory failed, $limbasLocalassetsTarGz does not exist!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("overwrite localassets directory failed, $limbasLocalassetsTarGz does not exist!");
+                }
+            }
+
+            if (in_array('source', $types)) {
+                $limbasSrcTarGz = $path . 'limbas_src.tar.gz';
+                if (file_exists($limbasSrcTarGz)) {
+                    $pathCore = COREPATH.'../';
+                    // delete old core
+                    rmdirr(rtrim(COREPATH,'/'));
+                    // extract new source
+                    system("tar xzf '$limbasSrcTarGz' -C '$pathCore'");
+                    $this->logger->notice("overwrite limbas_src directory");
+                }else{
+                    $this->logger->error("overwrite limbas_src directory failed, $limbasSrcTarGz does not exist!");
+                }
+                $limbasAssetsTarGz = $path . 'assets.tar.gz';
+                if (file_exists($limbasAssetsTarGz)) {
+                    $pathAssets = PUBLICPATH;
+                    // delete old assets
+                    rmdirr(PUBLICPATH.'assets');
+                    // extract new assets
+                    system("tar xzf '$limbasAssetsTarGz' -C '$pathAssets'");
+                    $this->logger->notice("overwrite assets directory");
+                }else{
+                    $this->logger->error("overwrite assets directory failed, $limbasAssetsTarGz does not exist!");
+                }
+                $limbasVendorTarGz = $path . 'vendor.tar.gz';
+                if (file_exists($limbasVendorTarGz)) {
+                    $pathVendor = COREPATH.'../';
+                    // delete old vendor
+                    rmdirr(rtrim(realpath(VENDORPATH),'/'));
+                    // extract new assets
+                    system("tar xzf '$limbasVendorTarGz' -C '$pathVendor'");
+                    $this->logger->notice("overwrite vendor directory");
+                }else{
+                    $this->logger->error("overwrite vendor directory failed, $limbasVendorTarGz does not exist!");
                 }
             }
 
@@ -1306,10 +1322,10 @@ class importSync
                 # call function by passed name
                 $extension = array();
                 if ($callExtensionFunctionName('after',$extension) === false) {
-                    LimbasLogger::log("Function '$callExtensionFunctionName' returned failure!", LimbasLogger::LL_ERROR);
+                    $this->logger->error("Function '$callExtensionFunctionName' returned failure!");
                     return false;
                 } else {
-                    LimbasLogger::log("Function '$callExtensionFunctionName' returned success!", LimbasLogger::LL_NOTICE);
+                    $this->logger->notice("Function '$callExtensionFunctionName' returned success!");
                 }
             }
 
@@ -1464,13 +1480,13 @@ class importSync
         # collect table data
         $left = $this->tarToPrimaryKeyIndexedArr($path, $tarFileName, $primaryKeys, $header);
         if ($left === false) {
-            LimbasLogger::log("Could not read '$tarFileName' in '$path' into array indexed by " . json_encode($primaryKeys) . "!", LimbasLogger::LL_ERROR);
+            $this->logger->error("Could not read '$tarFileName' in '$path' into array indexed by " . json_encode($primaryKeys) . "!");
             return false;
         }
         $_header = array();
         $right = $this->tarToPrimaryKeyIndexedArr($pathtmp, $tarFileName, $primaryKeys, $_header);
         if ($right === false) {
-            LimbasLogger::log("Could not read '$tarFileName' in '$pathtmp' into array indexed by " . json_encode($primaryKeys) . "!", LimbasLogger::LL_ERROR);
+            $this->logger->error("Could not read '$tarFileName' in '$pathtmp' into array indexed by " . json_encode($primaryKeys) . "!");
             return false;
         }
 
@@ -1565,7 +1581,7 @@ class importSync
         # get data from tar as array
         $dataArr = $this->tarToArr($path, $tarFileName, $header);
         if ($dataArr === false) {
-            LimbasLogger::log("Could not load tar '$path$tarFileName'!", LimbasLogger::LL_ERROR);
+            $this->logger->error("Could not load tar '$path$tarFileName'!");
             return false;
         }
 
@@ -1576,7 +1592,7 @@ class importSync
             if (array_key_exists($keyName, $fieldNames)) {
                 $primaryKeyIndices[] = $fieldNames[$keyName];
             } else {
-                LimbasLogger::log("Key '$keyName' not found in table! (" . json_encode($fieldNames) . ")", LimbasLogger::LL_ERROR);
+                $this->logger->error("Key '$keyName' not found in table! (" . json_encode($fieldNames) . ")");
                 return false;
             }
         }
@@ -1588,7 +1604,7 @@ class importSync
 
             # key already exists -> primary key must be invalid as it must be unique
             if (array_key_exists($primaryKey, $indexedDataArr)) {
-                LimbasLogger::log("Primary key $primaryKey (" . json_encode($primaryKeyIndices) . ") is invalid, entry already exists! In file '$tarFileName'", LimbasLogger::LL_ERROR);
+                $this->logger->error("Primary key $primaryKey (" . json_encode($primaryKeyIndices) . ") is invalid, entry already exists! In file '$tarFileName'");
                 return false;
             }
 
@@ -1610,7 +1626,7 @@ class importSync
 
         # check if tar to extract is missing
         if (!file_exists($tarPath)) {
-            LimbasLogger::log("File to extract '$tarPath' does not exist!", LimbasLogger::LL_ERROR);
+            $this->logger->error("File to extract '$tarPath' does not exist!");
             return false;
         }
 
@@ -1620,7 +1636,7 @@ class importSync
 
         # check if file to read from is missing
         if (!file_exists($extractFile)) {
-            LimbasLogger::log("Extracted file '$extractFile' does not exist!", LimbasLogger::LL_ERROR);
+            $this->logger->error("Extracted file '$extractFile' does not exist!");
             return false;
         }
 

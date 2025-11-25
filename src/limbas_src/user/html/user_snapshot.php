@@ -7,12 +7,14 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\gtab\lib\tables\TableFilter;
 
 require_once(COREPATH . 'extra/snapshot/snapshot.lib');
 
 
 if ($del and $gtabid) {
-    SNAP_delete($del, $gtabid);
+    $tableFilter = TableFilter::get(intval($del));
+    $tableFilter->delete();
 }
 
 if ($snap_edit and $gtabid and $snapid) {
@@ -118,14 +120,14 @@ foreach ($gsnap as $tabid => $snapshotData) {
             drop = 0;
         }
 
-        ajaxGet(el, 'main_dyns.php', 'showUserGroups&gtabid=' + snap_id + '&usefunction=lmbSnapShareSelect&destUser=' + destUser + '&del=' + del + '&edit=' + edit + '&drop=' + drop, '', function (result) {
+        ajaxGet(el, 'main_dyns.php', 'manageTableFilters&action=shareSelect&gtabid=' + snap_id + '&destUser=' + destUser + '&del=' + del + '&edit=' + edit + '&drop=' + drop, '', function (result) {
             $('#lmbAjaxContainer').html(result).show();
             if (el) {
                 $('#modal_publicShare').modal('show');
             }
         });
 
-        //ajaxGet(el, 'main_dyns.php', 'showUserGroups&gtabid=' + snap_id + '&usefunction=lmbSnapShareSelect&destUser=' + destUser + '&del=' + del + '&edit=' + edit + '&drop=' + drop, '', 'ajaxContainerPost');
+        //ajaxGet(el, 'main_dyns.php', 'manageTableFilters&action=shareSelect&gtabid=' + snap_id + '&destUser=' + destUser + '&del=' + del + '&edit=' + edit + '&drop=' + drop, '', 'ajaxContainerPost');
     }
 
     function lmbSnapShareSelect(ugval, snapname, gtabid) {

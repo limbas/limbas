@@ -9,221 +9,46 @@
 
 global $lang;
 global $session;
-global $DBA;
+global $umgvar;
 
-use Limbas\admin\install\Installer;
-use Limbas\admin\tools\update\Updater; ?>
+?>
 
-<div class="card h-100">
-    <div class="card-header">
-        <h2 class="mb-0">LIMBAS-<?= $umgvar['version']; ?></h2>
-    </div>
-    <nav class="nav">
-        <a class="nav-link" href="main.php?action=nav_info">Info</a>
-        <a class="nav-link" href="main.php?action=nav_info&view=credits">credits</a>
-        <a class="nav-link" href="main.php?action=nav_info&view=notes">release notes</a>
-        <a class="nav-link" href="main.php?action=nav_info&view=environment_check">environment check</a>
-        <a class="nav-link" href="http://www.limbas.org" target="_new">help</a>
-    </nav>
+<div class="card">
     <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="card-title mb-0 h1"><img src="assets/images/logo.svg" alt="" class="align-middle" style="max-height: 1.4em"> <span class="align-middle"><?=e($lang[3237])?> L<span style="color:orange">I</span>MBAS</span></p>
+            <span><?=e($umgvar['version'])?></span>
+        </div>
+        
+        <p>
+            <?php 
+            $currentHour = intval(date('G'));
+            if($currentHour >= 4 && $currentHour <= 10): ?>
+                <?=e($lang[3234])?>
+            <?php elseif($currentHour >= 11 && $currentHour <= 17): ?>
+                <?=e($lang[3235])?>
+            <?php else: ?>
+                <?=e($lang[3236])?>
+            <?php endif; ?><?=e($session['vorname'])?>!
+        </p>
 
-        <?php
-        if (!$view) {
-            ?>
+        <p class="h5"><i class="fas fa-lightbulb fa-fw"></i> <?=e($lang[3230])?>:</p>
+        <ul>
+            <li><?=e($lang[3226])?></li>
+            <li><?=e($lang[3227])?></li>
+            <li><?=e($lang[3228])?></li>
+            <li><?=e($lang[3229])?></li>
+        </ul>
 
-
-            <table class="table table-sm table-borderless fs-6">
-                <TR>
-                    <TD>info</td>
-                </tr>
-                <tr>
-                    <td><?= $lang[2] ?>:</td>
-                    <td class="text-muted"><?= $umgvar['version'] ?></td>
-                </tr>
-                <?php if ($session['user_id'] == 1) {
-                    $latestVersion = Updater::checkNewVersionAvailable();
-
-                    if ($latestVersion !== false && $latestVersion !== true):
-                        ?>
-                        <tr>
-                            <td><?= $lang[2930] ?>:</td>
-                            <td>
-                                <a href="main_admin.php?action=setup_update" target="_blank"><?= $latestVersion ?><i
-                                            class="lmb-icon lmb-fav-filled text-danger" title="update available"></i></a>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                <?php } ?>
-                <tr>
-                    <td><?= $lang[519] ?>:</td>
-                    <td class="text-muted"><?= $session['username'] ?></td>
-                </tr>
-                <tr>
-                    <td><?= $lang[4] ?>:</td>
-                    <td class="text-muted"><?= "{$session['vorname']} {$session['name']}" ?></td>
-                </tr>
-                <tr>
-                    <td><?= $lang[11] ?>:</td>
-                    <td class="text-muted"><?= $umgvar['company'] ?></td>
-                </tr>
-                <tr>
-                    <td><?= $lang[749] ?>:</td>
-                    <td class="text-muted"><?= $session['lastlogin'] ?></td>
-                </tr>
-                <tr>
-                    <td><?= $lang[7] ?>:</td>
-                    <td class="text-muted"><?= $_SERVER['SERVER_NAME'] ?></td>
-                </tr>
-                <tr>
-                    <td><?= $lang[8] ?>:</td>
-                    <td class="text-muted"><?= $_SERVER['REMOTE_ADDR'] ?></td>
-                </tr>
-                <tr>
-                    <td><?= $lang[9] ?>:</td>
-                    <td class="text-muted"><?= $_SERVER['HTTP_USER_AGENT'] ?></td>
-                </tr>
-
-                <?php if ($session['group_id'] == 1) {
-                    require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
-                    $setup_version = dbf_version($DBA);
-                    #if (!$DBA['VERSION'] or $DBA['VERSION'] != $setup_version[1]) {
-                    #    $versionconlict = "<br><i style=\"color:red\"><b>Version Conflict! \$DBA['VERSION'] in include_db.lib has to be updated!</b></i>";
-                    #}
-                    unset($setup_version[1]);
-                    ?>
-                    <tr>
-                        <td colspan="2">
-                            <HR>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Database Vendor:</td>
-                        <td class="text-muted"><?= $DBA["DB"] . ' - ' . implode(' - ', $setup_version) . ' ' . $versionconlict ?></td>
-                    </tr>
-                    <tr>
-                        <td>Database User:</td>
-                        <td class="text-muted"><?= $DBA["DBUSER"] ?></td>
-                    </tr>
-                    <tr>
-                        <td>Database Name:</td>
-                        <td class="text-muted"><?= $DBA["DBNAME"] ?></td>
-                    </tr>
-                    <tr>
-                        <td>Database Host:</td>
-                        <td class="text-muted"><?= $DBA["DBHOST"] ?></td>
-                    </tr>
-                    <tr>
-                        <td><?= $lang[10] ?>:</td>
-                        <td class="text-muted"><?= isset($AUTH_TYPE) ? $AUTH_TYPE : "limbas-db" ?></td>
-                    </tr>
-                <?php } ?>
-
-            </table>
-
-
-            <?php
-        } elseif ($view == "credits") {
-            ?>
-
-            <table class="table table-sm table-borderless fs-6">
-                <TR>
-                    <th colspan="2">credits</th>
-                </tr>
-                <TR>
-                    <TD>Bootstrap</TD>
-                    <TD><A href="https://getbootstrap.com/">https://getbootstrap.com/</A></TD>
-                </TR>
-                <TR>
-                    <TD>Chart.js</TD>
-                    <TD><A href="https://www.chartjs.org/">https://www.chartjs.org/</A></TD>
-                </TR>
-                <TR>
-                    <TD>CodeMirror</TD>
-                    <TD><A href="https://codemirror.net/">https://codemirror.net/</A></TD>
-                </TR>
-                <TR>
-                    <TD>DataTables</TD>
-                    <TD><A href="https://datatables.net/">https://datatables.net/</A></TD>
-                </TR>
-                <TR>
-                    <TD>ExifTool</TD>
-                    <TD><A href="https://exiftool.org/">https://exiftool.org/</A>
-                    </TD>
-                </TR>
-                <TR>
-                    <TD>Font Awesome</TD>
-                    <TD><A href="http://fontawesome.io/">http://fontawesome.io/</A></TD>
-                </TR>
-                <TR>
-                    <TD>FullCalendar</TD>
-                    <TD><A href="https://fullcalendar.io/">https://fullcalendar.io/</A></TD>
-                </TR>
-                <TR>
-                    <TD>jQuery</TD>
-                    <TD><A href="https://jquery.com/">https://jquery.com/</A></TD>
-                </TR>
-                <TR>
-                    <TD>mPDF</TD>
-                    <TD><A href="https://mpdf.github.io/">https://mpdf.github.io/</A></TD>
-                </TR>
-                <TR>
-                    <TD>SabreDAV</TD>
-                    <TD><A href="https://sabre.io/">https://sabre.io/</A>
-                    </TD>
-                </TR>
-                <TR>
-                    <TD>TCPDF</TD>
-                    <TD><A href="https://tcpdf.org/">https://tcpdf.org/</A></TD>
-                </TR>
-                <TR>
-                    <TD>TinyMCE</TD>
-                    <TD><A href="https://www.tiny.cloud/">https://www.tiny.cloud/</A></TD>
-                </TR>
-            </table>
-
-            <?php
-        } elseif ($view == "notes") {
-            ?>
-
-            <p class="fw-bold mb-3">Release notes <?= $umgvar["version"] ?> - main features</p>
-            <p>Full PHP 8 Support</p>
-            <p>Fully revised layout and style based on Bootstrap 5</p>
-            <p>New report and form creation based on html template parts</p>
-            <p>First version of customizable dashboard</p>
-            <p>New menu editor for code-free creation of own menus</p>
-            <p>Advanced data synchronization between two Limbas systems</p>
-            <p>Full structure and configuration transfer between two Limbas systems</p>
-            <p>Dependencies are now managed by composer / npm</p>
-            <p>New authentication allowing easier implementation of custom authentication providers</p>
-            <p>Refactored folder structure to better separate source and local files</p>
-            <p>Extended multitenancy capability</p>
-            <p>New field LMB_STATUS replacing field DEL and allowing trashed and archived state</p>
-            <p>New field types e.g. exncryptable fields</p>
-            <p>Bug fixes</p>
-
-
-            <?php
-        } elseif ($view == 'environment_check') { ?>
-            <div class="overflow-hidden">
-                <?php {                    
-                    define('LIMBAS_INSTALL', true);
-                    define('LANG', 'en');
-
-                    require_once(COREPATH . 'admin/install/install.lib');
-                    
-                    $installer = new Installer();
-                    $phpIniMessages = $installer->checkPhpIni();
-                    $writePermissionMessages = $installer->checkWritePermissions();
-                    $dependencyMessages = $installer->checkDependencies();
-                    
-                    require(COREPATH . 'admin/install/html/dependencies.php');
-                } ?>
+        <p class="h5 mb-3"><i class="fas fa-question-circle fa-fw"></i> <?=e($lang[3231])?>:</p>
+        <div class="row">
+            <div class="col">
+                <a class="btn btn-lg btn-outline-secondary w-100 py-4" href="https://www.limbas.org/" target="_blank"><?=e($lang[3232])?> <i class="fas fa-external-link"></i></a>
             </div>
-            <?php
-        }
-        ?>
-
-
+            <div class="col">
+                <a class="btn btn-lg btn-outline-secondary w-100 py-4" href="https://www.limbas.com/" target="_blank"><?=e($lang[3233])?> <i class="fas fa-external-link"></i></a>
+            </div>
+        </div>
     </div>
     <div class="card-footer">
         LIMBAS. Copyright &copy; 1998-<?= date('Y') ?> LIMBAS GmbH (info@limbas.com). LIMBAS is free

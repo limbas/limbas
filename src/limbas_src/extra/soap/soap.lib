@@ -8,7 +8,7 @@
  */
 
 # ------- soap-Funktion --------
-use Limbas\admin\tools\datasync\DatasyncClientProcess;
+use Limbas\admin\tools\datasync\DatasyncClientHandler;
 use Limbas\admin\tools\update\Updater;
 
 function runlmb($lmpar){
@@ -368,11 +368,11 @@ function parse_action($lmpar){
                     'output' => $importSync->structureoutput,
                     'success' => $result['success']
                 );
-            } elseif($lmpart['action'] == 'setup_datasync' || $lmpart['action'] == 'finish_datasync' || $lmpart['action'] == 'socket_datasync') { //TODO: Rechte
+            } elseif($lmpart['action'] == 'run_datasync' || $lmpart['action'] == 'finish_datasync' || $lmpart['action'] == 'socket_datasync') { //TODO: Rechte
 
 				require_once(COREPATH . 'admin/tools/datasync/loaddatasync.php');
 
-                return DatasyncClientProcess::handleSoapRequest($lmpart);
+                return DatasyncClientHandler::handleSoapRequest($lmpart);
 				
             } elseif($lmpart['action'] == 'get_system_update') {
 

@@ -25,7 +25,7 @@ function lmb_reminderFilter(&$sql,$category=null,$gtabid=null,$ID=null,$valid=nu
  * function adds a reminder (in table lmb_reminder)
  * @deprecated Use new instance of Reminder class instead.
  *
- * @param timestamp $gfrist field frist (date of the reminder)
+ * @param timestamp $gfrist field frist (timestamp of the reminder)
  * @param varchar $gfrist_desc field description
  * @param int2 $gtabid field tabid
  * @param numeric $ID field dat_id

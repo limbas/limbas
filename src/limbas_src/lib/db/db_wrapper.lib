@@ -8,15 +8,14 @@
  */
 
 
-
-if(!file_exists(DEPENDENTPATH . 'inc/include_db.lib')){
-    header('HTTP/1.1 302 Found (Moved Temporarily)');
-    header('Location: install/');
-    exit;
-}
-
 require_once(DEPENDENTPATH . 'inc/include_db.lib');
+
+$constantsFile = __DIR__ . '/constants/' . $DBA['DB'] . '.php';
+if(file_exists($constantsFile)){
+   require_once($constantsFile);
+}
 require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '.lib');
+require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
 
 // use PDO driver
 if($DBA['ODBCDRIVER'] == 'PDO') {

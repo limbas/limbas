@@ -8,25 +8,18 @@
  */
 namespace Limbas\extra\rest\classes;
 
-class Router
+readonly class Router
 {
-    /** @var string original path of the request */
-    private string $path;
-
     /**
      * Router constructor.
+     *
+     * @param string $path original path of the request
      */
-    public function __construct() {
-        global $umgvar;
-
-        if (!empty($umgvar['restpath']) && $umgvar['restpath'] != 'main_rest.php') {
-            $baseUrl = trim($umgvar['restpath'],'/');
-        } else {
-            $baseUrl = parse_url(trim($umgvar['url'],'/') . '/main_rest.php');
-            $baseUrl = $baseUrl['path'];
-        }
-        $url = parse_url($_SERVER['REQUEST_URI']);
-        $this->path = trim(preg_replace('*' . preg_quote($baseUrl, '*') . '*', '', $url['path'], 1),'/');
+    public function __construct(
+        private string $path,
+        private string $method,
+    ) {
+        //
     }
 
     /**
@@ -43,16 +36,16 @@ class Router
             throw new RestException('Too many request parts', 400);
         }
 
-        $table_identifier = $url_parts[0];
+        $tableIdentifier = $url_parts[0];
         $id = null;
-        $field_identifier = null;
+        $fieldIdentifier = null;
         if (lmb_count($url_parts) > 1) {
             $id = $url_parts[1];
             if (lmb_count($url_parts) > 2) {
-                $field_identifier = $url_parts[2];
+                $fieldIdentifier = $url_parts[2];
             }
         }
-        return new Request($this, $_SERVER['REQUEST_METHOD'], $table_identifier, $id, $field_identifier, $_GET);
+        return new Request($this, $this->method, $tableIdentifier, $id, $fieldIdentifier, $_GET);
     }
 
     /**
@@ -63,4 +56,21 @@ class Router
         return $this->path;
     }
 
+
+    /**
+     * Router constructor.
+     */
+    public static function getLegacyPath(): string
+    {
+        global $umgvar;
+
+        if (!empty($umgvar['restpath']) && $umgvar['restpath'] != 'main_rest.php') {
+            $baseUrl = trim($umgvar['restpath'],'/');
+        } else {
+            $baseUrl = parse_url(trim($umgvar['url'],'/') . '/main_rest.php');
+            $baseUrl = $baseUrl['path'];
+        }
+        $url = parse_url($_SERVER['REQUEST_URI']);
+        return trim(preg_replace('*' . preg_quote($baseUrl, '*') . '*', '', $url['path'], 1),'/');
+    }
 }

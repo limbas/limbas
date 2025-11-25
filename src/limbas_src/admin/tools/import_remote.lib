@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\lib\db\functions\Dbf;
 
 require_once(COREPATH . 'admin/tools/import.dao');
 
@@ -27,12 +28,12 @@ function clean_import_temp()
     global $newGROUPID;
 
     # drop old copy-tables
-    $odbc_table = dbf_20(array($DBA["DBSCHEMA"], "LMBX_%", "'TABLE'"));
+    $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"], "LMBX_%", "'TABLE'");
     if (is_array($odbc_table)) {
         echo "<br><b>-----> remove temporary tables ... </b>";
         foreach ($odbc_table["table_name"] as $tkey => $tvalue) {
             if (lmb_substr(lmb_strtoupper($tvalue), 0, 5) == "LMBX_") {
-                $sqlquery1 = "DROP TABLE " . dbf_4($tvalue) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                $sqlquery1 = "DROP TABLE " . Dbf::handleCaseSensitive($tvalue) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
                 $rs1 = lmbdb_exec($db, $sqlquery1);
                 echo $tvalue . ", ";
             }
@@ -300,7 +301,7 @@ function remote_mergeTables($lmbs, $path, $precheck)
         #$new_tabid = next_db_id("LMB_CONF_TABLES","TAB_ID");
 
         # Table Fields
-        $domain_columns = dbf_5(array($DBA["DBSCHEMA"], "LMBX_LMB_CONF_TABLES"));
+        $domain_columns = Dbf::getColumns($DBA["DBSCHEMA"], "LMBX_LMB_CONF_TABLES", null);
         $fieldlist = implode(', ', $domain_columns["columnname"]);
 
         # Fields Values
@@ -367,7 +368,7 @@ function remote_mergeTables($lmbs, $path, $precheck)
 
         # new IDs
         $new_fieldkeyid = next_db_id("LMB_CONF_FIELDS");
-        $domain_columns = dbf_5(array($DBA["DBSCHEMA"], "LMBX_LMB_CONF_FIELDS"));
+        $domain_columns = Dbf::getColumns($DBA["DBSCHEMA"], "LMBX_LMB_CONF_FIELDS", null);
         $fieldlist = implode(', ', $domain_columns["columnname"]);
 
         # Fields Values
@@ -491,7 +492,7 @@ function remote_mergeTables($lmbs, $path, $precheck)
     $odbc_table = dbf_20(array($DBA["DBSCHEMA"],"LMBX_%","'TABLE'"));
     foreach($odbc_table["table_name"] as $tkey => $tvalue) {
         if(lmb_substr(lmb_strtoupper($tvalue),0,5) == "LMBX_"){
-            $sqlquery1 = "DROP TABLE ".dbf_4($tvalue) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+            $sqlquery1 = "DROP TABLE ".Dbf::handleCaseSensitive($tvalue) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
             $rs1 = lmbdb_exec($db,$sqlquery1);
             echo $tvalue.", ";
         }
@@ -625,7 +626,7 @@ function remote_mergeForms(&$exptable, $precheck)
             $qu_field = array();
 
             ################## LMB_FORM_LIST ##################
-            $domain_columns = dbf_5(array($DBA["DBSCHEMA"], "LMBX_LMB_FORM_LIST"));
+            $domain_columns = Dbf::getColumns($DBA["DBSCHEMA"], "LMBX_LMB_FORM_LIST", null);
             $fieldlist = implode(', ', $domain_columns["columnname"]);
 
             $sqlquery = "SELECT $fieldlist FROM LMBX_LMB_FORM_LIST WHERE ID = " . $value;
@@ -683,7 +684,7 @@ function remote_mergeForms(&$exptable, $precheck)
 
 
             ################## LMB_FORMS ##################
-            $domain_columns = dbf_5(array($DBA["DBSCHEMA"], "LMBX_LMB_FORMS"));
+            $domain_columns = Dbf::getColumns($DBA["DBSCHEMA"], "LMBX_LMB_FORMS", null);
             $fieldlist = implode(', ', $domain_columns["columnname"]);
 
             $sqlquery = "SELECT $fieldlist FROM LMBX_LMB_FORMS WHERE FORM_ID = " . $value;
@@ -781,7 +782,7 @@ function remote_mergeReport(&$exptable, $precheck)
 
             ################## LMB_REPORT_LIST ##################
 
-            $domain_columns = dbf_5(array($DBA["DBSCHEMA"], "LMBX_LMB_REPORT_LIST"));
+            $domain_columns = Dbf::getColumns($DBA["DBSCHEMA"], "LMBX_LMB_REPORT_LIST", null);
             $fieldlist = implode(', ', $domain_columns["columnname"]);
             $sqlquery = "SELECT $fieldlist FROM LMBX_LMB_REPORT_LIST WHERE ID = " . $value;
 
@@ -834,7 +835,7 @@ function remote_mergeReport(&$exptable, $precheck)
             }
 
             ################## LMB_REPORTS ##################
-            $domain_columns = dbf_5(array($DBA["DBSCHEMA"], "LMBX_LMB_REPORTS"));
+            $domain_columns = Dbf::getColumns($DBA["DBSCHEMA"], "LMBX_LMB_REPORTS", null);
             $fieldlist = implode(', ', $domain_columns["columnname"]);
             $sqlquery = "SELECT $fieldlist FROM LMBX_LMB_REPORTS WHERE BERICHT_ID = " . $value;
 

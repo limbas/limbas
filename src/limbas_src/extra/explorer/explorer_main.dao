@@ -61,6 +61,7 @@ if(!$ffilter['anzahl'][$LID] AND $ffilter['anzahl']['def']){
 }
 
 # ----- Spaltenbreite ---
+/*
 if($rowsize){
 	$rowsize = explode(";",$rowsize);
 	foreach ($rowsize as $key => $value){
@@ -72,6 +73,7 @@ if($rowsize){
 		}
 	}
 }
+*/
 
 # -------------------------------------- Filterkriterien -------------------------------------------
 if($ffilter_glob == "true"){

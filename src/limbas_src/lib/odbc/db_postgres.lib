@@ -186,7 +186,7 @@ function postgres_dbf_7($p){
  */
 function postgres_dbf_8($db,$p){
 
-	$rs = lmbdb_exec($db,"SELECT NEXTVAL('".dbf_4($p)."') AS NEXTSEQ") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
+	$rs = lmbdb_exec($db,"SELECT NEXTVAL('".postgres_dbf_4($p)."') AS NEXTSEQ") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
 	return lmbdb_result($rs,"NEXTSEQ");
 }
 

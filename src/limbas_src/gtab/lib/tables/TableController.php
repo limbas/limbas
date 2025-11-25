@@ -8,7 +8,7 @@
  */
 
 namespace Limbas\gtab\lib\tables;
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 use Symfony\Component\HttpFoundation\Request;
 
 class TableController extends LimbasController

@@ -1,0 +1,120 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+# LMB_DBTYPE #
+const LMB_DBTYPE_CHAR = "CHAR";
+const LMB_DBTYPE_VARCHAR = "VARCHAR";
+const LMB_DBTYPE_INTEGER = "INTEGER";
+const LMB_DBTYPE_SMALLINT = "SMALLINT";
+const LMB_DBTYPE_BIGINT = "BIGINT";
+const LMB_DBTYPE_FLOAT = "FLOAT";
+const LMB_DBTYPE_NUMERIC = "NUMERIC";
+const LMB_DBTYPE_FIXED = "NUMERIC";
+const LMB_DBTYPE_BOOLEAN = "BOOLEAN";
+const LMB_DBTYPE_DATE = "DATE";
+const LMB_DBTYPE_TIME = "TIME";
+const LMB_DBTYPE_TIMESTAMP = "TIMESTAMP";
+const LMB_DBTYPE_LONG = "TEXT";
+const LMB_DBTYPE_ASCII = "";
+const LMB_DBTYPE_BYTE = "";
+const LMB_DBTYPE_SERIAL = "SERIAL";
+
+
+# LMB_DBDEF #
+const LMB_DBDEF_TIME = "CURRENT_TIME";
+const LMB_DBDEF_DATE = "CURRENT_DATE";
+const LMB_DBDEF_TIMESTAMP = "CURRENT_TIMESTAMP";
+const LMB_DBDEF_FALSE = "FALSE";
+const LMB_DBDEF_TRUE = "TRUE";
+const LMB_DBDEF_NULL = "NULL";
+const LMB_DBDEF_DTNULL = "NULL";
+
+# LMB_DBRETYPE #
+const LMB_DBRETYPE_CHAR = "CHAR";
+const LMB_DBRETYPE_VARCHAR = "VARCHAR";
+const LMB_DBRETYPE_BPCHAR = "CHAR";
+const LMB_DBRETYPE_INT8 = "INTEGER";
+const LMB_DBRETYPE_INT4 = "INTEGER";
+const LMB_DBRETYPE_INT2 = "SMALLINT";
+const LMB_DBRETYPE_FLOAT4 = "FLOAT";
+const LMB_DBRETYPE_FLOAT8 = "FLOAT";
+const LMB_DBRETYPE_NUMERIC = "FIXED";
+const LMB_DBRETYPE_BOOL = "BOOLEAN";
+const LMB_DBRETYPE_DATE = "DATE";
+const LMB_DBRETYPE_TIME = "TIME";
+const LMB_DBRETYPE_TIMESTAMP = "TIMESTAMP";
+const LMB_DBRETYPE_TIMESTAMPTZ = "TIMESTAMP";
+const LMB_DBRETYPE_TEXT = "LONG";
+
+# LMB_DBREDEF #
+define ('LMB_DBREDEF_NOW()', "TIMESTAMP");
+const LMB_DBREDEF_CURRENT_TIMESTAMP = "TIMESTAMP";
+const LMB_DBREDEF_CURRENT_DATE = "DATE";
+const LMB_DBREDEF_CURRENT_TIME = "TIME";
+const LMB_DBREDEF_FALSE = "FALSE";
+const LMB_DBREDEF_TRUE = "TRUE";
+
+# LMB_DBFUNC #
+const LMB_DBFUNC_ISNULL = "IS NULL";
+const LMB_DBFUNC_PRIMARY_KEY = "PRIMARY KEY";
+const LMB_DBFUNC_UNIQUE = "UNIQUE";
+const LMB_DBFUNC_CONCAT = "||";
+#define("LMB_DBFUNC_UMASCB","\\");
+const LMB_DBFUNC_OFFSET_START = 0;
+const LMB_DBFUNC_LIMIT = "LIMIT";
+const LMB_DBFUNC_ROWNO = "";
+const LMB_DBFUNC_SPLIT_TRIGGER = "EXECUTE PROCEDURE";
+const LMB_DBFUNC_ADD_COLUMN_FIRST = "ADD COLUMN";
+const LMB_DBFUNC_ADD_COLUMN_NEXT = "ADD COLUMN";
+const LMB_DBFUNC_DROP_COLUMN_FIRST = "DROP COLUMN";
+const LMB_DBFUNC_DROP_COLUMN_NEXT = "DROP COLUMN";
+const LMB_DBFUNC_DATE = "DATE(";
+const LMB_DBFUNC_TIME = "TIME(";
+const LMB_DBFUNC_YEAR = "EXTRACT(YEAR FROM ";
+const LMB_DBFUNC_MONTH = "EXTRACT(MONTH FROM ";
+const LMB_DBFUNC_DAY = "EXTRACT(DAY FROM ";
+const LMB_DBFUNC_HOUR = "EXTRACT(HOUR FROM ";
+const LMB_DBFUNC_MINUTE = "EXTRACT(MINUTE FROM ";
+
+const LMB_DBFUNC_LONGHANDLE = 1;
+const LMB_DBFUNC_PROCEDUREHANDLE = 1;
+const LMB_DBFUNC_FKEYHANDLE = 1;
+const LMB_DBFUNC_FLOATHANDLE = 0;
+const LMB_DBFUNC_TIMEHANDLE = 1;
+const LMB_DBFUNC_MATVIEWSHANDLE = 1;
+const LMB_DBFUNC_NUMROWS = 1;
+const LMB_DBFUNC_VIEWGALIAS = 0;
+const LMB_DBFUNC_SEQUENCE = 1;
+const LMB_DBFUNC_VIEWDEPENDENCY = 1;
+const LMB_DBCURSOR = 0;
+const LMB_DBFUNC_SAVEPOINT = 1;
+const LMB_DBFUNC_WITH_RECURSIVE = 'WITH RECURSIVE';
+const LMB_DBFUNC_MAXFIELDNAMESIZE = 120;
+const LMB_DBFUNC_MAXTABLENAMESIZE = 30;
+const LMB_DBFUNC_TRANSACTION = 1;
+const LMB_DBFUNC_TRANSACTION_WITH_SCHEMA = 1;
+const LMB_DBFUNC_UMASCB = "\\";
+
+if($DBA['ODBCDRIVER'] == 'PDO') {
+    define("LMB_DBFUNC_PREPAREHANDLE", 1);
+}else{
+    define("LMB_DBFUNC_PREPAREHANDLE", 0);
+}
+
+# workaround for postgresql versions
+/*
+if($DBA['VERSION'] AND $DBA['VERSION'] < 90100){
+	define("LMB_DBFUNC_UMASCB","\\\\");
+}else{
+	define("LMB_DBFUNC_UMASCB","\\");
+}
+*/

@@ -12,6 +12,7 @@ namespace Limbas\admin\tools\update\updates;
 
 use Limbas\admin\tools\update\Update;
 use Limbas\lib\db\Database;
+use Limbas\lib\db\functions\Dbf;
 
 class Update6m0 extends Update
 {
@@ -108,7 +109,7 @@ class Update6m0 extends Update
      */
     protected function patch6(): bool
     {
-        $changeCssColumn = dbq_15(['','LMB_FORM_LIST','CSS',LMB_DBTYPE_LONG]);
+        $changeCssColumn = Dbf::modifyColumnTypeSql('LMB_FORM_LIST','CSS',LMB_DBTYPE_LONG);
         
         $sqlQueries = [
             'ALTER TABLE LMB_FORM_LIST ADD MODE '. LMB_DBTYPE_SMALLINT,
@@ -258,7 +259,7 @@ class Update6m0 extends Update
     protected function patch18(): bool
     {
         global $DBA;
-        $query = dbq_15(array($DBA['DBSCHEMA'],'LMB_SYNC_LOG','MESSAGE','VARCHAR(400)'));
+        $query = Dbf::modifyColumnTypeSql('LMB_SYNC_LOG','MESSAGE','VARCHAR(400)');
         return $this->databaseUpdate($query);
     }
 

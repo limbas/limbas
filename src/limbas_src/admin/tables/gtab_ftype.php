@@ -498,7 +498,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 <?php if(!$isview){?><th><?=$lang[2639]?></th><?php }?>
                 <th><?=$lang[101]?></th>
                 <th><?=$lang[932]?></th>
-                <th><?=$lang[2507]?></th>
+                <th><?=$lang[3206]?></th>
                 <th><?=$lang[2922]?></th>
                 <th><?=$lang[2638]?></th>
                 <th><?=$lang[1459]?></th>
@@ -1029,7 +1029,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <td>
                     <?php // --- Gruppierbar ------  
-                    if(($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100) && !($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 22 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 13 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 31 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 32 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 18  OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 13 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 16)):
+                    if(($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100) && !($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 22 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 31 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 32 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 18  OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 13 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 16)):
                         if($result_fieldtype[$table_gtab[$bzm]]["groupable"][$bzm1] == 1){$groupablevalue = "CHECKED";}else{$groupablevalue = "";}
                         ?>
 

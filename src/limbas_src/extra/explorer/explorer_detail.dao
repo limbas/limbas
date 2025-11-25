@@ -7,64 +7,57 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+function arrayToDescriptionList($elem, $max_level=10, $print_nice_stack=array()) : String {
+	$out = '';
+	if(is_array($elem) || is_object($elem)){
+		if(in_array($elem,$print_nice_stack,true)){
+			$out .= "<span style=\"color:red;\">RECURSION</span>";
+			return $out;
+		}
+		$print_nice_stack[]=&$elem;
+		if($max_level<1){
+			$out .= "<span style=\"color:red;\">MAX</span>";
+			return $out;
+		}
+		$max_level--;
+		$out .= "<dl class='row'>";
+		if(is_array($elem)){
+			#$out .= '<tr><td colspan=2 style="background-color:#333333;"><strong><font color=white> </font></strong></td></tr>';
+		}else{
+			$out .= '<h5 class="EXIF_Main_Heading">';
+			$out .= '<span style="color:white;">OBJECT Type: '.get_class($elem).'</span></h5>';
+		}
+		$color=0;
+		foreach($elem as $k => $v){
+			if($max_level%2){
+				$cl=($color++%2)?"EXIF_Level1A":"EXIF_Level1B";
+			}else{
+				$cl=($color++%2)?"EXIF_Level2A":"EXIF_Level2B";
+			}
+			$out .= '<dt class="col-3 text-break '.$cl.'">'.$k.'</dt><dd class="col-9 text-wrap">';
+			$out .= arrayToDescriptionList($v,$max_level,$print_nice_stack);
+			$out .= "</dd>";
+		}
+		$out .= "</dl>";
+		return $out;
+	}
+	if($elem === null){
+		$out .= "<span style=\"color:green;\">NULL</span>";
+	}elseif($elem === 0){
+		$out .= "0";
+	}elseif($elem === true){
+		$out .= "<span style=\"color:green;\">TRUE</span>";
+	}elseif($elem === false){
+		$out .= "<span style=\"color:green;\">FALSE</span>";
+		#}elseif($elem === ""){
+		#    $out .= "<font color=green>EMPTY STRING</font>";
+	}else{
+		$out .= str_replace("\n","<strong><span style=\"color:red;\">*</span></strong><br>\n",$elem);
+	}
 
 
-
-function arrayToTable($elem,$max_level=10,$print_nice_stack=array()){
-    static $out;
-    
-
-    if(is_array($elem) || is_object($elem)){
-        if(in_array($elem,$print_nice_stack,true)){
-            $out .= "<span style=\"color:red;\">RECURSION</span>";
-            return $out;
-        }
-        $print_nice_stack[]=&$elem;
-        if($max_level<1){
-            $out .= "<span style=\"color:red;\">MAX</span>";
-            return $out;
-        }
-        $max_level--;
-        $out .= "<table cellspacing=0 cellpadding=3 width=100%>";
-        if(is_array($elem)){
-            #$out .= '<tr><td colspan=2 style="background-color:#333333;"><strong><font color=white> </font></strong></td></tr>';
-        }else{
-            $out .= '<tr><td colspan=2 class="EXIF_Main_Heading"><strong>';
-            $out .= '<span style="color:white;">OBJECT Type: '.get_class($elem).'</span></strong></td></tr>';
-        }
-        $color=0;
-        foreach($elem as $k => $v){
-            if($max_level%2){
-                $cl=($color++%2)?"EXIF_Level1A":"EXIF_Level1B";
-            }else{
-                $cl=($color++%2)?"EXIF_Level2A":"EXIF_Level2B";
-            }
-            $out .= '<tr><td valign="top" style="width:40px;" class="'.$cl.'">';
-            $out .= '<strong>'.$k."</strong></td><td>";
-            arrayToTable($v,$max_level,$print_nice_stack);
-            $out .= "</td></tr>";
-        }
-        $out .= "</table>";
-        return $out;
-    }
-    if($elem === null){
-        $out .= "<span style=\"color:green;\">NULL</span>";
-    }elseif($elem === 0){
-        $out .= "0";
-    }elseif($elem === true){
-        $out .= "<span style=\"color:green;\">TRUE</span>";
-    }elseif($elem === false){
-        $out .= "<span style=\"color:green;\">FALSE</span>";
-    #}elseif($elem === ""){
-    #    $out .= "<font color=green>EMPTY STRING</font>";
-    }else{
-        $out .= str_replace("\n","<strong><span style=\"color:red;\">*</span></strong><br>\n",$elem);
-    }
-    
-    
-    return $out;
-
-} 
+	return $out;
+}
 
 
 # --- Datenatz-Update -----------------------------------
@@ -246,7 +239,7 @@ if(lmbdb_fetch_row($rs)){
 	# Sonderfall JPEG wegen EXIF Zusatzdaten
 	if($umgvar["read_metadata"][0] && (is_array($umgvar["read_metadata"]) AND in_array($ffile["ext"],$umgvar["read_metadata"]))){
     	if($exifdata = getmeta_struct($filename)){
-    	   $exifdata = arrayToTable($exifdata);
+			$exifdata = arrayToDescriptionList($exifdata);
     	}
 	}
 

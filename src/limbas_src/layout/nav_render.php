@@ -20,6 +20,7 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
     global $dwme;
     global $farbschema;
     global $activeMenu;
+    global $LINK;
 
     # check param
     if(!$entry) { return; }
@@ -36,11 +37,11 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
         }
 
         //TODO: change $entryKey from single number to sth like "menu{$entryKey}"
-        echo "<ul id='{$entryKey}' {$style} class=\"mainmenu\">";
+        echo '<ul id="mainmenu-' . $entryKey . '" ' . $style. ' class="mainmenu">';
 
-        if ($entryKey !== 301) {
+        if ($entryKey !== 301 && !empty($LINK['menu_search'][$entryKey])) {
             # quick search
-            echo '<li onmousedown="event.stopPropagation();" class="sidenav-quicksearch sticky-top"><div class="menu-side-header"><i class="lmbMenuHeaderImage lmb-icon-32 lmb-fav" onclick="openMenu(301)"></i><input type="text" class="form-control form-control-sm" onkeyup="lmbFilterTablesTimer(event, this, ' . $entryKey . ');" placeholder="' . $lang[2507] . '"></div>
+            echo '<li onmousedown="event.stopPropagation();" class="sidenav-quicksearch sticky-top"><div class="menu-side-header"><i class="lmbMenuHeaderImage lmb-icon lmb-fav" onclick="openMenu(301)"></i><input type="text" class="form-control form-control-sm" onkeyup="lmbFilterTablesTimer(event, this, \'mainmenu-' . $entryKey . '\');" placeholder="' . $lang[2507] . '"></div>
                 </li>';
         }
 
@@ -59,19 +60,35 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
         $combinedId = $data['depth0Key'] . '_' . $entryKey;
 
+        $hasChildren = !empty($entry['child']);
+
         # get onclick for header and angle up/down icon
-        if ($entry['link']) {                
-            $onHeaderSymbolClick = "onclick=\"{$entry['onclick']}; {$entry['link']}\"";
-            $onToggleAngleSymbolClick = "onclick=\"hideShow(event, '{$combinedId}'); {$entry['onclick']};\"";
-        } else {
-            $onHeaderSymbolClick = "onclick=\"hideShow(event, '{$combinedId}'); {$entry['onclick']}\"";
+        if($hasChildren) {
+            if ($entry['link']) {
+                $onHeaderSymbolClick = "onclick=\"{$entry['onclick']}; {$entry['link']}\"";
+                $onToggleAngleSymbolClick = "onclick=\"hideShow(event, '{$combinedId}'); {$entry['onclick']};\"";
+            } else {
+                $onHeaderSymbolClick = "onclick=\"hideShow(event, '{$combinedId}'); {$entry['onclick']}\"";
+                $onToggleAngleSymbolClick = '';
+            }
+        }
+        else {
+            if (lmb_substr($entry['link'], 0, 4) == 'main') {
+                $onHeaderSymbolClick = "onclick=\"{$entry['onclick']}; parent.main.location.href='{$entry['link']}'\"";
+            } elseif ($entry['link']) {
+                $onHeaderSymbolClick = "onclick=\"{$entry['onclick']}; {$entry['link']}\"";
+            }
+            else {
+                $onHeaderSymbolClick = "onclick=\"hideShow(event, '{$combinedId}'); {$entry['onclick']}\"";
+            }
             $onToggleAngleSymbolClick = '';
         }
+        
 
 
         # get correct angle icon (up/down)
         if ($menu_setting['menu']["{$combinedId}"] && !$entry['extension']) {
-            $eldispl = 'open';
+            $eldispl = $hasChildren ? 'open' : '';
             $iconclass = 'lmb-angle-up';
         } else {
             $eldispl = '';
@@ -80,7 +97,7 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
         # popupIcon
         $popupIcon = '';
-        if (($entry['child'] AND lmb_count($entry['child']) > 0) || $entry['extension']) {
+        if ($hasChildren || $entry['extension']) {
             $popupIcon = "<i id=\"HS{$combinedId}\" class=\"lmb-icon {$iconclass} float-end\" $onToggleAngleSymbolClick></i>";
         }
 
@@ -90,9 +107,9 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
         $entryIcon = $entry['gicon'] ?? $entry['icon'];
 
         echo <<<HTML
-            <li id="menu-side-header-{$data['depth0Key']}" class="clearfix $eldispl">
+            <li id="menu-side-header-{$combinedId}" class="clearfix $eldispl">
                 <div class="menu-side-header" $onHeaderSymbolClick>
-                    <i class="lmbMenuHeaderImage lmb-icon-32 $entryIcon"></i>
+                    <i class="lmbMenuHeaderImage lmb-icon $entryIcon"></i>
                     <span class="hide-menu">$title</span>$popupIcon
                 </div>
                 <ul id="CONTENT_$combinedId">

@@ -85,7 +85,86 @@ function dropMultitenantData($mid){
 
 
 
+function countMultitenantData($mid){
+    global $db;
 
+    #lmb_dropALLForeignKeys();
+    $commit = true;
+    $mid = parse_db_int($mid);
+    $count = 0;
+
+    $sqlquery = "SELECT MID FROM LMB_MULTITENANT WHERE ID = $mid";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(lmbdb_fetch_row($rs)) {
+        $mid = lmbdb_result($rs, "MID");
+    }
+
+    if(!$mid OR !is_numeric($mid)){return false;}
+
+    // remove or empty relations - resolve ref int
+    $sqlquery = "SELECT DISTINCT MD5TAB,DATA_TYPE,
+    (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) AS LEFTTAB ,
+    (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.VERKNTABID) AS RIGHTTAB
+    FROM LMB_CONF_FIELDS
+    WHERE (SELECT MULTITENANT FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) = TRUE
+    AND (DATA_TYPE = 27 OR DATA_TYPE = 24 OR DATA_TYPE = 25)
+    AND VERKNTABLETYPE = 1";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        $md5tab = strtoupper(lmbdb_result($rs, 'MD5TAB'));
+        $lefttab = strtoupper(lmbdb_result($rs, 'LEFTTAB'));
+        $righttab = strtoupper(lmbdb_result($rs, 'RIGHTTAB'));
+        $datatype = lmbdb_result($rs, 'DATA_TYPE');
+
+        // with relation table
+        if($datatype == 24 OR $datatype == 27) {
+            // delete all relation data
+            $sqlquery1 = "SELECT COUNT(*) AS COUNT FROM $md5tab
+             WHERE ID IN 
+            (SELECT $lefttab.ID FROM $md5tab,$lefttab WHERE  $lefttab.ID = $md5tab.ID AND $lefttab.LMB_MID = $mid)";
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if($rs1){$commit = false;}
+            $count += lmbdb_result($rs1, 'COUNT');
+
+        // without relation table
+        }elseif($datatype == 25){
+            $sqlquery1 = "SELECT COUNT(*) AS COUNT FROM $righttab
+             WHERE $md5tab IN 
+            (SELECT $lefttab.ID FROM $lefttab WHERE $lefttab.LMB_MID = $mid)";
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if($rs1){$commit = false;}
+            $count += lmbdb_result($rs1, 'COUNT');
+        }
+
+    }
+
+    // remove 1:1 relations datasets
+    $sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE MULTITENANT = TRUE AND TYP != 5 AND TAB_ID != VERKN ORDER BY TAB_ID DESC";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        // delete table data
+        $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
+        $sqlquery1 = "SELECT COUNT(*) AS COUNT FROM $table WHERE LMB_MID = $mid";
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if($rs1){$commit = false;}
+        $count += lmbdb_result($rs1, 'COUNT');
+    }
+
+    // remove datasets
+    $sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE MULTITENANT = TRUE AND TYP != 5 AND (TAB_ID = VERKN OR VERKN IS NULL) ORDER BY TAB_ID DESC";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        // delete table data
+        $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
+        $sqlquery1 = "SELECT COUNT(*) AS COUNT FROM $table WHERE LMB_MID = $mid";
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if($rs1){$commit = false;}
+        $count += lmbdb_result($rs1, 'COUNT');
+    }
+
+    return $count;
+
+}
 
 
 
@@ -158,6 +237,9 @@ function infoMultitenant($mid){
         }
     }
 
+
+    $count = countMultitenantData($mid);
+
 ?>
 <div class="modal" id="multitenantInfo-modal" tabindex="-1">
     <div class="modal-dialog modal-xl">
@@ -180,9 +262,11 @@ function infoMultitenant($mid){
                     }
                 }else{
                     ?>
-                    no relation differenz found
+                    no relation differenz found<br><br>
                     <?php
                 } ?>
+                    complete numer of datasets:<b> <?=$count?> </b>
+
                 </table>
             </div>
             <div class="modal-footer">

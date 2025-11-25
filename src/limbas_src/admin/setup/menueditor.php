@@ -63,6 +63,16 @@
                                 <?php endif; ?>
                             <?php endforeach; ?>
                         </select>
+
+
+                        <div class="ps-3 mt-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="<?=e($linkid)?>" id="check-show-search-menu" <?=$LINK['menu_search'][$linkid] ? 'checked' : ''?>>
+                                <label class="form-check-label" for="check-show-search-menu">
+                                    Zeige Menüsuche
+                                </label>
+                            </div>
+                        </div>
                     
                     <div id="lmbMainContainer">
                         <?php

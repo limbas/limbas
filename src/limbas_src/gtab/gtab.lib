@@ -9,6 +9,8 @@
 
 use Limbas\extra\mail\LmbMail;
 use Limbas\extra\template\select\TemplateSelector;
+use Limbas\lib\general\Log\Log;
+use Limbas\lib\general\Log\LogLevel;
 
 require_once (COREPATH . 'extra/reminder/reminder.lib');
 require_once (COREPATH . 'gtab/gtab_type_where.lib');
@@ -20,7 +22,7 @@ if($GLOBALS["gLmbExt"]["ext_gtab.inc"]){
     }
 }
 
-if($GLOBALS["gLmbExt"]["ext_globalFilter.inc"]){
+if(!defined('LMB_SYNC_PROC') && $GLOBALS["gLmbExt"]["ext_globalFilter.inc"]){
 	foreach ($GLOBALS["gLmbExt"]["ext_globalFilter.inc"] as $key => $extfile){
 		require_once($extfile);
 	}
@@ -105,7 +107,7 @@ function set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,$verkn_add_ID=null,$v
     global $gfield;
 
     if(!$verkn_tabid OR !$verkn_fieldid){
-        lmb_log::error('set_verknpf - no verkn_tabid OR verkn_fieldid', null, $verkn_tabid, $verkn_fieldid, $verkn_ID);
+        Log::limbasError('set_verknpf - no verkn_tabid OR verkn_fieldid', null, $verkn_tabid, $verkn_fieldid, $verkn_ID);
         return false;
     }
     $verkn['md5tab'] = $gfield[$verkn_tabid]['md5tab'][$verkn_fieldid];
@@ -186,7 +188,7 @@ function scroll_to($scrollto,$gtabid,$ID,&$gsr,&$filter,$verkn,$pointer=null){
 
     if($scrollfilter != $filter['scrollfilter'][$gtabid]) {
         $rs = lmbdb_exec($db, $sqlquery["sql"]) or errorhandle(lmbdb_errormsg($db), $sqlquery['sql'], $GLOBALS['action'], __FILE__, __LINE__);
-        if (!$rs) {lmb_log::error('scroll_to - can not calculate next dataset', 'can not calculate next dataset', $gtabid, null, $ID);}
+        if (!$rs) {Log::limbasError('scroll_to - can not calculate next dataset', 'can not calculate next dataset', $gtabid, null, $ID);}
         while (lmbdb_fetch_row($rs)) {
            $scrollcache[] = lmbdb_result($rs, $gtab["keyfield"][$gtabid]);
         }
@@ -274,7 +276,7 @@ function execute_trigger($typ,$position,$gtabid,$fieldid,$trigger,$ID,$new_value
         if($triverval = $gtrigger[$gtabid]["value"][$value] AND $gtrigger[$gtabid]["type"][$value] == $typ AND $gtrigger[$gtabid]["position"][$value] == $position){
             $tres = eval(trim($triverval).";");
             if($tres === false) {
-                lmb_log::error('trigger [' . $typ . '] [' . $triverval . '] return false', $GLOBALS['lang'][2920], $gtabid, $fieldid, $ID);
+                Log::limbasError('trigger [' . $typ . '] [' . $triverval . '] return false', $GLOBALS['lang'][2920], $gtabid, $fieldid, $ID);
                 return false;
             }
             #eval("\$out[] = ".ltrim($triverval,";").";");
@@ -283,6 +285,31 @@ function execute_trigger($typ,$position,$gtabid,$fieldid,$trigger,$ID,$new_value
 
     return $out;
 }
+
+/**
+ * @param $gtabid
+ * @param $fieldid
+ * @param $datid
+ * @param $type
+ * @return bool
+ */
+function sync_cache_exists($gtabid,$fieldid,$datid,$type){
+    global $db;
+
+    // exception of typ change
+    if($type == 3){return false;}
+
+    $sqlquery = "SELECT ID FROM LMB_SYNC_CACHE WHERE TABID = $gtabid AND FIELDID = $fieldid AND DATID = $datid AND TYPE = $type AND (DONE IS NULL OR DONE = ".LMB_DBDEF_FALSE.")";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if($rs){
+        if(lmbdb_result($rs, "ID")){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 
 /**
  * sync handling
@@ -296,8 +323,6 @@ function execute_trigger($typ,$position,$gtabid,$fieldid,$trigger,$ID,$new_value
  * @return bool
  */
 
-#$gtabid,$fieldid,$dataid,$value,$old_gresult[$gtabid]['SYNC_ID'][0],$old_gresult[$gtabid]['SYNC_SLAVE'][0]
-
 function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type,$force=false){
     global $db;
     global $umgvar;
@@ -306,6 +331,7 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
     $commit = false;
 
     if(!$datid){return true;}
+    $datid = parse_db_int($datid);
 
     // use filter for DMS
     if($gtabid == $gtab["argresult_id"]["LDMS_FILES"] OR $gtabid == $gtab["argresult_id"]["LDMS_META"]){
@@ -352,15 +378,22 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
 
         // delete all cache entries after delete
         if($type == 1){ // delete
-            $sqlquery = "DELETE FROM LMB_SYNC_CACHE WHERE TABID = $gtabid AND DATID = ".parse_db_int($datid);
+            $sqlquery = "DELETE FROM LMB_SYNC_CACHE WHERE TABID = $gtabid AND DATID = ".$datid." AND (DONE IS NULL OR DONE = ".LMB_DBDEF_FALSE.")";
             $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
         }
 
-        // handle slave
-        $nextCacheId = next_db_id('LMB_SYNC_CACHE','ID',1);
-        $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid,$fieldid,".parse_db_int($datid).",0,".parse_db_int($datid).",$type)";
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-        if(!$rs){lmb_log::error('execute_sync client - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
+        // handle dublicate entries
+        if(!sync_cache_exists($gtabid,$fieldid,$datid,$type)) {
+
+            // insert cache value
+            $nextCacheId = next_db_id('LMB_SYNC_CACHE', 'ID', 1);
+            $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid,$fieldid," . $datid . ",0," . $datid . ",$type)";
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+            if (!$rs) {
+                Log::limbasError('execute_sync client - SQL error on insert', null, $gtabid, $fieldid, $datid);
+                $commit = 1;
+            }
+        }
 
     // master
     }else{
@@ -376,16 +409,16 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
                     $nextCacheId = next_db_id('LMB_SYNC_CACHE','ID',1);
                     $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid,".parse_db_int($fieldid).",$datid,".parse_db_int($sync_slave).','.parse_db_int($sync_id).",1)";
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
+                    if(!$rs){Log::limbasError('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
                     // drop SYNC_ID from dataset
                     $sqlquery = "UPDATE ".$gtab['table'][$gtabid]." SET LMB_SYNC_ID = NULL WHERE ID = $datid";
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs){lmb_log::error('execute_sync master - SQL error on update', null, $gtabid, $fieldid, $datid);$commit = 1;}
+                    if(!$rs){Log::limbasError('execute_sync master - SQL error on update', null, $gtabid, $fieldid, $datid);$commit = 1;}
                 }else{
                     // delete old slave from cashe
                     $sqlquery = "DELETE FROM LMB_SYNC_CACHE WHERE SLAVE_ID = $sync_slave AND TABID = $gtabid AND DATID = $datid";
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs){lmb_log::error('execute_sync master - SQL error on delete', null, $gtabid, $datid);$commit = 1;}
+                    if(!$rs){Log::limbasError('execute_sync master - SQL error on delete', null, $gtabid, $datid);$commit = 1;}
                 }
 
             // change LMB_SYNC_SLAVE from NULL to NEW VALUE
@@ -394,7 +427,7 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
                 $nextCacheId = next_db_id('LMB_SYNC_CACHE','ID',1);
                 $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid,".parse_db_int($fieldid).",$datid,".parse_db_int($new_slave).",".parse_db_int($datid).",2)";
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
+                if(!$rs){Log::limbasError('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
             // change LMB_SYNC_SLAVE from OLD to NEW VALUE
             }else if($sync_slave AND $sync_slave !== $new_slave){
                 if($sync_id){
@@ -402,27 +435,27 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
                     $nextCacheId = next_db_id('LMB_SYNC_CACHE','ID',1);
                     $sqlquery = "INSERT INTO LMB_SYNC_CACHE (TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid,".parse_db_int($fieldid).",$datid,".parse_db_int($sync_slave).','.parse_db_int($sync_id).",1)";
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
+                    if(!$rs){Log::limbasError('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
                     // add to new slave
                     $nextCacheId = next_db_id('LMB_SYNC_CACHE','ID',1);
                     $sqlquery = "INSERT INTO LMB_SYNC_CACHE (TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid,".parse_db_int($fieldid).",$datid,".parse_db_int($new_slave).",".parse_db_int($datid).",2)";
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
+                    if(!$rs){Log::limbasError('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
                     // drop SYNC_ID from dataset
                     $sqlquery = "UPDATE ".$gtab['table'][$gtabid]." SET LMB_SYNC_ID = NULL WHERE ID = $datid";
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs){lmb_log::error('execute_sync master - SQL error on update', null, $gtabid, $fieldid, $datid);$commit = 1;}
+                    if(!$rs){Log::limbasError('execute_sync master - SQL error on update', null, $gtabid, $fieldid, $datid);$commit = 1;}
                 }else{
                     // delete old slave from cashe
                     $sqlquery = "DELETE FROM LMB_SYNC_CACHE WHERE SLAVE_ID = $sync_slave AND TABID = $gtabid AND DATID = $datid";
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs){lmb_log::error('execute_sync master - SQL error on delete', null, $gtabid, $datid);$commit = 1;}
+                    if(!$rs){Log::limbasError('execute_sync master - SQL error on delete', null, $gtabid, $datid);$commit = 1;}
 
                     // add to new slave
                     $nextCacheId = next_db_id('LMB_SYNC_CACHE','ID',1);
                     $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid,".parse_db_int($fieldid).",$datid,".parse_db_int($new_slave).",".parse_db_int($datid).",2)";
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
+                    if(!$rs){Log::limbasError('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
                 }
             }else{
                 return false;
@@ -432,26 +465,27 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
         }elseif($sync_slave OR $gtab['datasync'][$gtabid] == 2){
             // delete all cache entries after delete
             if($type == 1){ // delete all prev cache entries
-                $sqlquery = "DELETE FROM LMB_SYNC_CACHE WHERE SLAVE_ID = ".parse_db_int($sync_slave)." AND TABID = $gtabid AND DATID = ".parse_db_int($datid);
+                $sqlquery = "DELETE FROM LMB_SYNC_CACHE WHERE SLAVE_ID = ".parse_db_int($sync_slave)." AND TABID = $gtabid AND DATID = ".$datid." AND (DONE IS NULL OR DONE = ".LMB_DBDEF_FALSE.")";
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
             }
 
-
             // handle timing problem if sync already started and update has no sync_id
             if(!$sync_id && $type == 3){
-                $sqlquery = "SELECT PROCESS_KEY FROM LMB_SYNC_CACHE WHERE TYPE = 2 AND SLAVE_ID = ".parse_db_int($sync_slave)." AND TABID = $gtabid AND DATID = ".parse_db_int($datid);
+                $sqlquery = "SELECT PROCESS_KEY FROM LMB_SYNC_CACHE WHERE TYPE = 2 AND SLAVE_ID = ".parse_db_int($sync_slave)." AND TABID = $gtabid AND DATID = ".$datid;
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
                 $forceupdate = lmbdb_result($rs, "PROCESS_KEY");
             }
 
             // add delete cache entry if existing $sync_id
             if(($sync_id OR $forceupdate) OR $gtab['datasync'][$gtabid] == 2) {
-                $nextCacheId = next_db_id('LMB_SYNC_CACHE','ID',1);
-                $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid," . parse_db_int($fieldid) . "," . parse_db_int($datid) . "," . parse_db_int($sync_slave) . "," . parse_db_int($sync_id) . ",$type)";
-                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
-                if (!$rs) {
-                    lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);
-                    $commit = 1;
+                if(!sync_cache_exists($gtabid,$fieldid,$datid,$type)) {
+                    $nextCacheId = next_db_id('LMB_SYNC_CACHE', 'ID', 1);
+                    $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextCacheId,$gtabid," . parse_db_int($fieldid) . "," . $datid . "," . parse_db_int($sync_slave) . "," . parse_db_int($sync_id) . ",$type)";
+                    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                    if (!$rs) {
+                        Log::limbasError('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);
+                        $commit = 1;
+                    }
                 }
             }
 
@@ -460,9 +494,9 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
             // matching sync_client with multitenant
             if($sync_slave = $GLOBALS['lmmultitenants']['syncslave'][$GLOBALS['session']['mid']]){
                 $nextCacheId = next_db_id('LMB_SYNC_CACHE','ID',1);
-                $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,TYPE) VALUES($nextCacheId,$gtabid,1,".parse_db_int($datid).",".parse_db_int($sync_slave).",2)";
+                $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,TYPE) VALUES($nextCacheId,$gtabid,1,".$datid.",".parse_db_int($sync_slave).",2)";
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, 1, $datid);$commit = 1;}
+                if(!$rs){Log::limbasError('execute_sync master - SQL error on insert', null, $gtabid, 1, $datid);$commit = 1;}
             }
         }
 
@@ -605,7 +639,7 @@ function set_joins($gtabid, $verkn, $result=null){
     $ID = $verkn["id"];
 
     if(!is_numeric($verkn["id"])){
-        lmb_log::error('set_joins - ID is no number', null, $verkn["tabid"], $verkn["fieldid"], $verkn["id"]);
+        Log::limbasError('set_joins - ID is no number', null, $verkn["tabid"], $verkn["fieldid"], $verkn["id"]);
         return false;
     }
     
@@ -655,7 +689,7 @@ function set_joins($gtabid, $verkn, $result=null){
 
     # edit permission from field / table
     if(!$gtab["edit"][$verkn["tabid"]] OR !$gfield[$verkn["tabid"]]["perm_edit"][$verkn["fieldid"]]){
-        lmb_log::error('set_joins - permission denied for edit field or table', $lang[1317], $verkn["tabid"], $verkn["fieldid"], $ID);
+        Log::limbasError('set_joins - permission denied for edit field or table', $lang[1317], $verkn["tabid"], $verkn["fieldid"], $ID);
         return false;
     }
 
@@ -699,7 +733,7 @@ function set_joins($gtabid, $verkn, $result=null){
             # delete single relation
 
             if(!is_numeric($value)){
-                lmb_log::error('set_joins - VERKN_ID is no number ['.$value.']', null, $verkn["tabid"], $verkn["fieldid"], $verkn["fieldid"]);
+                Log::limbasError('set_joins - VERKN_ID is no number ['.$value.']', null, $verkn["tabid"], $verkn["fieldid"], $verkn["fieldid"]);
                 $commit=1;continue;
             }
 
@@ -714,7 +748,7 @@ function set_joins($gtabid, $verkn, $result=null){
                 $err = 'SQL error on delete ['.$verkn['origin']['table'].']';
             }
             if(!$rs){
-                lmb_log::error('set_joins - '.$err, null, $verkn["tabid"], $verkn["fieldid"], $verkn["fieldid"]);
+                Log::limbasError('set_joins - '.$err, null, $verkn["tabid"], $verkn["fieldid"], $verkn["fieldid"]);
                 $commit=1;continue;
             }else{
                 # translate id in fieldvalue
@@ -774,7 +808,7 @@ function set_joins($gtabid, $verkn, $result=null){
             }
             $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
             if (!$rs) {
-                lmb_log::error('set_joins - 1:n drop relation failed', null, $verkn["tabid"], $verkn["fieldid"], $verkn["fieldid"]);
+                Log::limbasError('set_joins - 1:n drop relation failed', null, $verkn["tabid"], $verkn["fieldid"], $verkn["fieldid"]);
                 $commit = 1;
             }
 
@@ -802,7 +836,7 @@ function set_joins($gtabid, $verkn, $result=null){
                 global $lmmultitenants;
                 if(!$lmmultitenants['mid'][$session['mid']]){
                     lmb_alert('you can not add data without multitenant ID');
-                    lmb_log::error('you can not add data without multitenant ID');
+                    Log::limbasError('you can not add data without multitenant ID');
                     return false;
                 }
                 $sql_i_d = array('LMB_MID');
@@ -814,7 +848,7 @@ function set_joins($gtabid, $verkn, $result=null){
         foreach($verkn_add_id as $key => $value){
 
                 if(!$value OR !is_numeric($value)){
-                    #lmb_log::error('set_joins - VERKN_ID is no number ['.$value.']', null, $verkn["tabid"], $verkn["fieldid"], $value);
+                    #Log::limbasError('set_joins - VERKN_ID is no number ['.$value.']', null, $verkn["tabid"], $verkn["fieldid"], $value);
                     #$commit=1;
                     $errorMessages[] = 'verkn_add_id empty';
                     continue;
@@ -825,7 +859,7 @@ function set_joins($gtabid, $verkn, $result=null){
                     $sqlquery = "SELECT KEYID FROM " . $verkn['md5tab'] . " WHERE ID = " . $verkn['id'] . " AND VERKN_ID = " . $value;
                     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
                     if (!$rs OR ($keyid = lmbdb_result($rs, 'KEYID') AND !$gfield[$verkn["tabid"]]["multirelation"][$verkn["fieldid"]] AND $verkn['typ'] == 24)) {
-                        lmb_log::error('set_joins - relation already exists [' . $keyid . ']', $lang[1285], $verkn['tabid'], $verkn['fieldid'], $value);
+                        Log::limbasError('set_joins - relation already exists [' . $keyid . ']', $lang[1285], $verkn['tabid'], $verkn['fieldid'], $value);
                         $commit = 1;
                         continue;
                     }
@@ -852,9 +886,12 @@ function set_joins($gtabid, $verkn, $result=null){
                 if($sqlquery){
                     $rs2 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
                     if(!$rs2 OR $keyid = lmbdb_result($rs2,'KEYID')){
-                        lmb_log::error('set_joins - referential integrity fail - dataset already joined ['.$keyid.'->'.$value.']', $lang[1285], $verkn['tabid'], $verkn['fieldid'], $value, level:E_WARNING);
-                        $errorMessages[] = 'set_joins - referential integrity fail - dataset already joined ['.$keyid.'->'.$value.']';
-                        $commit=1;continue;
+                        if(!defined('LMB_SYNC_PROC')) {
+                            Log::limbasError('set_joins - referential integrity fail - dataset already joined [' . $keyid . '->' . $value . ']', $lang[1285], $verkn['tabid'], $verkn['fieldid'], $value, level: LogLevel::WARNING);
+                            $errorMessages[] = 'set_joins - referential integrity fail - dataset already joined [' . $keyid . '->' . $value . ']';
+                            $commit = 1;
+                        }
+                        continue;
                     }
                 }
 
@@ -863,7 +900,7 @@ function set_joins($gtabid, $verkn, $result=null){
 
                 # --- Verknüpfung auf Endlosschleife prüfen (bei Selbstverknüpfungen) -----
                 if(willHaveRecursionLoop($verkn,$value)) {
-                    lmb_log::error('set_joins - dataset recursiv joined [' . $value . ']', $lang[1285], $verkn["tabid"], $verkn["fieldid"], $value, level:E_WARNING);
+                    Log::limbasError('set_joins - dataset recursiv joined [' . $value . ']', $lang[1285], $verkn["tabid"], $verkn["fieldid"], $value, level:LogLevel::WARNING);
                     $errorMessages[] = 'set_joins - dataset recursiv joined [' . $value . ']';
                     $commit=1;continue;
                 }
@@ -904,7 +941,7 @@ function set_joins($gtabid, $verkn, $result=null){
                 $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $GLOBALS['action'], __FILE__, __LINE__);
 
                 if(!$rs2){
-                    lmb_log::error('set_joins - SQL error on insert ['.$verkn['origin']['table'].']', null, $verkn["tabid"], $verkn["fieldid"], $value);
+                    Log::limbasError('set_joins - SQL error on insert ['.$verkn['origin']['table'].']', null, $verkn["tabid"], $verkn["fieldid"], $value);
                     $commit=1;continue;
                 }else{
                     # translate id in fieldvalue
@@ -956,7 +993,7 @@ function set_joins($gtabid, $verkn, $result=null){
     if($commit AND !$result){
         
         if(defined('LMB_SYNC_PROC') && !empty($errorMessages)) {
-            lmb_log::error(implode('; ',$errorMessages));
+            Log::limbasError(implode('; ',$errorMessages));
         }
         
         return false;
@@ -1005,7 +1042,7 @@ function updateRelationCount($gtabid,$fieldid,$md5tab,$id,$vgtabid,$backw=null){
 
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
         if (!$rs) {
-            lmb_log::error('set_joins - SQL error on update relation count without trigger [' . $rgtab . ']', null, $gtabid, $fieldid, $id);
+            Log::limbasError('set_joins - SQL error on update relation count without trigger [' . $rgtab . ']', null, $gtabid, $fieldid, $id);
         }
 
     }
@@ -1243,6 +1280,8 @@ function sql_14_c(&$vgtabid,$verkn,&$linklevel=array(),$gformid=null,$order=null
         }
 
     }
+
+    // set filter['anzahl']
     get_countFilter($vgtabid,$vuniqueid,$params,$vfilter);
 
     $gresult = get_gresult($vgtabid,2,$vfilter,$gsr,$verkn,$onlyfield,null,$extension);
@@ -1301,7 +1340,7 @@ function check_MultitenantRules($ID,$gtabid){
     global $gtab;
     global $db;
 
-    if($umgvar['multitenant'] AND $gtab['multitenant'][$gtabid] AND !$session['superadmin']) {
+    if($umgvar['multitenant'] && $gtab['multitenant'][$gtabid] && !$session['superadmin'] && !defined('LMB_SYNC_PROC')) {
 
         $sqlquery = "SELECT LMB_MID FROM ".$gtab["table"][$gtabid]." WHERE ID = $ID";
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
@@ -1652,13 +1691,13 @@ function del_data($gtabid,$ID,$typ="delete",$delete_recursive=null){
 
     # --- Grundrechte Prüfen --------------------------------------
     if(!$gtab["delete"][$gtabid] OR !$ID OR !$GLOBALS["LINK"][11]){
-        lmb_log::error('del_data - permission denied for delete rule', null, $gtabid, null, $ID);
+        Log::limbasError('del_data - permission denied for delete rule', null, $gtabid, null, $ID);
         return false;
     }
 
     # ----------- multitenant permission  -----------
     if($umgvar['multitenant'] AND !check_MultitenantRules($ID,$gtabid)){
-        lmb_log::error('del_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $ID);
+        Log::limbasError('del_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $ID);
         return false;
     }
 
@@ -1666,7 +1705,7 @@ function del_data($gtabid,$ID,$typ="delete",$delete_recursive=null){
     if($gtab["editrule"][$gtabid]){
         #$rownr = 0;
         if(check_GtabRules($ID,$gtabid,null,$gtab["editrule"][$gtabid],null,$null,'delete')){
-            lmb_log::error('del_data - permission denied for table rule', null, $gtabid, null, $ID);
+            Log::limbasError('del_data - permission denied for table rule', null, $gtabid, null, $ID);
             return false;
         }
     }
@@ -1674,7 +1713,7 @@ function del_data($gtabid,$ID,$typ="delete",$delete_recursive=null){
     # --- Edit Permission from Dataset-Rule --------------------------------------
     if($gtab["has_userrules"][$gtabid] AND !$gtab["edit_userrules"][$gtabid]){
         if(!check_GtabUserRules($gtabid,$ID,$GLOBALS["session"]["user_id"],"del")){
-            lmb_log::error('del_data - permission denied for data rule', null, $gtabid, null, $ID);
+            Log::limbasError('del_data - permission denied for data rule', null, $gtabid, null, $ID);
             return false;
         }
     }
@@ -1684,12 +1723,12 @@ function del_data($gtabid,$ID,$typ="delete",$delete_recursive=null){
         $lck = lock_data_check($gtabid,$ID,$GLOBALS["session"]["user_id"]);
 
         if($lck["islocked"]){
-            lmb_log::error('del_data - permission denied for locked dataset', $GLOBALS["lang"][2651], $gtabid, null, $ID);
+            Log::limbasError('del_data - permission denied for locked dataset', $GLOBALS["lang"][2651], $gtabid, null, $ID);
             return false;
         }
 
         if($lck["isversion"] AND !$gtab['delver'][$gtabid]){
-            lmb_log::error('del_data - permission denied for versioned dataset', $GLOBALS["lang"][2650], $gtabid, null, $ID);
+            Log::limbasError('del_data - permission denied for versioned dataset', $GLOBALS["lang"][2650], $gtabid, null, $ID);
             return false;
         }
     }
@@ -1780,7 +1819,7 @@ function del_data($gtabid,$ID,$typ="delete",$delete_recursive=null){
                 // delete version or versionlist
                 foreach ($droplist as $id_ => $vid_) {
                     if (!del_record($vgtabid, $id_, $typ, $delete_recursive)) {
-                        lmb_log::error('del_data - delete dataset failed', 'failed to delete versioned dataset', $vgtabid, null, $id_);
+                        Log::limbasError('del_data - delete dataset failed', 'failed to delete versioned dataset', $vgtabid, null, $id_);
                         lmb_EndTransaction(0);
                         return false;
                     }
@@ -1809,7 +1848,7 @@ function del_data($gtabid,$ID,$typ="delete",$delete_recursive=null){
                             execute_sync($vgtabid,0,lmbdb_result($rs2, 'ID'),$null,null,null,3);
                         }
                         if (!$rs) {
-                            lmb_log::error('del_data - delete dataset failed', 'failed to set validity stamps', $vgtabid, null, $ID);
+                            Log::limbasError('del_data - delete dataset failed', 'failed to set validity stamps', $vgtabid, null, $ID);
                             $commit = 1;
                         }
                     }
@@ -1817,7 +1856,7 @@ function del_data($gtabid,$ID,$typ="delete",$delete_recursive=null){
 
             }else {
                 if (!del_record($vgtabid, $ID, $typ, $delete_recursive)) {
-                    lmb_log::error('del_data - delete dataset failed', 'failed to delete dataset', $vgtabid, null, $ID);
+                    Log::limbasError('del_data - delete dataset failed', 'failed to delete dataset', $vgtabid, null, $ID);
                     lmb_EndTransaction(0);
                     return false;
                 }
@@ -1841,15 +1880,16 @@ function hide_data($gtabid,$ID,$typ='trash'){
     global $db;
     global $umgvar;
     global $lang;
+    global $LINK;
 
     // permission check
-    if(($typ == 'archive' && !$gtab['hide'][$gtabid]) OR ($typ == 'trash' && !$gtab['trash'][$gtabid])){
-        lmb_log::error($typ.'_data - permission denied for type1 '.$typ, $GLOBALS["lang"][114], $gtabid, null, $ID);
+    if(($typ == 'archive' && !$gtab['hide'][$gtabid] && $LINK[313]) OR ($typ == 'trash' && !$gtab['trash'][$gtabid] && $LINK[164])){
+        Log::limbasError($typ.'_data - permission denied for type1 '.$typ, $GLOBALS["lang"][114], $gtabid, null, $ID);
         return false;
     }
 
     if((!$gtab['trash'][$gtabid] && !$gtab['hide'][$gtabid]) OR !$ID OR !$GLOBALS["LINK"][11]){
-        lmb_log::error($typ.'_data - permission denied for type2 '.$typ, $GLOBALS["lang"][114], $gtabid, null, $ID);
+        Log::limbasError($typ.'_data - permission denied for type2 '.$typ, $GLOBALS["lang"][114], $gtabid, null, $ID);
         return false;
     }
 
@@ -1857,7 +1897,7 @@ function hide_data($gtabid,$ID,$typ='trash'){
     if($gtab["lockable"][$gtabid] OR $gtab["lockable"][$gtabid]){
         $lck = lock_data_check($gtabid,$ID,$GLOBALS["session"]["user_id"]);
         if($lck["isversion"] OR $lck["islocked"]){
-            lmb_log::error('hide_data - permission denied for locked OR versioned dataset', $GLOBALS["lang"][2651], $gtabid, null, $ID);
+            Log::limbasError('hide_data - permission denied for locked OR versioned dataset', $GLOBALS["lang"][2651], $gtabid, null, $ID);
             return false;
         }
     }
@@ -1865,14 +1905,14 @@ function hide_data($gtabid,$ID,$typ='trash'){
     # --- Spezifische Userrechte Prüfen --------------------------------------
     if($gtab["has_userrules"][$gtabid] AND !$gtab["edit_userrules"][$gtabid]){
         if(!check_GtabUserRules($gtabid,$ID,$GLOBALS["session"]["user_id"],"edit")){
-            lmb_log::error('hide_data - permission denied for edit rule', $GLOBALS["lang"][114], $gtabid, null, $ID);
+            Log::limbasError('hide_data - permission denied for edit rule', $GLOBALS["lang"][114], $gtabid, null, $ID);
             return false;
         }
     }
 
     # ----------- multitenant permission  -----------
     if($umgvar['multitenant'] AND !check_MultitenantRules($ID,$gtabid)){
-        lmb_log::error('del_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $dataid);
+        Log::limbasError('del_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $dataid);
         return false;
     }
 
@@ -1988,7 +2028,7 @@ function version_record($gtabid,$ID,$newID){
     if($gtab["lockable"][$gtabid] OR $gtab["versioning"][$gtabid]){
         $lck = lock_data_check($gtabid,$ID,$GLOBALS['session']["user_id"]);
         if($lck["isversion"] OR $lck["islocked"]){
-            lmb_log::error('del_data - permission denied for locked OR versioned dataset', $lang[2651], $gtabid, null, $ID);
+            Log::limbasError('del_data - permission denied for locked OR versioned dataset', $lang[2651], $gtabid, null, $ID);
             return false;
         }
     }
@@ -2038,7 +2078,7 @@ function version_record($gtabid,$ID,$newID){
         if(!$rs) {$commit = 1;}
         $vpid = lmbdb_result($rs,"VPID");
         if(!$vpid){
-            lmb_log::error('version_record - no VPID', null, $vgtabid, null, $ID);
+            Log::limbasError('version_record - no VPID', null, $vgtabid, null, $ID);
             lmb_EndTransaction(0,"ID ".$ID);
             return false;
         }
@@ -2316,7 +2356,7 @@ function lock_data($gtabid,$ID,&$gresult=null){
             #if($action != "gtab_change" AND $action != "gtab_deterg"){$action= "gtab_erg";}else{$action = "gtab_deterg";}
             $gresult[$gtabid]["LOCK"]["USER"][$ID] = $userdat["vorname"][$lck["user"]]." ".$userdat["name"][$lck["user"]];
             $gresult[$gtabid]["LOCK"]["TIME"][$ID] = $lck["time_left"];
-            lmb_log::error('lock_data - lock failed: dataset is already locked', "$lang[763]\\n$lang[1721] \"".$gresult[$gtabid]["LOCK"]["USER"][$ID]."\"\\n$lang[1722] ".$lck["time_left"], $gtabid, null, $ID);
+            Log::limbasError('lock_data - lock failed: dataset is already locked', "$lang[763]\\n$lang[1721] \"".$gresult[$gtabid]["LOCK"]["USER"][$ID]."\"\\n$lang[1722] ".$lck["time_left"], $gtabid, null, $ID);
         }elseif($lck["isselflocked"]){
             $gresult[$gtabid]["LOCK"]["SELF"][$ID] = $userdat["vorname"][$session["user_id"]]." ".$userdat["name"][$session["user_id"]];
             $gresult[$gtabid]["LOCK"]["TIME"][$ID] = $lck["time_left"];
@@ -2552,27 +2592,27 @@ function del_record($gtabid,$ID,$typ,$delete_recursive=null){
 
     // check for dataset ID
     if(!lmbdb_result($rs, "ID")){
-        lmb_log::error('del_record - dataset does not exist', null, $gtabid, null, $ID);
+        Log::limbasError('del_record - dataset does not exist', null, $gtabid, null, $ID);
         return false;
     }
 
     // delete related datasets recursive
     if(!del_record_recursive($gtabid,$ID,$typ,$delete_recursive)){
-        lmb_log::error('del_record - recursive deletion failed', null, $gtabid, null, $ID);
+        Log::limbasError('del_record - recursive deletion failed', null, $gtabid, null, $ID);
         return false;
     }
 
     // trigger before delete record
     if($gtab["trigger"][$gtabid]){
         if(execute_trigger("DELETE","BEFORE",$gtabid,0,$gtab["trigger"][$gtabid],$ID) === false){
-            lmb_log::error('del_record - delete record fails because of trigger rule', null, $gtabid, null, $ID);
+            Log::limbasError('del_record - delete record fails because of trigger rule', null, $gtabid, null, $ID);
             return false;
         }
     }
 
     // ----- delet all relations of all tables to this dataset -------------------
     if(!del_record_refint($gtabid,$ID)){
-        lmb_log::error('del_record - referential integrity failed', null, $gtabid, null, $ID);
+        Log::limbasError('del_record - referential integrity failed', null, $gtabid, null, $ID);
         return false;
     }
 
@@ -2590,7 +2630,7 @@ function del_record($gtabid,$ID,$typ,$delete_recursive=null){
 
         require_once(COREPATH . 'extra/explorer/filestructure.lib');
         if (!del_document($ID)) {
-            lmb_log::error('del_record - error on delete document [' . $ID . ']', null, $gtabid, null, $ID);
+            Log::limbasError('del_record - error on delete document [' . $ID . ']', null, $gtabid, null, $ID);
             return false;
         }
     }
@@ -2634,17 +2674,17 @@ function del_record($gtabid,$ID,$typ,$delete_recursive=null){
 
 
     if($commit) {
-        lmb_log::error('del_record - SQL error on delete', null, $gtabid, null, $ID);
+        Log::limbasError('del_record - SQL error on delete', null, $gtabid, null, $ID);
         return false;
     }
 
     /* --- History-Eintrag (LMB_HISTORY_ACTION) ---------------------------------------- */
-    history_action($gtabid, $ID, 11, 1);
+    history_action($gtabid, $ID, 11);
 
     # trigger after delete record
     if($gtab["trigger"][$gtabid]){
         if(execute_trigger("DELETE","AFTER",$gtabid,0,$gtab["trigger"][$gtabid],$ID) === false){
-            lmb_log::error('del_record - error on delete trigger', null, $gtabid, null, $ID);
+            Log::limbasError('del_record - error on delete trigger', null, $gtabid, null, $ID);
             return false;
         }
     }
@@ -2685,7 +2725,7 @@ function hide_record($gtabid,$ID,$typ){
 
     // archive related datasets recursive
     if(!del_record_recursive($gtabid,$ID,$typ)){
-        lmb_log::error('archive_record - recursive archive failed', null, $gtabid, null, $ID);
+        Log::limbasError('archive_record - recursive archive failed', null, $gtabid, null, $ID);
         return false;
     }
 
@@ -2726,7 +2766,7 @@ function hide_record($gtabid,$ID,$typ){
 
 
     // --- History-Eintrag (LMB_HISTORY_ACTION) ---------------------
-    history_action($gtabid, $ID, $linkid, 1);
+    history_action($gtabid, $ID, $linkid);
 
     # --- sync cache entry - systemfields only----
     #if($gtab["datasync"][$gtabid] AND $umgvar['sync_mode'] == 1){ // todo
@@ -2757,7 +2797,7 @@ function check_refint_add($md5tab,$v_id,$verknpf){
     if(!$rs) {$commit = 1;}
     if(lmbdb_fetch_row($rs)){
         $commit = 1;
-        lmb_log::error('check_refint_add - referential integrity failed ['.$md5tab.']', $lang[1574], $md5tab, null, $v_id);
+        Log::limbasError('check_refint_add - referential integrity failed ['.$md5tab.']', $lang[1574], $md5tab, null, $v_id);
     }
 
     if(!$commit){return true;}else{$GLOBALS["commit"] = 1;return false;}
@@ -2778,6 +2818,12 @@ function getDefaultValues($gtabid,$ID,&$dflt_v,&$dflt_i){
         $def1 = array();
         $def2 = array();
         $default = null;
+        
+        // skip fields from other tables
+        if(array_key_exists('org_tab',$gfield[$gtabid]) && !empty($gfield[$gtabid]['org_tab'][$key]) && intval($gfield[$gtabid]['org_tab'][$key]) !== intval($gtabid)){
+            continue;
+        }
+        
 
         if ($gfield[$gtabid]['deflt'][$key]) {
             $default = $gfield[$gtabid]['deflt'][$key];
@@ -2949,11 +2995,11 @@ function insert_newdata($gtabid,$ID,$copyid,$version,$insertdata=null){
     $sqlquery = "INSERT INTO " . $gtab["table"][$gtabid] . " (ID,ERSTUSER,ERSTDATUM,EDITDATUM,INUSE_TIME,LMB_STATUS $dflti) VALUES ($ID," . $session["user_id"] . "," . LMB_DBDEF_TIMESTAMP . "," . LMB_DBDEF_TIMESTAMP . "," . LMB_DBDEF_TIMESTAMP . ", 0 $dfltv)";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
     if (!$rs) {
-        lmb_log::error('insert_newdata - SQL error on insert', null, $gtabid, null, $ID);
+        Log::limbasError('insert_newdata - SQL error on insert', null, $gtabid, null, $ID);
         $commit = 1;
     } else {
         # --- History-Eintrag (LMB_HISTORY_ACTION) ----------------------------------------
-        history_action($gtabid, $ID, 1, 1);
+        history_action($gtabid, $ID, 1);
     }
 
     if($commit){
@@ -3005,17 +3051,17 @@ function create_newdata($gtabid,$verkn,$verknpf,$copyid,$ID,$version=null,$norel
                 # --- Datensatz kopieren -----
                 if($copyid){
                     if(!copy_record($gtabid,$copyid,$ID,$version,$norelation,$verkn,$subrelation)){
-                        lmb_log::error('create_newdata - copy data failed', 'copy new dataset failed', $gtabid, null, $ID);
+                        Log::limbasError('create_newdata - copy data failed', 'copy new dataset failed', $gtabid, null, $ID);
                         $commit = 1;
                     }
                 }
 
             }else{
-                lmb_log::error('create_newdata - insert new data failed', 'crate new dataset failed', $gtabid, null, $ID);
+                Log::limbasError('create_newdata - insert new data failed', 'crate new dataset failed', $gtabid, null, $ID);
                 $commit = 1;
             }
         }else{
-            lmb_log::error('create_newdata - referential integrity failed', 'crate new dataset failed', $gtabid, null, $ID);
+            Log::limbasError('create_newdata - referential integrity failed', 'crate new dataset failed', $gtabid, null, $ID);
         }
     }else{
         # --- Insert Statement ----
@@ -3034,13 +3080,13 @@ function create_newdata($gtabid,$verkn,$verknpf,$copyid,$ID,$version=null,$norel
                         if(!version_record($gtabid,$copyid,$ID,1)){$commit = 1;}
                     }
                 }else{
-                    lmb_log::error('create_newdata - copy data failed', 'copy new dataset failed', $gtabid, null, $ID);
+                    Log::limbasError('create_newdata - copy data failed', 'copy new dataset failed', $gtabid, null, $ID);
                     $commit = 1;
                 }
             }
 
         }else{
-            lmb_log::error('create_newdata - insert new data failed', 'create new dataset failed', $gtabid, null, $ID);
+            Log::limbasError('create_newdata - insert new data failed', 'create new dataset failed', $gtabid, null, $ID);
             $commit = 1;
         }
     }
@@ -3083,7 +3129,7 @@ function new_record($gtabid, $verknpf=null, $verkn_fieldid=null, $verkn_tabid=nu
 
     # --- Grundrechte Prüfen --------------------------------------
     if(!$gtab["add"][$gtabid] OR !$gtabid OR !$GLOBALS["LINK"][1]){
-        lmb_log::error('new_record - permission denied for table rule', null, $gtabid, null, $ID);
+        Log::limbasError('new_record - permission denied for table rule', null, $gtabid, null, $ID);
         return false;
     }
 
@@ -3105,7 +3151,7 @@ function new_record($gtabid, $verknpf=null, $verkn_fieldid=null, $verkn_tabid=nu
         if(!lmbdb_fetch_row($rs)){
             $ID = $forceNewID;
         }else{
-            lmb_log::error('new_record - primary Key ID already exists! ['.$forceNewID.']', null, $gtabid, null, $forceNewID);
+            Log::limbasError('new_record - primary Key ID already exists! ['.$forceNewID.']', null, $gtabid, null, $forceNewID);
             lmb_EndTransaction(0);
             return false;
         }
@@ -3138,7 +3184,7 @@ function new_record($gtabid, $verknpf=null, $verkn_fieldid=null, $verkn_tabid=nu
             if($version AND $gtab["versioning"][$gtabid]){
                 // check if dataset is last version
                 if(!check_version($copyid,$gtab["table"][$value])){
-                    lmb_log::error('new_record - only the latest version can be versioned', null, $gtabid, null, $forceNewID);
+                    Log::limbasError('new_record - only the latest version can be versioned', null, $gtabid, null, $forceNewID);
                     lmb_EndTransaction(0,"ID ".$ID);
                     return false;
                 }
@@ -3150,7 +3196,7 @@ function new_record($gtabid, $verknpf=null, $verkn_fieldid=null, $verkn_tabid=nu
                     #$userpara = $session["user_id"]."_u_v__1";
                     $userpara = array($session["user_id"],"u","v",null,1);
                     if(!add_GtabUserRules($value,array($ID),$userpara,1)){
-                        lmb_log::error('new_record - unable to add userrules after insert', null, $gtabid, null, $ID);
+                        Log::limbasError('new_record - unable to add userrules after insert', null, $gtabid, null, $ID);
                         $commit = 1;
                     }
                 }
@@ -3278,7 +3324,7 @@ function copy_record($gtabid,$copyid,$ID,$version=null,$norelation=null,$verkn=n
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
         if(!$rs OR !lmbdb_fetch_row($rs) OR !lmbdb_result($rs, 'ID')){
-            lmb_log::error('copy_record - origin dataset not found or authorised', $lang[1317], $gtabid, null, $copyid);
+            Log::limbasError('copy_record - origin dataset not found or authorised', $lang[1317], $gtabid, null, $copyid);
             return false;
         }
 
@@ -3583,8 +3629,7 @@ function copy_record($gtabid,$copyid,$ID,$version=null,$norelation=null,$verkn=n
             $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
             if(!$rs1) {$commit = 1;}else{
                 /* --- History-Eintrag (LMB_HISTORY_ACTION) ---------------------------------------- */
-                history_action($gtabid,$ID,201,1);
-                $GLOBALS["ltmp"]["history_action"] = 1;
+                history_action($gtabid,$ID,201);
             }
         }
 
@@ -3636,14 +3681,14 @@ function update_data_precheck($gtabid,$dataid,&$query_dataid,&$query_result,&$ol
 
         # --- check if dataset is locked ----
         if($lck["islocked"]){
-            lmb_log::error('update_data - permission denied for locked dataset', $lang[763], $gtabid, null, $dataid);
+            Log::limbasError('update_data - permission denied for locked dataset', $lang[763], $gtabid, null, $dataid);
             return false;
         }
 
         # --- check if version is locked ----
         #if ($gtab["versioning"][$gtabid] and $old_gresult and !$old_gresult[$gtabid]['VACT'][0]) {
         if ($lck["isversion"] AND !$gtab['editver'][$gtabid]) {
-            lmb_log::error('update_data - not allowed to update old version', $lang[2147], $gtabid, null, $dataid);
+            Log::limbasError('update_data - not allowed to update old version', $lang[2147], $gtabid, null, $dataid);
             return false;
         }
     }
@@ -3651,21 +3696,21 @@ function update_data_precheck($gtabid,$dataid,&$query_dataid,&$query_result,&$ol
     # --- Edit Permission from Table-Rule ----
     if($gtab["editrule"][$gtabid]){
         if(check_GtabRules($dataid,$gtabid,null,$gtab["editrule"][$gtabid],0,$old_gresult)){
-            lmb_log::error('update_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $dataid);
+            Log::limbasError('update_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $dataid);
             return false;
         }
     }
 
     # ----------- Edit Permission from multitenant -----------
     if($umgvar['multitenant'] AND !check_MultitenantRules($dataid,$gtabid)){
-        lmb_log::error('update_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $dataid);
+        Log::limbasError('update_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $dataid);
         return false;
     }
 
     # --- Edit Permission from Dataset-Rule ----
     if($gtab["has_userrules"][$gtabid] AND !$gtab["edit_userrules"][$gtabid]){
         if(!check_GtabUserRules($gtabid,$dataid,$session["user_id"],"edit")){
-            lmb_log::error('update_data - permission denied for dataset rule', $lang[1317], $gtabid, null, $dataid);
+            Log::limbasError('update_data - permission denied for dataset rule', $lang[1317], $gtabid, null, $dataid);
             return false;
         }
     }
@@ -3676,7 +3721,7 @@ function update_data_precheck($gtabid,$dataid,&$query_dataid,&$query_result,&$ol
             if ($gfield[$gtabid]["editrule"][$fieldid]) {
                 # ----------- Edit Permission from Field-Rule -----------
                 if (check_GtabRules($dataid, $gtabid, $fieldid, $gfield[$gtabid]["editrule"][$fieldid], 0, $old_gresult)) {
-                    lmb_log::error('update_data - permission denied for field rule', $lang[1317], $gtabid, $fieldid, $dataid);
+                    Log::limbasError('update_data - permission denied for field rule', $lang[1317], $gtabid, $fieldid, $dataid);
                     return false;
                 }
             }
@@ -3687,7 +3732,7 @@ function update_data_precheck($gtabid,$dataid,&$query_dataid,&$query_result,&$ol
     if($gfield[$gtabid]["unique"] AND is_array($query_result)){
         foreach($gfield[$gtabid]["unique"] as $fieldid => $value) {
             if ($query_result[$gtabid][$dataid][$fieldid] AND lmb_gtabIfIsUnique($gtabid, $query_result[$gtabid][$dataid][$fieldid])) {
-                lmb_log::error('update_data - ' . $gfield[$gtabid]["spelling"][$fieldid] . ' is unique', $gfield[$gtabid]["spelling"][$fieldid] . " " . $lang[2605], $gtabid, $fieldid, $ID);
+                Log::limbasError('update_data - ' . $gfield[$gtabid]["spelling"][$fieldid] . ' is unique', $gfield[$gtabid]["spelling"][$fieldid] . " " . $lang[2605], $gtabid, $fieldid, $ID);
                 return false;
             }
         }
@@ -3747,21 +3792,25 @@ function update_data_postcheck($gtabid,$dataid,&$query_dataid,&$old_gresult,&$tr
             return false;
         }
     }
-    # --- History-Eintrag (history_action) ---------
-    if($session["logging"] AND $actionid = history_action($gtabid, $dataid, 3, 1) AND $gtab["logging"][$gtabid]){
-        $logging = 1;
+
+    # --- rebuild php argument ---------
+    foreach($gfield[$gtabid]['argument_typ'] as $argfieldid => $argument_typ) {
+        if($argument_typ == 15 && !$gfield[$gtabid]['argument_modus']){
+            lmbGetArgumentValue($gtabid, $argfieldid, $dataid, $old_gresult);
+        }
     }
 
     // logging / trigger  / sync hash
-    if ($logging OR $gfield[$gtabid]["trigger"] OR $gfield[$gtabid]["sync"]) {
-
+    if (($session["logging"] && $gtab["logging"][$gtabid]) OR $gfield[$gtabid]["trigger"] OR $gfield[$gtabid]["sync"]) {
+        $linkid = 3;
         foreach ($query_dataid as $fieldid => $value) {
 
             # --- History-Eintrag (history_update) ---------
-            if ($logging) {
-                if(!history_update($gtabid, $fieldid, $dataid, $actionid, $value, $old_gresult[$gtabid][$fieldid][0])){
-                    lmb_log::error('update_data - history update failed', null, $gtabid, $fieldid, $dataid);
+            if ($session["logging"] && $gtab["logging"][$gtabid]) {
+                if(!history_update($gtabid, $fieldid, $dataid, $linkid, $value, $old_gresult[$gtabid][$fieldid][0])){
+                    Log::limbasError('update_data - history update failed', null, $gtabid, $fieldid, $dataid);
                 }
+                $linkid = null;
             }
 
             # --- trigger after update field ----
@@ -3895,7 +3944,7 @@ function update_data($history_fields,$typ=null,$verkn=null,$nometa=null){
                 $newdataid[$gtab_id] = $data_id;
 
                 if(!$data_id){
-                    lmb_log::error('update_data - create new dataset failed', 'create new dataset failed', $gtab_id);
+                    Log::limbasError('update_data - create new dataset failed', 'create new dataset failed', $gtab_id);
                     continue;
                 }
             }else{
@@ -3914,25 +3963,25 @@ function update_data($history_fields,$typ=null,$verkn=null,$nometa=null){
 
         # check plausibility
         if($data_id < 0 OR !is_numeric($data_id) OR !$data_id OR !is_numeric($field_id) OR !is_numeric($gtab_id)){
-            lmb_log::error('update_data - plausibility check failed, no valid ID', 'null', $gtab_id,$field_id,$ID);
+            Log::limbasError('update_data - plausibility check failed, no valid ID', 'null', $gtab_id,$field_id,$ID);
             continue;
         }
 
         # ignore intern fields
         if(in_array($gfield[$gtab_id]["field_name"][$field_id],$forbidenfields)){
-            lmb_log::error('update_data - ignore intern fields', 'ignore intern fields', $gtab_id,$field_id,$ID);
+            Log::limbasError('update_data - ignore intern fields', 'ignore intern fields', $gtab_id,$field_id,$ID);
             continue;
         }
 
         # ignore duplicate
         if($query_result[$gtab_id][$data_id][$field_id]){
-            lmb_log::error('update_data - ignore duplicate values', null, $gtab_id,$field_id,$ID);
+            Log::limbasError('update_data - ignore duplicate values', null, $gtab_id,$field_id,$ID);
             continue;
         }
 
         # edit permission from field / table
         if(!$gtab["edit"][$gtab_id] OR !$gfield[$gtab_id]["perm_edit"][$field_id]){
-            lmb_log::error('update_data - permission denied for edit field or table', $lang[1317], $gtab_id, $field_id, $ID);
+            Log::limbasError('update_data - permission denied for edit field or table', $lang[1317], $gtab_id, $field_id, $ID);
             continue;
         }
 
@@ -3980,7 +4029,7 @@ function update_data($history_fields,$typ=null,$verkn=null,$nometa=null){
             $query_value[$gtab_id][$data_id][$field_id] = $change_value;
         }elseif($result === false){
             $failed[$gtab_id] = $data_id;
-            lmb_log::error('update_data - function failed (' .$fname. ', ' . $field_id . ')' , null, $gtab_id, null, $data_id);
+            Log::limbasError('update_data - function failed (' .$fname. ', ' . $field_id . ')' , null, $gtab_id, null, $data_id);
         }
         $bzm++;
     }
@@ -3988,7 +4037,7 @@ function update_data($history_fields,$typ=null,$verkn=null,$nometa=null){
 
     // nothing to do
     if(!$bzm){
-        lmb_log::error('update_data - nothing todo', null, $gtabid, null, $dataid);
+        Log::limbasError('update_data - nothing todo', null, $gtabid, null, $dataid);
         lmb_EndTransaction(1);
         return true;
     }
@@ -4011,7 +4060,7 @@ function update_data($history_fields,$typ=null,$verkn=null,$nometa=null){
 
                 // precheck routine
                 if(!update_data_precheck($gtabid,$dataid,$query_dataid,$query_result,$old_gresult,$triggerResult)){
-                    lmb_log::error('update_data - update_data_precheck return false', null, $gtabid, null, $dataid);
+                    Log::limbasError('update_data - update_data_precheck return false', null, $gtabid, null, $dataid);
                     $failed[$gtabid] = $dataid;
                     continue;
                 }
@@ -4043,13 +4092,13 @@ function update_data($history_fields,$typ=null,$verkn=null,$nometa=null){
                 }
 
                 if(!$rs){
-                    lmb_log::error('update_data - SQL error on update data', null, $gtabid, null, $dataid);
+                    Log::limbasError('update_data - SQL error on update data', null, $gtabid, null, $dataid);
                     $failed[$gtabid] = $dataid;
                     continue;
                 }else{
                     // postcheck routine
                     if(!update_data_postcheck($gtabid,$dataid,$query_dataid,$old_gresult,$triggerResult,$nometa)){
-                        lmb_log::error('update_data - update_data_postcheck return false', null, $gtabid, null, $dataid);
+                        Log::limbasError('update_data - update_data_postcheck return false', null, $gtabid, null, $dataid);
                         $failed[$gtabid] = $dataid;
                         continue;
                     }
@@ -4164,12 +4213,21 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
     global $style_sens_e;
     static $quwac;
 
-    $tab = $gtab['table'][$gtabid];
+    $orgTabId = $gtabid;
     $field = $gfield[$gtabid]["field_name"][$key];
+    if(array_key_exists('org_tab', $gfield[$gtabid]) && $gfield[$gtabid]['org_tab'][$key]) {
+        // special case if fields from other table are added to gfield
+        $orgTabId = $gfield[$gtabid]['org_tab'][$key];
+        $field = $gfield[$gtabid]['org_field_name'][$key];
+    }
+    
+    $tab = $gtab['table'][$orgTabId];
+    
     if($vquery['child_alias']){
         $tab = $vquery['child_alias'];
     }
     $query["from_"] = array();
+    $query["where_glob"] = array();
     $bzm2 = 0;
 
     if(!is_array($gsr[$gtabid][$key])){return $query;}
@@ -4178,7 +4236,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
     foreach ($gsr[$gtabid][$key] as $key1 => $value1) {
         if(!is_numeric($key1) OR !$gfield[$gtabid]['id'][$key]){
             if(!$gfield[$gtabid]['sort'][$key]) {
-                lmb_log::error('get_where - missing gfield description or permission', null, $gtabid, $key, level: E_WARNING);
+                Log::limbasError('get_where - missing gfield description or permission', null, $gtabid, $key, level: LogLevel::WARNING);
             }
             continue;
         }
@@ -4191,7 +4249,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
         // todo workaround for string keys ('eg txt') - have to change
         if(!is_numeric($key1) OR !$gfield[$gtabid]['id'][$key]){
             if(!$gfield[$gtabid]['sort'][$key]) {
-                lmb_log::error('get_where - missing gfield description or permission', null, $gtabid, $key, level: E_WARNING);
+                Log::limbasError('get_where - missing gfield description or permission', null, $gtabid, $key, level: LogLevel::WARNING);
             }
             continue;
         }
@@ -4232,11 +4290,11 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
 
             # check that only entry is correct table id
             if (lmb_count($gsrres) != 1) {
-                lmb_log::error("Recursive gsrres has wrong number of entries: Expected only index $verk_tabid", null, $gtabid, $key);
+                Log::limbasError("Recursive gsrres has wrong number of entries: Expected only index $verk_tabid", null, $gtabid, $key);
                 continue;
             } else if (!array_key_exists($verk_tabid, $gsrres)) {
                 $otherTabID = key($gsrres);
-                lmb_log::error("Recursive gsrres has wrong tabid: Expected $verk_tabid, got $otherTabID", null, $gtabid, $key);
+                Log::limbasError("Recursive gsrres has wrong tabid: Expected $verk_tabid, got $otherTabID", null, $gtabid, $key);
                 continue;
             }
 
@@ -4246,7 +4304,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
             if($gtab["sverkn"][$gtabid]){
                 $vquery['rec_count']++;
                 if ($vquery['rec_count'] > 2) { # maximum amount of recursive calls to get_where
-                    lmb_log::error('get_where -  maximum amount of recursive calls', null, $gtabid );
+                    Log::limbasError('get_where -  maximum amount of recursive calls', null, $gtabid );
                     continue;
                 }
 
@@ -4272,7 +4330,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
 
                 # check access rights
                 if (!$gfield[$verk_tabid_]["sort"][$verk_fieldid]) {
-                    lmb_log::error('get_where - missing gfield description or permission', null, $verk_tabid_, $verk_fieldid,level:E_WARNING );
+                    Log::limbasError('get_where - missing gfield description or permission', null, $verk_tabid_, $verk_fieldid,level:LogLevel::WARNING );
                     continue;
                 }
 
@@ -4403,8 +4461,11 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
         if($gsrres OR $gsrres == '0') {
             if($noeregi OR preg_match("/".$gfield[$gtabid]["regel"][$key]."/", $gsrres)){
 
-                # --- SQL Argument -----
-                if($gfield[$gtabid]["argument_typ"][$key] == 47){
+                    # Extension - skip
+                if($gfield[$gtabid]["ext_type"][$key] && function_exists("lmbs_" . $gfield[$gtabid]["ext_type"][$key])) {
+
+                    # SQL Argument
+                }elseif($gfield[$gtabid]["argument_typ"][$key] == 47){
                     $argument = '('.$gfield[$gtabid]["argument"][$key].')';
 
                     # number int
@@ -4514,6 +4575,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
                         $verk_tabid = $gfield[$gtabid]['verkntabid'][$key];
                         $verk_fieldname = $gfield[$gtabid]['md5tab'][$key];
 
+                        #NULL#
                         if ($gsrres === '#NULL#') { # no relation
                             if ($gfield[$gtabid]['verkntabletype'][$key] == 2) {
                                 # backward relation
@@ -4525,6 +4587,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
                                 $allLinkedIDs = "(SELECT {$verk_fieldname} FROM {$gtab['table'][$verk_tabid]} WHERE {$verk_fieldname} != 0)";
                                 $query['where'][] = "({$tab}.{$gtab['keyfield'][$gtabid]} NOT IN {$allLinkedIDs})";
                             }
+                        #NOTNULL#'
                         } elseif ($gsrres == '#NOTNULL#') {
                             if ($gfield[$gtabid]['verkntabletype'][$key] == 2) {
                                 # backward relation
@@ -4536,6 +4599,23 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
                                 $allLinkedIDs = "(SELECT {$verk_fieldname} FROM {$gtab['table'][$verk_tabid]} WHERE {$verk_fieldname} != 0)";
                                 $query['where'][] = "({$tab}.{$gtab['keyfield'][$gtabid]} IN {$allLinkedIDs})";
                             }
+
+                        // using #ID# for an exact search
+                        } elseif (substr($gsrres,0,4) == '#ID#' && is_numeric(substr($gsrres,4))) { # extract ID
+                            $relID = substr($gsrres,4);
+
+                            if ($gfield[$gtabid]['verkntabletype'][$key] == 2) {
+                                # backward relation
+                                $forwardRelationFieldid = $gfield[$gtabid]['hasrecverkn'][$key];
+                                $relationFieldname = $gfield[$verk_tabid]['md5tab'][$forwardRelationFieldid];
+                                $query["where"][] = "{$tab}.{$relationFieldname} = $relID";
+                            } else {
+                                # forward relation
+                                $query['from_'][] = $gtab['table'][$verk_tabid];
+                                $query['where'][] = $gtab['table'][$verk_tabid].".ID = ".$relID;
+                                $query["where"][] = "{$tab}.ID = ".$gtab['table'][$verk_tabid].'.'.$gfield[$gtabid]["md5tab"][$key];
+                            }
+
                         } else {
                             $LIMBAS_CHILD = $gtab["table"][$verk_tabid]; // name of joined table
                             $aliasName = ''; // alias to current table
@@ -4544,7 +4624,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
                             if($gtab["sverkn"][$gtabid]){
                                 $vquery['rec_count']++;
                                 if ($vquery['rec_count'] > 2) { # maximum amount of recursive calls to get_where
-                                    lmb_log::error('get_where -  maximum amount of recursive calls', null, $gtabid );
+                                    Log::limbasError('get_where -  maximum amount of recursive calls', null, $gtabid );
                                     continue;
                                 }
 
@@ -4566,7 +4646,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
 
                                 # check access rights
                                 if (!$gfield[$verk_tabid]['sort'][$verk_fieldid]){
-                                    lmb_log::error('get_where - missing gfield description or permission', null, $verk_tabid, $verk_fieldid,level:E_WARNING);
+                                    Log::limbasError('get_where - missing gfield description or permission', null, $verk_tabid, $verk_fieldid,level:LogLevel::WARNING);
                                     continue;
                                 }
 
@@ -4636,6 +4716,12 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
                             $query['where'][] = "(".$tab.".{$gtab['keyfield'][$gtabid]} NOT IN (SELECT ID FROM ".$gfield[$gtabid]["md5tab"][$key]."))";
                         } elseif ($gsrres == '#NOTNULL#') { # has any relation
                             $query['where'][] = "(".$tab.".{$gtab['keyfield'][$gtabid]} IN (SELECT ID FROM ".$gfield[$gtabid]["md5tab"][$key]."))";
+                        } elseif (substr($gsrres,0,4) == '#ID#' && is_numeric(substr($gsrres,4))) { # extract ID
+                            $query['where'][] = $gfield[$gtabid]["md5tab"][$key].".VERKN_ID = ".substr($gsrres,4);
+                            $query['from_'][] = $gfield[$gtabid]["md5tab"][$key];
+                            # relation conditions
+                            $query["where_glob"][] = "{$tab}.ID = {$gfield[$gtabid]["md5tab"][$key]}.ID";
+
                         } else {
                             $LIMBAS_CHILD = $gtab["table"][$verk_tabid]; // name of joined table
                             $aliasName = ''; // alias to current table
@@ -4644,7 +4730,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
                             if($gtab["sverkn"][$gtabid]){
                                 $vquery['rec_count']++;
                                 if ($vquery['rec_count'] > 2) { # maximum amount of recursive calls to get_where
-                                    lmb_log::error('get_where -  maximum amount of recursive calls', null, $gtabid );
+                                    Log::limbasError('get_where -  maximum amount of recursive calls', null, $gtabid );
                                     continue;
                                 }
 
@@ -4672,7 +4758,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
 
                                 # check access rights
                                 if(!$gfield[$verk_tabid_]["sort"][$verk_fieldid]){
-                                    lmb_log::error('get_where - missing gfield description or permission', null, $verk_tabid_, $verk_fieldid,level:E_WARNING );
+                                    Log::limbasError('get_where - missing gfield description or permission', null, $verk_tabid_, $verk_fieldid,level:LogLevel::WARNING );
                                     continue;
                                 }
 
@@ -4784,8 +4870,13 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
 
     }
 
-    # --- M-Select/Attribute -----
-    if($gfield[$gtabid]["data_type"][$key] == 31 OR $gfield[$gtabid]["data_type"][$key] == 32 OR $gfield[$gtabid]["data_type"][$key] == 18 OR $gfield[$gtabid]["data_type"][$key] == 46){
+        // Extension
+    if($gfield[$gtabid]["ext_type"][$key] && function_exists("lmbs_" . $gfield[$gtabid]["ext_type"][$key])) {
+        $fname = "lmbs_" . $gfield[$gtabid]["ext_type"][$key];
+        $query = $fname($gtabid, $key, $argument, $gsparams, $gsrres, $gsr);
+
+        //  M-Select/Attribute
+    }elseif($gfield[$gtabid]["data_type"][$key] == 31 OR $gfield[$gtabid]["data_type"][$key] == 32 OR $gfield[$gtabid]["data_type"][$key] == 18 OR $gfield[$gtabid]["data_type"][$key] == 46){
 
         // recursive
         if($GLOBALS['gselectpool'][$mselecttype]['recursivemode'][$gfield[$gtabid]["select_pool"][$key]]) {
@@ -4812,6 +4903,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
     }elseif($whr2){
         $query["where"][] = "(".$whr2.")";
     }
+
 
     return $query;
 }
@@ -4980,7 +5072,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
     $ojoin = array();
     if(!$gsr){$gsr = array();}
 
-    # full text search
+    # global table search in all fields
     if ($gsr[$gtabid] and is_array($gsr[$gtabid])) {
         $search_text = $gsr[$gtabid][0][0];
 
@@ -5002,14 +5094,20 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
 
             # for every field of the table
             foreach ($gfield[$gtabid]['fullsearch'] as $fieldId => $someKey) {
-                # ignore full text search entry
+                # ignore text search entry
                 if ($fieldId == 0) { continue; }
+
+                // use whole world modus
+                if($gtab["searchmodus"][$gtabid] == 1) {
+                    $search_text_ = explode(' ', $search_text);
+                // use OR modus
+                }else{
+                    $search_text_ = array($search_text);
+                }
 
                 # add search text to temporary gsr
                 $tmpGsr = array();
-
-                $search_text_ = explode(' ',$search_text);
-                foreach($search_text_ as $txtk => $txtv){
+                foreach ($search_text_ as $txtk => $txtv) {
                     $tmpGsr[$gtabid][0][$txtk] = $txtv;
                     $tmpGsr[$gtabid][$fieldId][$txtk] = $txtv;
                     $tmpGsr[$gtabid][$fieldId]['txt'][$txtk] = 1; // contains
@@ -5062,7 +5160,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
                         // permission
                         if(!$gfield[$fgtabid]["id"][$fieldid]){
                             if($fieldid < 1000) {
-                                lmb_log::error('get_where - missing gfield description or permission', null, $fgtabid, $fieldid,level:E_WARNING);
+                                Log::limbasError('get_where - missing gfield description or permission', null, $fgtabid, $fieldid,level: LogLevel::WARNING);
                             }
                             continue;
                         }
@@ -5087,7 +5185,10 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
                             $select[] = $gfield[$fgtabid]["select"][$fieldid];
                             #$select[] = $gtab["table"][$fgtabid].".".$gfield[$fgtabid]["field_name"][$fieldid]."_C AS ".$gfield[$fgtabid]["form_name"][$fieldid]."_C";
                         // default
-                        }else {
+                        }elseif(!empty($gfield[$fgtabid]["select"][$fieldid])) {
+                            $select[] = $gfield[$fgtabid]["select"][$fieldid];
+                        }
+                        else {
                             $select[] = $gtab["table"][$fgtabid] . "." . $gfield[$fgtabid]["field_name"][$fieldid] . " AS " . $gfield[$fgtabid]["form_name"][$fieldid];
                         }
                         $query["from_"][] = $gtab["table"][$fgtabid];
@@ -5259,7 +5360,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
         */
 
         /*----------------- Zusatz Wiedervorlage -------------------*/
-        if($filter['reminder'][$gtabid]){ #AND !$onlyfield
+        if($filter['reminder'][$gtabid] && !defined('LMB_SYNC_PROC')){ #AND !$onlyfield
             global $greminder;
 
             $gtabid_reminder = $greminder["argresult_id"][$filter['reminder'][$gtabid]];
@@ -5278,7 +5379,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
                 $where[] = "LMB_REMINDER_GROUP.USER_ID = ".parse_db_int($filter['reminder_user'][$reminderID]);
                 # filter nach Zugehörigkeit Gruppe&User
             }elseif($greminder[$gtabid_reminder]["groupbased"][$filter["reminder"][$gtabid]]){
-                $where[] = "(LMB_REMINDER_GROUP.GROUP_ID IN (".implode(",",$session["subgroup"]).") OR LMB_REMINDER.USER_ID = ".$session["user_id"].")";
+                $where[] = "(LMB_REMINDER_GROUP.GROUP_ID IN (".implode(",",$session["subgroup"]).") OR LMB_REMINDER_GROUP.USER_ID = ".$session["user_id"].")";
                 # filter nach Zugehörigkeit User
             }else{
                 $where[] = "LMB_REMINDER_GROUP.USER_ID = ".$session["user_id"];
@@ -5833,7 +5934,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
 
     /* --- SQL-Query --------------------------------------------- */
     if(!$select OR !$from){
-        lmb_log::error('query could not be executed - no select or from in query', null, $gtabid);
+        Log::limbasError('query could not be executed - no select or from in query', null, $gtabid);
         #lmb_alert('query could not be executed!');
         #error_showalert($GLOBALS['alert']);
         return false;
@@ -5929,7 +6030,12 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
     $rs = lmbdb_exec($db,$query["sql"]) or errorhandle(lmbdb_errormsg($db),$query["sql"],'result_query',__FILE__,__LINE__);
 
     # ---------------- Anzahl Reihen -------------
-    $num_rows = lmb_num_rows($rs,$query["count"],$gtab["numrowcalc"][$gtabid]);
+    $num_rows = 0;
+    if($single) {
+        $num_rows = 1;
+    }else{
+        $num_rows = lmb_num_rows($rs, $query["count"], $gtab["numrowcalc"][$gtabid]);
+    }
     $gresult[$gtabid]["res_count"] = $num_rows;
 
     # ---------------- Anzahl Ergebnisse -------------
@@ -6086,7 +6192,22 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
                             }else{
                                 $gresult[$fgtabid][$value][$i] = 0;
                             }
+
+                            // calculate php argument
+                            if($gfield[$fgtabid]["argument_typ"][$value] == 15 && $gfield[$fgtabid]["argument_modus"][$value] == 1){
+                                $argument[] = array('gtabid'=>$fgtabid,'fieldid'=>$value,'row'=>$i,'value'=>lmbdb_result($rs, $gtab["keyfield"][$fgtabid]));
+                            }
+
                         }
+
+                        /*----------------- argument -------------------*/
+                        if(is_array($argument)){
+                            foreach($argument as $akey => $avalue){
+                                lmbGetArgumentValue($avalue['gtabid'], $avalue['fieldid'], $avalue['value'], $gresult, $avalue['row']);
+                            }
+                            $argument = null;
+                        }
+
                     }
                     /*----------------- system fields -------------------*/
                     # only view
@@ -6126,7 +6247,7 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
                     $gresult[$fgtabid]["id"][$i] = $id;
 
                     #------------------- Wiedervorlage --------------------------------
-                    if($LINK[109] AND $single AND !$filter['report'][$gtabid]){
+                    if($LINK[109] && $single && !$filter['report'][$gtabid] && !defined('LMB_SYNC_PROC')){
                         $gresult[$fgtabid]["REMINDER"][$i] = lmb_getReminder($fgtabid,$id);
                     }
 
@@ -6178,7 +6299,7 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
 
             # --- Datensatz sperren bei Detaildatensatz -----------
             #if($gtab["lockable"][$gtabid] AND ($action == "gtab_change" OR $filter["alter"][$gtabid])){
-            if($single AND $gtab["lockable"][$gtabid] AND !$filter['report'][$gtabid]){
+            if($single AND $gtab["lockable"][$gtabid] AND !$filter['report'][$gtabid] && !defined('LMB_SYNC_PROC')){
                 lock_data($gtabid,$id,$gresult); // todo
                 #$action_ = lock_data($gtabid,$id,$gresult);
                 // set action
@@ -6190,7 +6311,7 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
                 try {
                     $indicator = eval("return " . str_replace('return ', '', $gtab["indicator"][$gtabid]));
                 } catch (ParseError $e) {
-                    lmb_log::error($lang[56] . ' -> ' . $lang[1255]  . ': ' . $e->getMessage());
+                    Log::limbasError($lang[56] . ' -> ' . $lang[1255]  . ': ' . $e->getMessage());
                 }
                 if($indicator === false){
                     $i--;
@@ -6239,11 +6360,17 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
  * @param array $detail
  * @return array resultset
  */
-function get_gresult($gtabid,$utyp=1,$filter=null,$gsr=null,$verkn=null,$onlyfield=null,$single=null,$extension=null,$pointer=null,$lmb_query=null,$detailmode=null){
-
-    if($lmb_query){global $lmb_query;}
+function get_gresult($gtabid,$utyp=1,$filter=null,$gsr=null,$verkn=null,$onlyfield=null,$single=null,$extension=null,$pointer=null,$get_sqlquery=null,$detailmode=null){
 
     if($lmb_query = get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield,$single,$extension)) {
+//error_log(print_r($lmb_query,1));
+        // global sql query for grouping /  table
+        if($get_sqlquery){
+            global $get_sqlquery;
+            $get_sqlquery = array();
+            $get_sqlquery[$gtabid] = $lmb_query['count'];
+        }
+
         if(!$detailmode) {
             return get_sqlresult($gtabid, $lmb_query, $verkn, $filter, $onlyfield, $single, $pointer, $utyp);
         }else{
@@ -6390,17 +6517,23 @@ function show_userRules($gtabid,$ID){
 
 #------------------- global ftyp functions --------------------------------
 
-# PHP Argument
-function ftyp_13($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos,$typ,$bzm=0) {
+# PHP Argumen
+function lmbGetArgumentValue($gtabid, $fieldid, $ID, &$gresult, $row=0, $force=false) {
     global $session;
     global $userdat;
     global $gtab;
     global $gfield;
     global $db;
 
+    if(!$ID){return true;}
 
-    if(!$ID){return;}
-    if($style){$style = "STYLE=\"".$pos.$style."\"";}
+    if(!$gresult) {
+        $gresult = get_gresult($gtabid, 1, null, null, null, null, $ID);
+    }
+
+    if($gresult[$gtabid][$fieldid][$row] && $gfield[$gtabid]["argument_edit"][$fieldid] && !$force) {
+        return true;
+    }
 
     if($gfield[$gtabid]["argument"][$fieldid]){
         $arg = explode("#", $gfield[$gtabid]["argument"][$fieldid]);
@@ -6409,17 +6542,17 @@ function ftyp_13($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos,$typ,$bzm=0) 
                 $arg_fieldid = lmb_substr($value,1,30);
                 # --- currency ----
                 if($gfield[$gtabid]["data_type"][$arg_fieldid] == 30){
-                    $arg[$key] = str_replace("\"","\\\"",$gresult[$gtabid][$arg_fieldid][$bzm]["V"]." ".$gresult[$gtabid][$arg_fieldid][$bzm]["C"]);
+                    $arg[$key] = str_replace("\"","\\\"",$gresult[$gtabid][$arg_fieldid][$row]["V"]." ".$gresult[$gtabid][$arg_fieldid][$row]["C"]);
                     # --- date ----
                 }elseif($gfield[$gtabid]["field_type"][$arg_fieldid] == 2){
                     $notime = $gfield[$gtabid]["datetime"][$arg_fieldid];
                     if($gfield[$gtabid]["data_type"][$arg_fieldid] == 40){$notime = 1;}
-                    $arg[$key] = get_date($gresult[$gtabid][$arg_fieldid][$bzm],$notime);
+                    $arg[$key] = get_date($gresult[$gtabid][$arg_fieldid][$row],$notime);
                     # --- Systemfields Date ----
                 }elseif($gfield[$gtabid]["field_type"][$arg_fieldid] == 15){
-                    $arg[$key] = get_date($gresult[$gtabid][$gfield[$gtabid]["field_name"][$arg_fieldid]][$bzm],1);
+                    $arg[$key] = get_date($gresult[$gtabid][$gfield[$gtabid]["field_name"][$arg_fieldid]][$row],1);
                 }else{
-                    $arg[$key] = str_replace("\"","\\\"",$gresult[$gtabid][$arg_fieldid][$bzm]);
+                    $arg[$key] = str_replace("\"","\\\"",$gresult[$gtabid][$arg_fieldid][$row]);
                 }
                 if(!$arg[$key] AND ($gfield[$gtabid]["field_type"][$arg_fieldid] == 5 OR $gfield[$gtabid]["field_type"][$arg_fieldid] == 17)){$arg[$key] = 0;}
             }
@@ -6431,13 +6564,12 @@ function ftyp_13($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos,$typ,$bzm=0) 
             $arg_result = eval($arg["result"].";");
             if($arg_result === false){return;}
             $arg_result = trim($arg_result);
-            /* ------- export ------- */
-            if($csvexp){$csvexp_zeile .= str_replace("\n"," ",str_replace("\t"," ",$arg_result));}
         }
 
         /* ------- Eintrag in DB bei Änderung ------- */
-        if(!$gresult[$gtabid][$fieldid][$bzm] OR ($arg_result != $gresult[$gtabid][$fieldid][$bzm] AND !$gfield[$gtabid]["argument_edit"][$fieldid])){
-            $gresult[$gtabid][$fieldid][$bzm] = $arg_result;
+        if(!$gresult[$gtabid][$fieldid][$row] OR $force OR ($arg_result != $gresult[$gtabid][$fieldid][$row] AND !$gfield[$gtabid]["argument_edit"][$fieldid])){
+
+            $gresult[$gtabid][$fieldid][$row] = $arg_result;
 
             # date
             if($gfield[$gtabid]["parse_type"][$fieldid] == 4){
@@ -6459,16 +6591,32 @@ function ftyp_13($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos,$typ,$bzm=0) 
             if($arg_result OR $arg_result == "0"){
                 $sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = $arg_result WHERE ID = ".$ID;
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+                if(!$rs){
+                    Log::limbasError('generate php argument failed', 'generate php argument failed', $gtabid, $fieldid, $ID);
+                    return false;
+                }
             }
-
-            if($gfield[$gtabid]["nformat"][$fieldid]){
-                $gresult[$gtabid][$fieldid][$bzm] = convert_NumberFormat($gresult[$gtabid][$fieldid][$bzm],$gfield[$gtabid]["nformat"][$fieldid]);
-            }
+            
         }
     }
 
-    return $gresult[$gtabid][$fieldid][$bzm];
+    return $arg_result;
 
 }
 
-?>
+function lmbGetColumnTitle($filter, $tabId, $fieldId, $vId) {
+    global $gfield, $lang;
+    
+    $columnTitle = $gfield[$tabId]['spelling'][$fieldId];
+    if(is_array($filter['ext_RelationFields']) && array_key_exists('names',$filter['ext_RelationFields']) &&
+        is_array($filter['ext_RelationFields']['names']) && array_key_exists($vId,$filter['ext_RelationFields']['names']) &&
+        is_array($filter['ext_RelationFields']['names'][$vId]) && array_key_exists($fieldId,$filter['ext_RelationFields']['names'][$vId])) {
+
+        $columnTitle = $filter['ext_RelationFields']['names'][$vId][$fieldId];
+
+        if(array_key_exists($columnTitle,$lang)){
+            $columnTitle = $lang[$columnTitle];
+        }
+    }
+    return $columnTitle;
+}

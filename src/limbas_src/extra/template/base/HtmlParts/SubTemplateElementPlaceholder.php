@@ -11,7 +11,7 @@ namespace Limbas\extra\template\base\HtmlParts;
 
 use Limbas\extra\template\base\TemplateConfig;
 use Limbas\extra\template\base\TemplateElement;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
 
 /**
  * Class SubTemplateElementPlaceholder
@@ -51,7 +51,7 @@ class SubTemplateElementPlaceholder extends AbstractHtmlPart {
     public function getAsHtmlArr(): array
     {
         if (!$this->templateElement) {
-            lmb_log::error("TemplateElement placeholder {$this->name} could not be resolved!", 'Not all placeholders could be resolved!');
+            Log::limbasError("TemplateElement placeholder {$this->name} could not be resolved!", 'Not all placeholders could be resolved!');
             return array('${' . $this->name . '}');
         }
         return $this->templateElement->getAsHtmlArr();

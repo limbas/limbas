@@ -7,177 +7,51 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Log;
+
+require_once __DIR__ .'/constants/postgres.php';
 
 
-
-# LMB_DBTYPE #
-define("LMB_DBTYPE_CHAR","CHAR");
-define("LMB_DBTYPE_VARCHAR","VARCHAR");
-define("LMB_DBTYPE_INTEGER","INTEGER");
-define("LMB_DBTYPE_SMALLINT","SMALLINT");
-define("LMB_DBTYPE_BIGINT","BIGINT");
-define("LMB_DBTYPE_FLOAT","FLOAT");
-define("LMB_DBTYPE_NUMERIC","NUMERIC");
-define("LMB_DBTYPE_FIXED","NUMERIC");
-define("LMB_DBTYPE_BOOLEAN","BOOLEAN");
-define("LMB_DBTYPE_DATE","DATE");
-define("LMB_DBTYPE_TIME","TIME");
-define("LMB_DBTYPE_TIMESTAMP","TIMESTAMP");
-define("LMB_DBTYPE_LONG","TEXT");
-define("LMB_DBTYPE_ASCII","");
-define("LMB_DBTYPE_BYTE","");
-define("LMB_DBTYPE_SERIAL","SERIAL");
-
-
-# LMB_DBDEF #
-define("LMB_DBDEF_TIME","CURRENT_TIME");
-define("LMB_DBDEF_DATE","CURRENT_DATE");
-define("LMB_DBDEF_TIMESTAMP","CURRENT_TIMESTAMP");
-define("LMB_DBDEF_FALSE","FALSE");
-define("LMB_DBDEF_TRUE","TRUE");
-define("LMB_DBDEF_NULL","NULL");
-define("LMB_DBDEF_DTNULL","NULL");
-
-# LMB_DBRETYPE #
-define("LMB_DBRETYPE_CHAR","CHAR");
-define("LMB_DBRETYPE_VARCHAR","VARCHAR");
-define("LMB_DBRETYPE_BPCHAR","CHAR");
-define("LMB_DBRETYPE_INT8","INTEGER");
-define("LMB_DBRETYPE_INT4","INTEGER");
-define("LMB_DBRETYPE_INT2","SMALLINT");
-define("LMB_DBRETYPE_FLOAT4","FLOAT");
-define("LMB_DBRETYPE_FLOAT8","FLOAT");
-define("LMB_DBRETYPE_NUMERIC","FIXED");
-define("LMB_DBRETYPE_BOOL","BOOLEAN");
-define("LMB_DBRETYPE_DATE","DATE");
-define("LMB_DBRETYPE_TIME","TIME");
-define("LMB_DBRETYPE_TIMESTAMP","TIMESTAMP");
-define("LMB_DBRETYPE_TIMESTAMPTZ","TIMESTAMP");
-define("LMB_DBRETYPE_TEXT","LONG");
-
-# LMB_DBREDEF #
-define("LMB_DBREDEF_NOW()","TIMESTAMP");
-define("LMB_DBREDEF_CURRENT_TIMESTAMP","TIMESTAMP");
-define("LMB_DBREDEF_CURRENT_DATE","DATE");
-define("LMB_DBREDEF_CURRENT_TIME","TIME");
-define("LMB_DBREDEF_FALSE","FALSE");
-define("LMB_DBREDEF_TRUE","TRUE");
-
-# LMB_DBFUNC #
-define("LMB_DBFUNC_ISNULL","IS NULL");
-define("LMB_DBFUNC_PRIMARY_KEY","PRIMARY KEY");
-define("LMB_DBFUNC_UNIQUE","UNIQUE");
-define("LMB_DBFUNC_CONCAT","||");
-#define("LMB_DBFUNC_UMASCB","\\");
-define("LMB_DBFUNC_OFFSET_START",0);
-define("LMB_DBFUNC_LIMIT","LIMIT");
-define("LMB_DBFUNC_ROWNO","");
-define("LMB_DBFUNC_SPLIT_TRIGGER","EXECUTE PROCEDURE");
-define("LMB_DBFUNC_ADD_COLUMN_FIRST","ADD COLUMN");
-define("LMB_DBFUNC_ADD_COLUMN_NEXT","ADD COLUMN");
-define("LMB_DBFUNC_DROP_COLUMN_FIRST","DROP COLUMN");
-define("LMB_DBFUNC_DROP_COLUMN_NEXT","DROP COLUMN");
-define("LMB_DBFUNC_DATE","DATE(");
-define("LMB_DBFUNC_TIME","TIME(");
-define("LMB_DBFUNC_YEAR","EXTRACT(YEAR FROM ");
-define("LMB_DBFUNC_MONTH","EXTRACT(MONTH FROM ");
-define("LMB_DBFUNC_DAY","EXTRACT(DAY FROM ");
-define("LMB_DBFUNC_HOUR","EXTRACT(HOUR FROM ");
-define("LMB_DBFUNC_MINUTE","EXTRACT(MINUTE FROM ");
-
-define("LMB_DBFUNC_LONGHANDLE",1);
-define("LMB_DBFUNC_PROCEDUREHANDLE",1);
-define("LMB_DBFUNC_FKEYHANDLE",1);
-define("LMB_DBFUNC_FLOATHANDLE",0);
-define("LMB_DBFUNC_TIMEHANDLE",1);
-define("LMB_DBFUNC_MATVIEWSHANDLE",1);
-define("LMB_DBFUNC_NUMROWS",1);
-define("LMB_DBFUNC_VIEWGALIAS",0);
-define("LMB_DBFUNC_SEQUENCE",1);
-define("LMB_DBFUNC_VIEWDEPENDENCY",1);
-define("LMB_DBCURSOR",0);
-define("LMB_DBFUNC_SAVEPOINT",1);
-define("LMB_DBFUNC_WITH_RECURSIVE", 'WITH RECURSIVE');
-define("LMB_DBFUNC_MAXFIELDNAMESIZE",120);
-define("LMB_DBFUNC_MAXTABLENAMESIZE",30);
-define("LMB_DBFUNC_TRANSACTION",1);
-define("LMB_DBFUNC_TRANSACTION_WITH_SCHEMA",1);
-define("LMB_DBFUNC_UMASCB","\\");
-
-if($DBA['ODBCDRIVER'] == 'PDO') {
-    define("LMB_DBFUNC_PREPAREHANDLE", 1);
-}else{
-    define("LMB_DBFUNC_PREPAREHANDLE", 0);
-}
-
-# workaround for postgresql versions
-/*
-if($DBA['VERSION'] AND $DBA['VERSION'] < 90100){
-	define("LMB_DBFUNC_UMASCB","\\\\");
-}else{
-	define("LMB_DBFUNC_UMASCB","\\");
-}
-*/
-
-
-# odbc connect:
+/**
+ * 
+ * @param $host
+ * @param $database
+ * @param $dbuser
+ * @param $dbpass
+ * @param $dbdriver
+ * @param $port
+ * @return null
+ * 
+ * @deprecated Use Dbf::connect instead.
+ */
 function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null,$port=null){
-
-    if($dbdriver == 'PDO') {
-        if(!$port){$port = 5432;}
-        $dsn = "pgsql:host=$host;port=$port;dbname=$database";
-    }elseif($dbdriver) {
-		$dsn = "Driver=$dbdriver;Server=$host;Port=$port;Database=$database;ReadOnly=No";
-		#SQL_CUR_USE_ODBC
-		#SQL_CUR_DEFAULT
-		#SQL_CUR_USE_DRIVER
-    }else{
-	    $dsn = $database;
-	}
-
-	$db = lmbdb_pconnect($dsn,$dbuser,$dbpass);
-    
-	if($db){dbf_setVariables($db);return $db;}
-	else{echo("<div class=\"alert alert-danger\"><h1>Database connection failed</h1><p>($dsn)<BR>".lmbdb_errormsg()."</p></div>"); return false;}
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::connect instead.');
+    return Dbf::connect($host,$database,$dbuser,$dbpass,$dbdriver,intval($port));
 }
 
 /**
  * convert stamp for db
- *
  * @param number $p
  * @return string
+ * 
+ * @deprecated Use Dbf::convertToDbTimestamp instead.
  */
 function dbf_1($p,$t=0){
-	if($t){
-		if($p instanceof DateTime) {
-			return $p->format("Y-m-d");
-		} else {
-			return date("Y-m-d",1);
-		}
-	}else{
-		if($p instanceof DateTime) {
-			return $p->format("Y-m-d H:i:s");
-		} else {
-			return date("Y-m-d H:i:s",1);
-		}
-	}
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::convertToDbTimestamp instead.');
+    return Dbf::convertToDbTimestamp($p,$t);
 }
 
 /**
  * convert date from db to stamp
- *
  * @param string $p
  * @return number
+ * 
+ * @deprecated Use Dbf::convertFromDbTimestamp instead.
  */
 function dbf_2($p){
-	if(!$p){return false;}
-	$db_date = lmb_substr($p,0,19);
-	$db_date = preg_replace("/[^0-9]/",";",$db_date);
-	$db_date = explode(";",$db_date);
-	if(is_numeric($db_date[0])){
-		$result_stamp = mktime($db_date[3],$db_date[4],$db_date[5],$db_date[1],$db_date[2],$db_date[0]);
-	}else{$result_stamp = 0;}
-	return $result_stamp;
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::convertFromDbTimestamp instead.');
+    return Dbf::convertFromDbTimestamp($p);
 }
 
 /**
@@ -185,9 +59,12 @@ function dbf_2($p){
  *
  * @param string $p
  * @return string
+ * 
+ * @deprecated Use Dbf::parseBlob instead.
  */
 function dbf_6($p){
-	return dbf_7($p);
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::parseBlob instead.');
+    return Dbf::parseBlob($p ?? '');
 }
 
 /**
@@ -195,22 +72,25 @@ function dbf_6($p){
  *
  * @param string $p
  * @return string
+ * 
+ * @deprecated Use Dbf::parseString instead.
  */
 function dbf_7($p){
-	return str_replace("\\",LMB_DBFUNC_UMASCB,str_replace("'","''",$p));
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::parseBlob instead.');
+    return Dbf::parseString($p ?? '');
 }
 
 
 /**
  * get sequence
  *
- * @param array $p[0]=name
+ * @param string $p=name
+ * 
+ * @deprecated Use Dbf::getSequence instead.
  */
 function dbf_8($p){
-	global $db;
-
-	$rs = lmbdb_exec($db,"SELECT NEXTVAL('".dbf_4($p)."') AS NEXTSEQ") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
-	return lmbdb_result($rs,"NEXTSEQ");
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getSequence instead.');
+    return Dbf::getSequence($p);
 }
 
 /**
@@ -218,13 +98,12 @@ function dbf_8($p){
  *
  * @param string $p
  * @return string
+ * 
+ * @deprecated Use Dbf::handleCaseSensitive instead.
  */
 function dbf_4($p){
-	return lmb_strtolower($p);
-}
-
-function dbf_4a($p){
-	return strtoupper($p);
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::handleCaseSensitive instead.');
+    return Dbf::handleCaseSensitive($p);
 }
 
 /**
@@ -232,9 +111,12 @@ function dbf_4a($p){
  *
  * @param array $p
  * @return string
+ * 
+ * @deprecated Use Dbf::sqlTimeDiff instead.
  */
 function dbf_9($p){
-	return "(".$p[1]."-".$p[0].")";
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::sqlTimeDiff instead.');
+    return Dbf::sqlTimeDiff($p[0],$p[1]);
 }
 
 /**
@@ -242,9 +124,12 @@ function dbf_9($p){
  *
  * @param array $p
  * @return string
+ * 
+ * @deprecated Use Dbf::sqlDateDiff instead.
  */
 function dbf_10($p){
-	return "(".$p[1]."-".$p[0].")";
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::sqlDateDiff instead.');
+    return Dbf::sqlDateDiff($p[0],$p[1]);
 }
 
 /**
@@ -253,35 +138,22 @@ function dbf_10($p){
  * @param $field
  * @param $type
  * @return string
+ * 
+ * @deprecated Use Dbf::calculateChecksum instead.
  */
 function dbf_12($field,$type=null){
-    global $db;
-    global $gtab;
-    global $gfield;
-
-    if($type == 4){
-        return "coalesce(md5(floor(extract(epoch from $field))::text), ' ')";
-    } else if($gfield[$gtabid]['parse_type'][$fieldid] == 3){
-        return "coalesce(md5($field::integer::text), ' ')";
-    }else {
-        return "coalesce(md5($field::text), ' ')";
-    }
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::calculateChecksum instead.');
+    return Dbf::calculateChecksum($field,$type);
 }
 
 
-
+/**
+ * @param $db
+ * 
+ * @deprecated Use Dbf::setVariables instead.
+ */
 function dbf_setVariables($db) {
-    global $session;
-    //set default limbas variables
-	if (isset($session['user_id']) && is_numeric($session['user_id'])) {
-        lmbdb_exec($db,'SET lmb.userid = '.$session['user_id'].';');
-	}
-    if (isset($session['mid']) && is_numeric($session['mid'])) {
-        lmbdb_exec($db,'SET lmb.mid = '.$session['mid'].';');
-    }
-    if (isset($session['multitenant'])) {
-        lmbdb_exec($db,'SET lmb.mids = \''.implode(',',$session['multitenant']).'\';');
-        //where in: any(string_to_array(current_setting('lmb.mids'), ',') :: int [] )
-    }
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::setVariables instead.');
+    Dbf::setVariables($db);
 }
 

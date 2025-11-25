@@ -11,7 +11,7 @@ namespace Limbas\extra\template\form;
 
 use Limbas\extra\template\base\HtmlParts\DataPlaceholder;
 use Limbas\extra\template\base\TemplateConfig;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
 
 class FormDataPlaceholder extends DataPlaceholder
 {
@@ -129,14 +129,14 @@ class FormDataPlaceholder extends DataPlaceholder
         }
 
         if ($this->fieldlist === null) {
-            lmb_log::error("Data placeholder {$this->fullMatch} could not be resolved!", 'Not all data placeholders could be resolved!');
+            Log::limbasError("Data placeholder {$this->fullMatch} could not be resolved!", 'Not all data placeholders could be resolved!');
             return array();
         }
 
         list($gtabid, $fieldid) = explode(';', $this->fieldlist[0]);
         $funcid = $gfield[$gtabid]['funcid'][$fieldid];
         if (is_null($funcid)) {
-            lmb_log::error("Data placeholder {$this->fullMatch} could not be resolved! Function not found!", 'Not all data placeholders could be resolved!');
+            Log::limbasError("Data placeholder {$this->fullMatch} could not be resolved! Function not found!", 'Not all data placeholders could be resolved!');
             return array();
         }
         

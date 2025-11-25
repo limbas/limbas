@@ -13,6 +13,5 @@ require_once(COREPATH . 'gtab/gtab_type_update.lib');
 require_once(COREPATH . 'lib/include.lib');
 require_once(COREPATH . 'lib/include_admin.lib');
 
-require_once(COREPATH . 'extra/lmbObject/log/LimbasLogger.php');
 require_once(COREPATH . 'admin/tools/datasync/filesync.lib');
 

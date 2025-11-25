@@ -257,15 +257,9 @@ use Limbas\layout\Layout;
                     <?php } ?>
 
 
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label"><?= $lang[903] ?></label>
-                        <div class="col-sm-8">
-                            <TEXTAREA NAME="userdata[iprange]"
-                                      class="form-control form-control-sm"><?= $result_user['iprange'] ?></TEXTAREA>
-                        </div>
-                    </div>
+
                     <div class="row">
-                        <label class="col-sm-4 col-form-label">Farbkennung</label>
+                        <label class="col-sm-4 col-form-label"><?=$lang[156]?></label>
                         <div class="col-sm-8">
                             <input type="text" class="form-control form-control-sm" name="userdata[usercolor]"
                                    value="<?= $result_user['usercolor'] ?>"
@@ -441,6 +435,20 @@ use Limbas\layout\Layout;
                         </div>
                     </div>
 
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?= $lang[2935] ?></label>
+                        <div class="col-sm-8">
+                            <SELECT NAME="userdata[printer]" class="form-select form-select-sm"><option>
+                                <?php
+                                global $gprinter;
+                                foreach ($gprinter as $pid => $printer) {
+                                    echo '<option value="' . $pid . '" ' . (($result_user["printer"] == $pid) ? 'selected' : '') . '>' . $printer['name'] . '</option>';
+                                }
+                                ?>
+                            </SELECT>
+
+                        </div>
+                    </div>
 
                     <div class="row">
                         <label class="col-sm-4 col-form-label"><?= $lang[616] ?></label>
@@ -460,6 +468,7 @@ use Limbas\layout\Layout;
                             </div>
                         </div>
                     </div>
+
 
                     <?php if ($ID): ?>
                         <hr>

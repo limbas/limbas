@@ -19,12 +19,13 @@ class Excel extends FiletypeExporter
      * @throws IOException
      * @throws WriterNotOpenedException
      */
-    public function export(array $gresult, int $gtabid, bool $onlyGetVisibleRows): void
+    public function export(array $gresult, int $gtabid): void
     {
         global $gfield;
         global $filter;
+        global $umgvar;
 
-        $sortKeys = array_keys($gfield[$gtabid]["sort"]);
+        $sortKeys = array_keys($gfield[$gtabid]["key"]);
 
         $writer = new Writer();
 
@@ -34,7 +35,7 @@ class Excel extends FiletypeExporter
 
         // Set the column titles in the top row
         foreach ($sortKeys as $fieldId) {
-            if (!$gfield[$gtabid]["funcid"][$fieldId]) {
+            if (!$gfield[$gtabid]["funcid"][$fieldId] OR $gfield[$gtabid]["col_hide"][$fieldId]) {
                 continue;
             }
 
@@ -42,25 +43,26 @@ class Excel extends FiletypeExporter
             $hideCols = $filter["hidecols"][$gtabid][$fieldId];
 
             if (!$hideCols && $fieldType < 100 && $fieldType != 20) {
-                $titles[] = $gfield[$gtabid]["field_name"][$fieldId];
+                if($umgvar['export_sys_column_header']) {
+                    $titles[] = $gfield[$gtabid]['field_name'][$fieldId];
+                }
+                else
+                {
+                    $titles[] = $gfield[$gtabid]['spelling'][$fieldId];
+                }
             }
         }
 
         $writer->addRow(Row::fromValues($titles));
 
-        // Only get results of visible rows
-        if (!$onlyGetVisibleRows) {
-            $rescount = $gresult[$gtabid]["res_count"];
-        } else {
-            $rescount = $gresult[$gtabid]["res_viewcount"];
-        }
+        $rescount = $gresult[$gtabid]["res_count"];
 
         // Set the data in the rows
         for ($resultCounter = 0; $resultCounter < $rescount; $resultCounter++) {
             $row = [];
             $styles = [];
             foreach ($sortKeys as $fieldId) {
-                if (!$gfield[$gtabid]["funcid"][$fieldId]) {
+                if (!$gfield[$gtabid]["funcid"][$fieldId] OR $gfield[$gtabid]["col_hide"][$fieldId]) {
                     continue;
                 }
 
@@ -88,12 +90,12 @@ class Excel extends FiletypeExporter
                             $formattedField = implode("; ", $formattedField["value"]);
                         } elseif ($fieldType == 19) {
                             $output = [];
-                            foreach($formattedField as $key => $value) {
-                                if($key === 'attrvalue' || $key === 'keyword') {
+                            foreach ($formattedField as $key => $value) {
+                                if ($key === 'attrvalue' || $key === 'keyword') {
                                     continue;
                                 }
 
-                                $output[] = $value . (is_array($formattedField['attrvalue']) && array_key_exists($key,$formattedField['attrvalue']) && !empty($formattedField['attrvalue'][$key]) ? ' (' . $formattedField['attrvalue'][$key] . ')' : '');
+                                $output[] = $value . (is_array($formattedField['attrvalue']) && array_key_exists($key, $formattedField['attrvalue']) && !empty($formattedField['attrvalue'][$key]) ? ' (' . $formattedField['attrvalue'][$key] . ')' : '');
                             }
                             $formattedField = implode("; ", $output);
                         } else {
@@ -133,10 +135,10 @@ class Excel extends FiletypeExporter
                         $dateTime = (new DateTime)->setTimestamp((int)$formattedField);
                         $dateFormat = $gfield[$gtabid]['datetime'][$fieldId];
 
-                        if($dataType === 40) {
+                        if ($dataType === 40) {
                             $dateFormat = 1;
                         }
-                        
+
                         $formatCode = match ((int)$dateFormat) {
                             1 => setDateFormat(1, 2),               // date
                             4 => setDateFormat(4, 2),               // date with time
@@ -146,7 +148,7 @@ class Excel extends FiletypeExporter
                         $formattedField = $formattedField == '' ? '' : $dateTime;
 
                         $fieldStyle = (new Style())->setFormat($formatCode);
-                        }
+                    }
 
                     # max length of chars excel accepts
                     $maxLengthExcel = 32767;
@@ -155,7 +157,7 @@ class Excel extends FiletypeExporter
                         $formattedField = substr($formattedField, 0, $maxLengthExcel);
                     }
 
-                        $row[] = $formattedField;
+                    $row[] = $formattedField;
                     $styles[] = $fieldStyle;
                 }
             }

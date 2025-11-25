@@ -29,33 +29,82 @@ class Route
     }
 
 
-    public static function get(string $path, array $controller, string $name): void
+    public static function get(string $path, array $controller, string $name, array $requirements = []): void
     {
-        self::addRoute($path, $controller, $name, ['GET', 'HEAD', 'OPTIONS']);
+        self::addRoute($path, $controller, $name, ['GET', 'HEAD', 'OPTIONS'], $requirements);
     }
 
-    public static function post(string $path, array $controller, string $name): void
+    public static function post(string $path, array $controller, string $name, array $requirements = []): void
     {
-        self::addRoute($path, $controller, $name, ['POST']);
+        self::addRoute($path, $controller, $name, ['POST'], $requirements);
     }
 
-    public static function put(string $path, array $controller, string $name): void
+    public static function put(string $path, array $controller, string $name, array $requirements = []): void
     {
-        self::addRoute($path, $controller, $name, ['PUT']);
+        self::addRoute($path, $controller, $name, ['PUT'], $requirements);
     }
 
-    public static function delete(string $path, array $controller, string $name): void
+    public static function patch(string $path, array $controller, string $name, array $requirements = []): void
     {
-        self::addRoute($path, $controller, $name, ['DELETE']);
+        self::addRoute($path, $controller, $name, ['PATCH'], $requirements);
     }
 
+    public static function delete(string $path, array $controller, string $name, array $requirements = []): void
+    {
+        self::addRoute($path, $controller, $name, ['DELETE'], $requirements);
+    }
+    
+    public static function all(string $path, string $controller, string $name, array $requirements = []): void
+    {
+        self::get($path, [$controller,'get'], $name.'.get', $requirements);
+        self::post($path, [$controller,'post'], $name.'.post', $requirements);
+        self::put($path, [$controller,'put'], $name.'.put', $requirements);
+        self::patch($path, [$controller,'patch'], $name.'.patch', $requirements);
+        self::delete($path, [$controller,'delete'], $name.'.delete', $requirements);
+    }
 
-    protected static function addRoute(string $path, array $controller, string $name, array $methods): void
+    public static function resource(string $path, string $controller, string $name, array $options = []): void
+    {
+        $exclude = [];
+        if(array_key_exists('exclude', $options)) {
+            $exclude = $options['exclude'];
+        }
+
+        if(array_key_exists('only', $options)) {
+            $possibleRoutes = ['index','show','create','store','edit','update','delete'];
+            $exclude = array_diff($possibleRoutes, $options['only']);
+        }
+        
+        if(!in_array('index', $exclude)) {
+            self::get($path, [$controller, 'index'], $name . '.index');
+        }
+        if(!in_array('show', $exclude)) {
+            self::get($path . '/{id}', [$controller, 'show'], $name . '.show');
+        }
+        if(!in_array('create', $exclude)) {
+            self::get($path . '/create', [$controller, 'create'], $name . '.create');
+        }
+        if(!in_array('store', $exclude)) {
+            self::post($path, [$controller, 'store'], $name . '.store');
+        }
+        if(!in_array('edit', $exclude)) {
+            self::get($path . '/{id}/edit', [$controller, 'edit'], $name . '.edit');
+        }
+        if(!in_array('update', $exclude)) {
+            self::put($path . '/{id}', [$controller, 'update'], $name . '.update');
+        }
+        if(!in_array('delete', $exclude)) {
+            self::delete($path . '/{id}', [$controller, 'delete'], $name . '.delete');
+        }
+    }
+    
+
+    protected static function addRoute(string $path, array $controller, string $name, array $methods, array $requirements = []): void
     {
         self::initRouteCollection();
         self::$routes->add($name, new SymfonyRoute($path, [
             '_controller' => $controller,
-        ], methods: $methods));
+        ], $requirements, methods: $methods));
     }
 
     private static function initRouteCollection(): void

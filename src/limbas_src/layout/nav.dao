@@ -29,6 +29,7 @@ function menu_get_standard($id, $bzm){
 	$menu[$bzm]["icon"] = $LINK["icon_url"][$id];
 	$menu[$bzm]["gicon"] = $LINK["gicon"][$id];
 	$menu[$bzm]["child"] = null;
+    $menu[$bzm]['menu_search'] = $LINK['menu_search'][$id];
 
 	return $menu;
 }
@@ -61,7 +62,7 @@ function menu_get_snapshot($tabid, $snapid, $depth = null) {
     $menu["depth"] = $depth;
     $menu["name"] = $gsnap[$tabid]["name"][$snapid];
     $menu["desc"] = $gsnap[$tabid]["name"][$snapid] . " ($snapid)";
-    $menu["link"] = "main.php?action=gtab_erg&gtabid=$tabid&snap_id=".$snapid."&frame_type=1";
+    $menu["link"] = "main.php?action=gtab_erg&gtabid=$tabid&snap_id=".$snapid."&filter_page=1";
     $menu["icon"] = " lmb-icon-8 lmb-camera ";
     $menu["child"] = null;
     $menu["attr"] = 'data-lmb-type="snap" data-lmb-id="' . $snapid . '" data-lmb-tabid="' . $tabid . '"';
@@ -109,7 +110,7 @@ function menu_get_form(int $formId, bool $isAdmin = false, $depth = null, Form $
         }
 
         if($form->gtabId){
-            $menu['link'] = 'main.php?action=gtab_erg&gtabid=' . $form->gtabId . '&form_id=' . $form->id . '&HEADER='.urlencode($form->name)."&ID=0";
+            $menu['link'] = 'main.php?action=gtab_erg&gtabid=' . $form->gtabId . '&form_id=' . $form->id . '&HEADER='.urlencode($form->name)."&ID=0&filter_page=1";
         }else{
             $menu["link"] = 'main.php?action=gtab_form&form_id=' . $form->id . '&HEADER='.urlencode($form->name);
         }
@@ -118,7 +119,7 @@ function menu_get_form(int $formId, bool $isAdmin = false, $depth = null, Form $
         if($form->mode === FormMode::NEW) {
             $menu['link'] = 'main_admin.php?action=setup_form_show&id=' . $form->id;
         } else {
-            $menu['link'] = 'main_admin.php?action=setup_form_frameset&form_typ=' . $form->formType->value . '&form_id=' . $form->id . '&referenz_tab=' . $form->gtabId . '&type=form';
+            $menu['link'] = 'main_admin.php?action=setup_form_frameset&form_typ=' . $form->formType->value . '&form_id=' . $form->id . '&referenz_tab=' . $form->gtabId . '&type=form&filter_page=1';
         }
         
         
@@ -273,7 +274,7 @@ function menu_get_table($tabid, $isAdmin=false, $depth=0) {
     }
 
     # user link
-    $menu['link'] = "main.php?action=gtab_erg&gtabid=$tabid&frame_type=1";
+    $menu['link'] = "main.php?action=gtab_erg&gtabid=$tabid&filter_page=1";
 
     # get correct icon
     if($gtab['typ'][$tabid] == 5) {
@@ -493,6 +494,7 @@ function menu_get_admin_setup(){
     if($LINK[207]){$menu0 = menu_get_standard(207,15);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[$LINK_ID['setup_mails']]){$menu0 = menu_get_standard($LINK_ID['setup_mails'],16);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[$LINK_ID['setup_mail_templates']]){$menu0 = menu_get_standard($LINK_ID['setup_mail_templates'],17);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[$LINK_ID['setup_tinymce']]){$menu0 = menu_get_standard($LINK_ID['setup_tinymce'],18);$menu1 = array_merge($menu1,$menu0);}
     return $menu1;
 }
 
@@ -748,7 +750,7 @@ if($LINK[279]){
 			foreach ($gtabletree[$tabid] as $treeid => $value2){
 				$menu1[intval("2790".$treeid)]["name"] = $gtabletree[$tabid][$treeid]["poolname"];
 				$menu1[intval("2790".$treeid)]["desc"] = $gtabletree[$tabid][$treeid]["poolname"];
-				$menu1[intval("2790".$treeid)]["onclick"] = "lmb_treeOpen('PH_279_2790$treeid','$tabid','$treeid');";
+				$menu1[intval("2790".$treeid)]["onclick"] = "lmb_treeOpen('PH_279_2790$treeid','$tabid','$treeid',this);";
 				$menu1[intval("2790".$treeid)]["extension"] = 1;
 				$menu01[intval("2790".$treeid)][0]["child"]  = array("<div id=\"");
 				
@@ -788,7 +790,7 @@ if($LINK[21]){
 
 	# ------------- profile -------------
 	$menu1 = menu_get_standard(21,0);
-	$menu1[0]["gicon"] = " lmb-icon-32 lmb-cog ";
+	$menu1[0]["gicon"] = " lmb-icon lmb-cog ";
 		# usersettings
 		if($LINK[29]){$menu0 = menu_get_standard(29,0);}
 		# colors
@@ -799,7 +801,7 @@ if($LINK[21]){
 	if($LINK[246]){
 		$menu0 = Array();
 		$menu0 = menu_get_standard(246,1);
-		$menu0[1]["gicon"] = " lmb-icon-32 lmb-user ";
+		$menu0[1]["gicon"] = " lmb-icon lmb-user ";
 		$menu1 = array_merge($menu1,$menu0);
 
 		$menu0 = array();
@@ -852,7 +854,7 @@ if($LINK[17]){
 	if($LINK[58]){
 		$menu0 = menu_get_standard(58,0);
 		$menu0[0]["child"] = menu_get_admin_setup();
-		$menu0[0]["gicon"] = " lmb-icon-32 lmb-cogs ";
+		$menu0[0]["gicon"] = " lmb-icon lmb-cogs ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 
@@ -860,7 +862,7 @@ if($LINK[17]){
 	if($LINK[59]){
 		$menu0 = menu_get_standard(59,1);
 		$menu0[1]["child"] = menu_get_admin_tools();
-		$menu0[1]["gicon"] = " lmb-icon-32 lmb-wrench ";
+		$menu0[1]["gicon"] = " lmb-icon lmb-wrench ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 
@@ -868,7 +870,7 @@ if($LINK[17]){
 	if($LINK[54]){
 		$menu0 = menu_get_standard(54,2);
 		$menu0[2]["child"] = menu_get_admin_user();
-		$menu0[2]["gicon"] = " lmb-icon-32 lmb-group ";
+		$menu0[2]["gicon"] = " lmb-icon lmb-group ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 
@@ -876,7 +878,7 @@ if($LINK[17]){
 	if($LINK[56]){
 		$menu0 = menu_get_standard(56,3);
 		$menu0[3]["child"] = menu_get_admin_tables();
-		$menu0[3]["gicon"] = " lmb-icon-32 lmb-table ";
+		$menu0[3]["gicon"] = " lmb-icon lmb-table ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 
@@ -884,7 +886,7 @@ if($LINK[17]){
 	if($LINK[107]){
 		$menu0 = menu_get_standard(107,4);
 		$menu0[4]["child"] = menu_get_admin_forms();
-		$menu0[4]["gicon"] = "lmb-icon-cus lmb-icon-32 lmb-form-black ";
+		$menu0[4]["gicon"] = "lmb-icon-cus lmb-form-black ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 
@@ -892,7 +894,7 @@ if($LINK[17]){
 	if($LINK[65]){
 		$menu0 = menu_get_standard(65,5);
 		$menu0[5]["child"] = menu_get_admin_reports();
-		$menu0[5]["gicon"] = "lmb-icon-cus lmb-icon-32 lmb-file-text-black ";
+		$menu0[5]["gicon"] = "lmb-icon-cus lmb-file-text-black ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 
@@ -900,7 +902,7 @@ if($LINK[17]){
 	if($LINK[114]){
 		$menu0 = menu_get_standard(114,6);
 		$menu0[6]["child"] = menu_get_admin_diagramms();
-		$menu0[6]["gicon"] = " lmb-icon-32 lmb-bar-chart ";
+		$menu0[6]["gicon"] = " lmb-icon lmb-bar-chart ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 	
@@ -908,21 +910,21 @@ if($LINK[17]){
 	if($LINK[280]){
 		$menu0 = menu_get_standard(280,7);
 		$menu0[7]["child"] = menu_get_admin_tabletree();
-		$menu0[7]["gicon"] = " lmb-icon-32 lmb-tree ";
+		$menu0[7]["gicon"] = " lmb-icon lmb-tree ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 	
 	# reminder
 	if($LINK[289]){
 		$menu0 = menu_get_standard(289,8);
-		$menu0[8]["gicon"] = " lmb-icon-32 lmb-reminder ";
+		$menu0[8]["gicon"] = " lmb-icon lmb-reminder ";
 		$menu1 = array_merge($menu1,$menu0);
 	}
 	
 	# workflow
 	if($LINK[229]){
 		$menu0 = menu_get_standard(229,9);
-		$menu0[9]["gicon"] = " lmb-icon-cus lmb-icon-32 lmb-workflow-menu ";
+		$menu0[9]["gicon"] = " lmb-icon-cus lmb-workflow-menu ";
 		$menu0[9]["child"] = menu_get_admin_workflow();
 		$menu1 = array_merge($menu1,$menu0);
 	}

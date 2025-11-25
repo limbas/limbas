@@ -3,9 +3,9 @@
     <?php if ($LINK[304] and $gprinter): ?>
         <div class="form-group mb-2">
             <label class="form-label mb-0"><?=$lang[2935]?></label>
-            <select name="report_printer" class="form-select form-select-sm">
+            <select name="printerId" class="form-select form-select-sm">
                 <?php foreach ($gprinter as $id => &$printer): ?>
-                    <option value="<?=$id?>" <?=($greportlist[$gtabid]["printer"][$report_id] == $id) ? 'selected' : ''?>><?=$printer['name']?></option>
+                    <option value="<?=$id?>" <?=(!empty($report_id) && $greportlist[$gtabid]["printer"][$report_id] == $id) || (empty($greportlist[$gtabid]["printer"][$report_id]) && $printer['default']) ? 'selected' : ''?>><?=$printer['name']?></option>
                 <?php endforeach; ?>
             </select>
         </div>

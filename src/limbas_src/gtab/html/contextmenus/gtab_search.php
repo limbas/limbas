@@ -8,7 +8,11 @@
  */
 
 
+use Limbas\gtab\lib\tables\TableFilter;
+use Limbas\gtab\lib\tables\TableFilterContent;
+
 require_once(COREPATH . 'gtab/html/contextmenus/gtab_search.lib');
+require_once(COREPATH . 'gtab/gtab.lib');
 
 // explorer extension
 if($module == 'explorer_search') {
@@ -36,12 +40,13 @@ if($params['save_search_selection'] >= 2 && $params['gs']) {
     if($sname OR $saveSnapID) {
         if($params['save_search_selection'] == 3) {
             // search filter
-            $snap_id = SNAP_save($gtabid, $sname, $saveSnapID, array('gsr' => $params['gs'][$gtabid]), 2);
+            $content = new TableFilterContent(gsr: $params['gs'][$gtabid]);
+            $snap_id = TableFilter::create(intval($gtabid), $sname, intval($saveSnapID), $content, 2);
         }elseif($params['save_search_selection'] == 2) {
             // snapshot filter
-            $snap_id = SNAP_save($gtabid, $sname, $saveSnapID);
+            $snap_id = TableFilter::create(intval($gtabid), $sname, intval($saveSnapID));
         }
-        $gsnap = SNAP_loadInSession(1);
+        $gsnap = TableFilter::loadInSession(1);
         lmb_register_snapshot($gtabid, $snap_id);
     }
 }

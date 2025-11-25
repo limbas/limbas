@@ -107,8 +107,8 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
 	<input type="hidden" name="verkn_tabid" VALUE="<?= $verkn_tabid ?>">
 	<input type="hidden" name="verkn_fieldid" VALUE="<?= $verkn_fieldid ?>">
 	<input type="hidden" name="verkn_showonly" VALUE="<?= $verkn_showonly ?>">
-	<?php /*<input type="hidden" name="verkn_addfrom" VALUE="<?=$verkn_addfrom?>">  todo  */?>
 	<input type="hidden" name="verkn_poolid" VALUE="<?=$verkn_poolid;?>">
+	<input type="hidden" name="verkn_relationpath" VALUE="<?=$verkn_relationpath;?>">
 	<span id="myExtForms2"></span>
 	</form>
 
@@ -172,12 +172,11 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
     <input type="hidden" name="filter_validity_all">
 	<input type="hidden" name="pop_choice">
 	<input type="hidden" name="grp_choice">
-	
 	<input type="hidden" name="history_fields">
 	<input type="hidden" name="history_search">
 	<input type="hidden" name="verknpf" VALUE="<?= $verknpf ?>">
 	<input type="hidden" name="verkn_poolid" VALUE="<?=$verkn_poolid;?>">
-	<input type="hidden" name="verkn_addfrom" VALUE="<?=$verkn_addfrom;?>">
+	<input type="hidden" name="verkn_relationpath" VALUE="<?=$verkn_relationpath;?>">
 	<?php #--------------------- Verknüpfungszusatz ------------------------
 	if($verknpf){?>
 	<input type="hidden" name="verkn_ID" VALUE="<?= $verkn_ID ?>">

@@ -14,7 +14,7 @@ global $umgvar;
 global $gfield;
 global $gtab;
 global $form_done;
-global $verkn_addfrom;
+global $verkn_relationpath;
 
 
 $tabbedForm = boolval($filter['groupheader'][$gtabid]);

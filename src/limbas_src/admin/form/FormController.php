@@ -11,8 +11,7 @@ namespace Limbas\admin\form;
 
 require_once COREPATH . 'gtab/gtab.lib';
 
-use Limbas\admin\templates\TemplateEditor;
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 
 class FormController extends LimbasController
 {

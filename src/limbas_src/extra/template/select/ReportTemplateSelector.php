@@ -151,19 +151,25 @@ class ReportTemplateSelector extends TemplateSelector
         return parent::resolveSelect($params);
     }
 
-    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, array $ids, $use_record, $resolvedTemplateGroups): array
+    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, array $ids, $use_record, $resolvedTemplateGroups, array $appendData = []): array
     {
         global $greportlist;
 
 
-        $url = 'main.php?' . http_build_query(array(
-                'action' => 'report_preview',
-                'gtabid' => $gtabid,
-                'report_id' => $elementId,
-                'ID' => $id,
-                'use_record' => $use_record,
-                'resolvedTemplateGroups' => urldecode($resolvedTemplateGroups),
-            ));
+        $queryData = [
+            'action' => 'report_preview',
+            'gtabid' => $gtabid,
+            'report_id' => $elementId,
+            'ID' => $id,
+            'use_record' => $use_record,
+            'resolvedTemplateGroups' => urldecode($resolvedTemplateGroups),
+        ];
+
+        if(!empty($appendData)) {
+            $queryData['appendData'] = $appendData;
+        }
+        
+        $url = 'main.php?' . http_build_query($queryData);
 
         return [
             'url' => $url,

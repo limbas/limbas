@@ -1642,7 +1642,13 @@ var validEnter = false;
 */
 function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 {
-	
+
+    if((!el && !parent) && child && document.getElementById(child)){
+        document.getElementById(child).style.display ='';
+        limbasDivCloseTab.push(child);
+        return;
+    }
+
     if(!parent && el && (typeof(el) !== 'string' || el.indexOf(';') < 0)) {
         parent = $(el).closest('.lmbContextMenu').attr('id');
     }
@@ -2221,21 +2227,19 @@ function lmbAjax_showUserGroupsPost(result,el,parentel){
 	document.getElementById("lmbAjaxContainer").innerHTML = result;
 }
 
-function lmbAjax_showUserGroupsSearch(evt,value,ID,gtabid,fieldid,usefunction,prefix,typ,parameter){
-	actid = "showUserGroupsSearch&gtabid=" + gtabid + "&fieldid=" + fieldid + "&ID=" + ID + "&value=" +value+ "&usefunction=" + usefunction + "&typ=" + typ + "&parameter=" + parameter;
-	mainfunc = function(result){lmbAjax_showUserGroupsSearchPost(result,evt,typ,usefunction,prefix);};
+function lmbAjax_showUserGroupsSearch(evt,el,value,ID,gtabid,fieldid,usefunction,prefix,typ,parameter){
+	actid = "showUserGroupsSearch&gtabid=" + gtabid + "&fieldid=" + fieldid + "&ID=" + ID + "&value=" +value+ "&usefunction=" + usefunction + "&prefix=" + prefix + "&typ=" + typ + "&parameter=" + parameter;
+	mainfunc = function(result){lmbAjax_showUserGroupsSearchPost(evt,el,result,typ,usefunction,prefix);};
 	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc");
 }
 
-function lmbAjax_showUserGroupsSearchPost(result,evt,typ,usefunction,prefix){
+function lmbAjax_showUserGroupsSearchPost(evt,el,result,typ,usefunction,prefix){
 	$('#'+prefix+usefunction+'user').hide();
     $('#'+prefix+usefunction+'group').hide();
     const ajaxContainerID = prefix+usefunction+typ;
     const container = $('#'+ajaxContainerID);
     container.html(result);
-    const img = $(evt.target);
-	limbasDivShow(img.get(0), 'lmbAjaxContainer', ajaxContainerID, '0x-15');
-    container.css('left', img.position().left + img.width()).css('top', img.position().top);
+    limbasDivShow(null, null, ajaxContainerID);
 }
 
 // gtab user rules

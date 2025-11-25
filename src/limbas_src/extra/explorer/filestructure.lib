@@ -7,6 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\extra\printer\PrinterOptions;
+use Limbas\lib\general\Log\Log;
+use Limbas\lib\general\Log\LogLevel;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -412,6 +415,7 @@ function lmb_getFileRelations($ID,$droprelation=array()){
     global $gtab;
     global $gverkn;
     global $gfield;
+	global $filestruct;
 
     $forigin = null;
 
@@ -568,6 +572,8 @@ function rebuild_folder_permission($fid,$level){
 	global $session;
 	global $groupdat;
 
+    if(!$level OR !$fid){return 1;}
+
 	# all groups
 	foreach ($groupdat["id"] as $key => $value){
 		$NEXTID = next_db_id('LDMS_RULES');
@@ -608,8 +614,8 @@ function get_userShow($LID,$show_details,&$ffilter=null){
 			$ufile = unserialize(lmbdb_result($rs,"UFILE"));
 			if($ufile){
 				$gfile['show'] = $ufile[0];
-				$ffilter['tabsize'] = $ufile[1];
-				$ffilter['rowsize'] = $ufile[2];
+				#$ffilter['tabsize'] = $ufile[1];
+				#$ffilter['rowsize'] = $ufile[2];
 				$ffilter['anzahl'] = $ufile[3];
 				$ffilter['viewmode'] = $ufile[4];
 				$ffilter['order'] = $ufile[5];
@@ -621,18 +627,13 @@ function get_userShow($LID,$show_details,&$ffilter=null){
 		# Globale Defaultanzeige
 		if(!$gfile['show'][$LID] AND $gfile['show']['def']){
 			$gfile['show'][$LID] = $gfile['show']['def'];
-			$ffilter['tabsize'][$LID] = $ffilter['tabsize']['def'];
-			$ffilter['rowsize'][$LID] = $ffilter['rowsize']['def'];
+			#$ffilter['tabsize'][$LID] = $ffilter['tabsize']['def'];
+			#$ffilter['rowsize'][$LID] = $ffilter['rowsize']['def'];
 			$ffilter['anzahl'][$LID] = $ffilter['anzahl']['def'];
-		# minimum Felder
-		}elseif(!$gfile['show'][$LID]){
-			$alrd = 1;
 		}
-	}else{
-		$alrd = 1;
 	}
 
-	if($alrd){
+	if(!$ffilter['rowsize'][$LID] OR !$gfile['show'][$LID]){
 		# default ldms_files fields
         $gtabid = $gtab["argresult_id"]["LDMS_FILES"];
         foreach($gfield[$gtabid]["field_id"] as $key => $value) {
@@ -692,7 +693,7 @@ function save_userShow($LID,$save_setting){
 		# --- prepare ---
 		$prepare_string = "UPDATE LMB_USERDB SET UFILE = ? WHERE USER_ID = ".$session["user_id"];
 		if(!lmb_PrepareSQL($prepare_string,array(serialize($ufile)),__FILE__,__LINE__)){
-            lmb_log::error('save_userShow - settings are not saved sucessfully', 'settings are not saved sucessfully!', $GLOBALS['gtab']['argresult_id']['LDMS_FILES'], null, $LID, E_WARNING);
+            Log::limbasError('save_userShow - settings are not saved sucessfully', 'settings are not saved sucessfully!', $GLOBALS['gtab']['argresult_id']['LDMS_FILES'], null, $LID, LogLevel::WARNING);
         }
 
 		$ufile = 0;
@@ -707,19 +708,19 @@ function save_userShow($LID,$save_setting){
 		unset($gfile['show'],$ffilter['tabsize'],$ffilter['rowsize'],$ffilter['anzahl']);
 
 		$gfile['show'][$LID] = $ufile[0]['def'];
-		$ffilter['tabsize'][$LID] = $ufile[1]['def'];
-		$ffilter['rowsize'][$LID] = $ufile[2]['def'];
+		#$ffilter['tabsize'][$LID] = $ufile[1]['def'];
+		#$ffilter['rowsize'][$LID] = $ufile[2]['def'];
 		$ffilter['anzahl'][$LID] = $ufile[3]['def'];
 
 		$gfile['show']['def'] = $ufile[0]['def'];
-		$ffilter['tabsize']['def'] = $ufile[1]['def'];
-		$ffilter['rowsize']['def'] = $ufile[2]['def'];
+		#$ffilter['tabsize']['def'] = $ufile[1]['def'];
+		#$ffilter['rowsize']['def'] = $ufile[2]['def'];
 		$ffilter['anzahl']['def'] = $ufile[3]['def'];
 
 		# --- prepare ---
 		$prepare_string = "UPDATE LMB_USERDB SET UFILE = ? WHERE USER_ID = ".$session["user_id"];
 		if(!lmb_PrepareSQL($prepare_string,array(serialize($ufile)),__FILE__,__LINE__)){
-            lmb_log::error('save_userShow - settings are not saved sucessfully', 'settings are not saved sucessfully!', $GLOBALS['gtab']['argresult_id']['LDMS_FILES'], null, $LID, E_WARNING);
+            Log::limbasError('save_userShow - settings are not saved sucessfully', 'settings are not saved sucessfully!', $GLOBALS['gtab']['argresult_id']['LDMS_FILES'], null, $LID, LogLevel::WARNING);
         }
 
 		$ufile = 1;
@@ -1082,7 +1083,7 @@ function lmb_getMimetype(&$fl){
 
     if($umgvar["checkmime"] && $fl['filepath']){
         $mimetype = mime_content_type($fl['filepath']);
-    if($mimetype){
+        if($mimetype){
             $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".lmb_strtolower(trim($mimetype))."' AND ACTIVE = ".LMB_DBDEF_TRUE;
             $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$GLOBAL['action'],__FILE__,__LINE__);
         }
@@ -1092,10 +1093,10 @@ function lmb_getMimetype(&$fl){
     }
 
     if($sqlquery0) {
-    $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$GLOBAL['action'],__FILE__,__LINE__);
+        $rs0 = lmbdb_exec($db, $sqlquery0) or errorhandle(lmbdb_errormsg($db), $sqlquery0, $GLOBAL['action'], __FILE__, __LINE__);
     }
     if(!$rs0 OR !lmbdb_result($rs0, "ID")) {
-        Log::error("lmb_fileUpload - mimetype not found or allowed ( .$ext / $mimetype )", $lang[133]." ( .$ext / $mimetype )", null, null, null , LogLevel::ERROR);
+        Log::limbasError("lmb_fileUpload - mimetype not found or allowed ( .$ext / $mimetype )", $lang[133]." ( .$ext / $mimetype )", null, null, null , LogLevel::ERROR);
         return false;
     }
 
@@ -1221,7 +1222,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
 	# --- TYP-Prüfung ----
 	if(($filestruct["typ"][$level] == 2 OR $filestruct["typ"][$level] == 3 OR $filestruct["typ"][$level] == 5) AND !$fieldid AND !$umgvar["write_systemfolders"]){
-        lmb_log::error('lmb_fileUpload - write_systemfolders not allowed', $lang[114], $gtabid_files, $level, null,E_ERROR);
+        Log::limbasError('lmb_fileUpload - write_systemfolders not allowed', $lang[114], $gtabid_files, $level, null,LogLevel::ERROR);
 		return false;
 	}
 	# --- Rechte ---
@@ -1230,12 +1231,12 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
     if(!$filestruct["add"][$level]) {
         $path = implode('/',array_reverse(lmb_getPathFromLevel($filestruct["level"][$level],$level)));
-        lmb_log::error('lmb_fileUpload - no add permission in folder ('.$path.')', $lang[2310], $gtabid_files, $level, null, E_ERROR);
+        Log::limbasError('lmb_fileUpload - no add permission in folder ('.$path.')', $lang[2310], $gtabid_files, $level, null, LogLevel::ERROR);
         return false;
     }
 
     if(!is_array($filepath)) {
-        lmb_log::error('lmb_fileUpload - empty upload array', $lang[1726], $gtabid_files, $level, null, E_ERROR);
+        Log::limbasError('lmb_fileUpload - empty upload array', $lang[1726], $gtabid_files, $level, null, LogLevel::ERROR);
         return false;
     }
 
@@ -1269,20 +1270,20 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
         $change_subdir = 0;
 
         if( (!$filevalue OR !is_uploaded_file($filevalue) OR !file_exists($filevalue) ) AND !$noupload){
-            lmb_log::error('lmb_fileUpload - file could not be uploaded ('.$fl["filename"].')', $lang[1726], $gtabid_files, $fl["level"], $filevalue, E_ERROR);
+            Log::limbasError('lmb_fileUpload - file could not be uploaded ('.$fl["filename"].')', $lang[1726], $gtabid_files, $fl["level"], $filevalue, LogLevel::ERROR);
             $commit = 1;
             break;
         }
 
         if(lmb_strlen($fl["filename"]) > 128) {
-            lmb_log::error('lmb_fileUpload - filename longer then 128 ('.$fl["filename"].')', $lang[2531], $gtabid_files, $fl["level"], $fl["filename"] , E_ERROR);
+            Log::limbasError('lmb_fileUpload - filename longer then 128 ('.$fl["filename"].')', $lang[2531], $gtabid_files, $fl["level"], $fl["filename"] , LogLevel::ERROR);
             $commit = 1;
             break;
         }
 
-        if($fl["filesize"] <= 0 OR $fl["filesize"] > $session["uploadsize"]) {
+        if($fl["filesize"] < 0 OR $fl["filesize"] > $session["uploadsize"]) {
             $message = file_size($session["uploadsize"])." | ".$fl["filename"]." (".file_size($fl["filesize"]).")";
-            lmb_log::error('lmb_fileUpload - filesize to big - '.$message, $lang[129].' - '.$message, $gtabid_files, $fl["level"], $fl["filesize"].' > '.$session["uploadsize"] , E_ERROR);
+            Log::limbasError('lmb_fileUpload - filesize to big - '.$message, $lang[129].' - '.$message, $gtabid_files, $fl["level"], $fl["filesize"].' > '.$session["uploadsize"] , LogLevel::ERROR);
             $commit = 1;
             break;
         }
@@ -1290,7 +1291,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
         # ---------- Archiv ----------------
         if($fl["filearchiv"] === 'true') {
             if (!upload_archiv(array("file" => $filevalue, "file_name" => $fl["filename"]), $fl["level"], array("datid" => $datid, "gtabid" => $gtabid, "fieldid" => $fieldid))) {
-                lmb_log::error('lmb_fileUpload - could not upload file to archive ('.$fl["filename"].')', $lang[1726], $gtabid_files, $fl["level"], null , E_ERROR);
+                Log::limbasError('lmb_fileUpload - could not upload file to archive ('.$fl["filename"].')', $lang[1726], $gtabid_files, $fl["level"], null , LogLevel::ERROR);
                 lmb_EndTransaction(0);
                 return false;
             }
@@ -1309,7 +1310,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
             $sqlquery0 = "SELECT ID FROM LDMS_FILES WHERE ID = ".parse_db_int($existingFile['id']);
             $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
             if(!lmbdb_result($rs0, 'ID')){
-                lmb_log::error('lmb_fileUpload - file with ID '.$existingFile['id'].' does not exists!', $lang[1726], $gtabid_files, $fl["level"], null , E_ERROR);
+                Log::limbasError('lmb_fileUpload - file with ID '.$existingFile['id'].' does not exists!', $lang[1726], $gtabid_files, $fl["level"], null , LogLevel::ERROR);
                 $commit = 1;
                 break;
             }
@@ -1330,7 +1331,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
             $fl["md5"] = md5_file($filevalue);
             if($md5res = checkMD5Dublicates($fl["md5"],$level)){
                 $md5path = implode("\\n",$md5res["path"]);
-                lmb_log::error('lmb_fileUpload - file already exists in ('.$md5path.')', $lang[2375].":\\n".$md5path, $gtabid_files, $fl["level"], $fl['filename'] , E_NOTICE);
+                Log::limbasError('lmb_fileUpload - file already exists in ('.$md5path.')', $lang[2375].":\\n".$md5path, $gtabid_files, $fl["level"], $fl['filename'] , LogLevel::NOTICE);
             }
         }
 
@@ -1360,7 +1361,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
             // file already exists
             if(file_exists($uploadfile)){
-                lmb_log::error('lmb_fileUpload - file already exists ('.$fl['filename'].')', $lang[2313].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                Log::limbasError('lmb_fileUpload - file already exists ('.$fl['filename'].')', $lang[2313].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                 $commit = 1;
                 break;
             }
@@ -1370,7 +1371,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
                 // file encryption
                 if($umgvar['file_encryption'] AND !lmb_EncryptFile($filevalue)){
-                    lmb_log::error('lmb_fileUpload - file ecnryption failed ('.$fl['filename'].')', 'file ecnryption failed ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                    Log::limbasError('lmb_fileUpload - file ecnryption failed ('.$fl['filename'].')', 'file ecnryption failed ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                     $commit = 1;
                     break;
                 }
@@ -1384,7 +1385,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                 // upload / copy failure
                 if(!file_exists($uploadfile)){
                     $commit = 1;
-                    lmb_log::error('lmb_fileUpload - file could not be saved ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                    Log::limbasError('lmb_fileUpload - file could not be saved ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                     $commit = 1;
                     break;
                 }
@@ -1394,7 +1395,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
            // only move file from or to subdirecory
            if($dublicate["level"][$key] AND $level != $dublicate["level"][$key]){
                if(!rename($filevalue,$uploadfile)){
-                   lmb_log::error('lmb_fileUpload - could not move uploaded file ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                   Log::limbasError('lmb_fileUpload - could not move uploaded file ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                    $commit = 1;
                    break;
                }
@@ -1430,7 +1431,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                             $nometa = 1;
                         }else{
                             $commit = 1;
-                            lmb_log::error('lmb_fileUpload - overwrite existing file after move - can not delete destination file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                            Log::limbasError('lmb_fileUpload - overwrite existing file after move - can not delete destination file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                             break;
                         }
                     # intern copy
@@ -1439,7 +1440,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                         if(lmb_deleteFile($existingFile["id"],$dublicate["forceDelnm"][$key])){
                             # copy record
                             if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,copyid: $dublicate["copyid"][$key],forceNewID: $fl["nextid"],insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
-                                lmb_log::error('lmb_fileUpload - overwrite existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                                Log::limbasError('lmb_fileUpload - overwrite existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                                 $commit = 1;
                                 break;
                             }
@@ -1450,7 +1451,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                         }else{
                             # delete old file
                             unlink($uploadfile);
-                            lmb_log::error('lmb_fileUpload - overwrite existing file after move - can not delete destination file ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                            Log::limbasError('lmb_fileUpload - overwrite existing file after move - can not delete destination file ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                             break;
                             $commit = 1;
                         }
@@ -1466,7 +1467,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                 }else{
                     #unlink($umgvar['upload_pfad'].$filestruct['path'][$level].$fl['secname'].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
                     unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                    lmb_log::error('lmb_fileUpload - overwrite existing file - no edit permission for file ('.$fl["filename"].')', $lang[114].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                    Log::limbasError('lmb_fileUpload - overwrite existing file - no edit permission for file ('.$fl["filename"].')', $lang[114].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                     $commit = 1;
                     break;
                 }
@@ -1487,7 +1488,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                 }elseif ($dublicate["copymove"] == "copy"){
                     # copy record
                     if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,copyid:$dublicate["copyid"][$key],forceNewID: $fl["nextid"],insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
-                        lmb_log::error('lmb_fileUpload - rename existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                        Log::limbasError('lmb_fileUpload - rename existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                         $commit = 1;
                         break;
                     }
@@ -1500,7 +1501,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     # new record
                     if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,forceNewID: $fl["nextid"],insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
                         unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                        lmb_log::error('lmb_fileUpload - rename existing file after upload - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                        Log::limbasError('lmb_fileUpload - rename existing file after upload - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                         $commit = 1;
                         break;
                     }
@@ -1525,7 +1526,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                         $nometa = 1;
                         # versioning file
                         if(!lmb_versionFile($existingFile['id'],$fl['nextid'],$dublicate["subj"][$key])){
-                            lmb_log::error('lmb_fileUpload - versioning existing file after move - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                            Log::limbasError('lmb_fileUpload - versioning existing file after move - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                             $commit = 1;
                             break;
                         }
@@ -1533,7 +1534,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     }elseif ($dublicate["copymove"] == "copy"){
                         # copy record
                         if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,copyid: $dublicate["copyid"][$key],forceNewID: $fl["nextid"], insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
-                            lmb_log::error('lmb_fileUpload - versioning existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                            Log::limbasError('lmb_fileUpload - versioning existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                             $commit = 1;
                             break;
                         }
@@ -1541,7 +1542,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                         # versioning file
                         if(!lmb_versionFile($existingFile['id'],$fl['nextid'],$dublicate["subj"][$key])){
                             lmb_alert("can not version file: ".$fl["filename"]);
-                            lmb_log::error('lmb_fileUpload - versioning existing file after copy - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                            Log::limbasError('lmb_fileUpload - versioning existing file after copy - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                             $commit = 1;
                             break;
                         }
@@ -1554,7 +1555,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                             if ($fl["nextid"] = new_record($gtabid_files, copyid: $existingFile["id"], forceNewID: $fl["nextid"], insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )) {
                                 # versioning file
                                 if (!lmb_versionFile($existingFile['id'], $fl['nextid'], $dublicate["subj"][$key])) {
-                                    lmb_log::error('lmb_fileUpload - versioning existing file after upload - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                                    Log::limbasError('lmb_fileUpload - versioning existing file after upload - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                                     $commit = 1;
                                     break;
                                 } else {
@@ -1563,7 +1564,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                                 }
                             } else {
                                 unlink(lmb_getFilePath(null, $level, $fl['secname'], $gmimetypes['ext'][$fl['mimetype_id']]));
-                                lmb_log::error('lmb_fileUpload - versioning existing file after upload - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                                Log::limbasError('lmb_fileUpload - versioning existing file after upload - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                                 $commit = 1;
                                 break;
                             }
@@ -1571,12 +1572,12 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     }
                 }else{
                     unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                    lmb_log::error('lmb_fileUpload - versioning existing file - no edit permission for file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                    Log::limbasError('lmb_fileUpload - versioning existing file - no edit permission for file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                     $commit = 1;
                     break;
                 }
 
-            # -------- file alredy exists and ignore --------
+            # -------- file already exists and ignore --------
 
             #}elseif($existingFile AND $dublicate_type == "ignore"){
             #	$fl["nextid"] = -1;
@@ -1600,7 +1601,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     # copy record
                     if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,copyid: $dublicate["copyid"][$key],forceNewID: $fl["nextid"], insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
                         unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                        lmb_log::error('lmb_fileUpload - ignore existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                        Log::limbasError('lmb_fileUpload - ignore existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                         $commit = 1;
                         break;
                     }
@@ -1613,7 +1614,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     # new record
                     if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,forceNewID: $fl["nextid"], insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
                         unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                        lmb_log::error('lmb_fileUpload - ignore existing file after upload - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                        Log::limbasError('lmb_fileUpload - ignore existing file after upload - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                         $commit = 1;
                         break;
                     }
@@ -1624,7 +1625,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
             }
 
             if(!is_numeric($fl['nextid'])){
-                lmb_log::error('lmb_fileUpload - ignore existing file - no valid primary ID exists for file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], null , E_ERROR);
+                Log::limbasError('lmb_fileUpload - ignore existing file - no valid primary ID exists for file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], null , LogLevel::ERROR);
                 $commit = 1;
                 break;
             }
@@ -1668,7 +1669,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                                 $verkn['linkParam']['LID'] = $level;
                             }
                             if(!set_joins($relation['gtabid'][$rk], $verkn)){
-                                lmb_log::error('lmb_fileUpload - could not link dataset ('.$fl["filename"].')', $lang[2921].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                                Log::limbasError('lmb_fileUpload - could not link dataset ('.$fl["filename"].')', $lang[2921].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                                 $commit = 1;
                                 break;
                             }
@@ -1681,7 +1682,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                             $GLOBALS["create_new_file"] = 1;
                             # Metadaten eintragen
                             if (!putmeta_to_db($fl["nextid"], $meta)) {
-                                lmb_log::error('lmb_fileUpload - could not write metadata to file (' . $fl["filename"] . ')', $lang[1901] . ' (' . $fl['filename'] . ')', $gtabid_files, $fl["level"], $fl["nextid"], E_ERROR);
+                                Log::limbasError('lmb_fileUpload - could not write metadata to file (' . $fl["filename"] . ')', $lang[1901] . ' (' . $fl['filename'] . ')', $gtabid_files, $fl["level"], $fl["nextid"], LogLevel::ERROR);
                             }
                         }
                     }
@@ -1689,19 +1690,14 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     # --- History-Array ---------
                     if($session["logging"]){
                         $url = lmb_getUrlFromLevel($filestruct["level"][$fl["level"]],$fl["level"]);
-                        $GLOBALS["lhist"]["val"][128][] = "/".$url."/".$fl["filename"];
-                        $GLOBALS["lhist"]["gtabid"][128][] = $gtabid;
-                        $GLOBALS["lhist"]["fieldid"][128][] = $fieldid;
-                        $GLOBALS["lhist"]["datid"][128][] = $datid;
-                        $GLOBALS["lhist"]["level"][128][] = 1;
-                        $GLOBALS["lhist"]["linkid"][128] = 128;
+                        history_update($gtabid,$fieldid,$datid,128,"/".$url."/".$fl["filename"]);
                     }
 
                 }else{
                     if(!$dublicate["copymove"]){
                         unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
                     }
-                    lmb_log::error('lmb_fileUpload - could not update file dataset ('.$fl["filename"].')', $lang[2293].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                    Log::limbasError('lmb_fileUpload - could not update file dataset ('.$fl["filename"].')', $lang[2293].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , LogLevel::ERROR);
                     $commit = 1;
                     break;
                 }
@@ -1997,7 +1993,7 @@ function del_document($ID){
     $ext = $gmimetypes["ext"][$ldms['mimetype']];
 
     if(!file_edit_permission(array('level' => $level,'lock'=>$ldms['lmlock'],'lockdate'=>$ldms['lockdate'],'lockuser'=>$ldms['lockuser'],'name'=>$ldms['name']))){
-        lmb_log::error('del_document - permission denied', null, $ldms['tabid'], null, $ID);
+        Log::limbasError('del_document - permission denied', null, $ldms['tabid'], null, $ID);
         return false;
     }
 
@@ -2017,7 +2013,7 @@ function del_document($ID){
 	if(!$rs2) {$commit = 1;}
 
 	if($commit){
-        lmb_log::error('del_document - SQL error on delete document', null, $ldms['tabid'], null, $ID);
+        Log::limbasError('del_document - SQL error on delete document', null, $ldms['tabid'], null, $ID);
         return false;
     }
 
@@ -2026,7 +2022,7 @@ function del_document($ID){
     if(is_file($filepath)){
 
         if(!unlink($filepath)){
-            lmb_log::error('del_document - can not delete file ['.$filepath.']', null, $ldms['tabid'], null, $ID);
+            Log::limbasError('del_document - can not delete file ['.$filepath.']', null, $ldms['tabid'], null, $ID);
             return false;
         }
 
@@ -2051,14 +2047,9 @@ function del_document($ID){
 
 
     # --- History-Array ---------
-    if($session["logging"]){
+    if($session["logging"] && !$commit){
         $url = lmb_getUrlFromLevel($filestruct['level'][$level],$level);
-        $GLOBALS["lhist"]["val"][171][] = "/".$url."/".$ldms['name'];
-        $GLOBALS["lhist"]["gtabid"][171][] = $ldms['tabid'];
-        $GLOBALS["lhist"]["fieldid"][171][] = $ldms['fieldid'];
-        $GLOBALS["lhist"]["datid"][171][] = $ldms['datid'];
-        $GLOBALS["lhist"]["level"][171][] = 1;
-        $GLOBALS["lhist"]["linkid"][171] = 171;
+        history_update($ldms['tabid'],$ldms['fieldid'],$ldms['datid'],171,"/".$url."/".$ldms['name']);
     }
 
 	return true;
@@ -2132,7 +2123,7 @@ function lmb_printToCache($fileID,$printerID){
 	global $filestruct;
 
     if(!is_numeric($fileID) OR !is_numeric($printerID)){
-        lmb_log::error("Could not print to cache");
+        Log::limbasError("Could not print to cache");
         return false;
     }
 
@@ -2142,7 +2133,7 @@ function lmb_printToCache($fileID,$printerID){
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if($rs){return true;}
 
-    lmb_log::error("Could not print to cache");
+    Log::limbasError("Could not print to cache");
     return false;
 
 }
@@ -2237,15 +2228,10 @@ function rename_dir($ID,$rename_file,$level){
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}else{
 					# --- History-Array ---------
-					if($session['logging']){
+					if($session['logging'] == 2 && !$commit){
 						$url = lmb_getUrlFromLevel($filestruct['level'][$ID],$ID)."\n --> ".lmb_getUrlFromLevel($filestruct['level'][$level],$level)."/".$rename_file;
-						$GLOBALS["lhist"]['val'][116][] = "/".$url;
-						$GLOBALS["lhist"]['gtabid'][116][] = 0;
-						$GLOBALS["lhist"]['fieldid'][116][] = 0;
-						$GLOBALS["lhist"]['datid'][116][] = 0;
-						$GLOBALS["lhist"]['level'][116][] = 1;
-						$GLOBALS["lhist"]['linkid'][116] = 116;
-					}
+                        history_update(null,null,null,116,"/".$url);
+                    }
 				}
 			}else{return true;}
 		}else{lmb_alert($lang[1627]);}
@@ -2298,14 +2284,9 @@ function add_file($LEVEL,$folder_name){
 						$commit = rebuild_folder_permission($NEXTID,$LEVEL);
 
 						# --- History-Array ---------
-						if($session["logging"] AND !$commit){
+						if($session["logging"] && !$commit){
 							$url = lmb_getUrlFromLevel($filestruct['level'][$LEVEL],$LEVEL)."/".$folder_name;
-							$GLOBALS["lhist"]["val"][119][] = "/".$url;
-							$GLOBALS["lhist"]["gtabid"][119][] = 0;
-							$GLOBALS["lhist"]["fieldid"][119][] = 0;
-							$GLOBALS["lhist"]["datid"][119][] = 0;
-							$GLOBALS["lhist"]["level"][119][] = 1;
-							$GLOBALS["lhist"]["linkid"][119] = 119;
+                            history_update(null,null,null,119,"/".$url);
 						}
 					}
 				}else{lmb_alert($folder_name.": ".$lang[1317]);lmb_EndTransaction(0);return false;}
@@ -2417,14 +2398,9 @@ function delete_dir($ID,$force=null){
             }
 
             # --- History-Array ---------
-            if ($session["logging"]) {
+            if ($session["logging"] && !$commit) {
                 $url = lmb_getUrlFromLevel($filestruct["level"][$ID], $ID);
-                $GLOBALS["lhist"]["val"][171][] = "/" . $url;
-                $GLOBALS["lhist"]["gtabid"][171][] = 0;
-                $GLOBALS["lhist"]["fieldid"][171][] = 0;
-                $GLOBALS["lhist"]["datid"][171][] = 0;
-                $GLOBALS["lhist"]["level"][171][] = 1;
-                $GLOBALS["lhist"]["linkid"][171] = 171;
+                history_update(null,null,null,171,"/".$url);
             }
         }
 
@@ -2500,15 +2476,10 @@ function move_dir($move_file,$LEVEL,$dublicate=null){
 					$commit = rebuild_folder_permission($value,$LEVEL);
 
 					# --- History-Array ---------
-					if($session["logging"]){
+					if($session["logging"] && !$commit){
 						$url1 = lmb_getUrlFromLevel($filestruct['level'][$value],$value);
 						$url2 = lmb_getUrlFromLevel($filestruct['level'][$LEVEL],$LEVEL);
-						$GLOBALS["lhist"]['val'][130][] = "/".$url1."\n --> /".$url2;
-						$GLOBALS["lhist"]['gtabid'][130][] = 0;
-						$GLOBALS["lhist"]['fieldid'][130][] = 0;
-						$GLOBALS["lhist"]['datid'][130][] = 0;
-						$GLOBALS["lhist"]['level'][130][] = 1;
-						$GLOBALS["lhist"]['linkid'][130] = 130;
+                        history_update(null,null,null,130,"/".$url1."\n --> /".$url2);
 					}
 				}
 			}else{lmb_EndTransaction(1);return true;}
@@ -2554,19 +2525,13 @@ function copy_dir($copy_dir,$LEVEL,$dublicate){
 			if($sublevel = copy_dir_create($value,$LEVEL,$dublicate)){
 				# Unterordner
 				if(copy_dir_level($value,$sublevel,$fst,$dublicate)){
-					# --- History-Array ---------
-					if($session["logging"]){
+                    $commit = rebuild_folder_permission($value,$LEVEL);
+					# --- History ---------
+					if($session["logging"] && !$commit){
 						# --- Rechte neu setzen ------
-						$commit = rebuild_folder_permission($value,$LEVEL);
-
 						$url1 = lmb_getUrlFromLevel($filestruct["level"][$value],$value);
 						$url2 = lmb_getUrlFromLevel($filestruct["level"][$sublevel],$sublevel);
-						$GLOBALS["lhist"]["val"][129][] = "/".$url1."\n --> /".$url2;
-						$GLOBALS["lhist"]["gtabid"][129][] = $f_tabid;
-						$GLOBALS["lhist"]["fieldid"][129][] = $f_fieldid;
-						$GLOBALS["lhist"]["datid"][129][] = $f_datid;
-						$GLOBALS["lhist"]["level"][129][] = 1;
-						$GLOBALS["lhist"]["linkid"][129] = 129;
+                        history_update($f_tabid,$f_fieldid,$f_datid,129,"/".$url1."\n --> /".$url2);
 					}
 				}
 			}
@@ -2759,15 +2724,10 @@ function move_file($move_file,$level,$dublicates=null){
                     $dublicate["copyvpid"][] = lmbdb_result($rs, "VPID");
 
 					# --- History-Array ---------
-					if($session["logging"] AND !$commit){
+					if($session["logging"] && !$commit){
 						$url1 = lmb_getUrlFromLevel($filestruct["level"][$flevel],$flevel);
 						$url2 = lmb_getUrlFromLevel($filestruct["level"][$level],$level);
-						$GLOBALS["lhist"]["val"][130][] = "/".$url1."/".lmbdb_result($rs, "NAME")."\n --> /".$url2;
-						$GLOBALS["lhist"]["gtabid"][129][] = lmbdb_result($rs, "TABID");
-						$GLOBALS["lhist"]["fieldid"][129][] = lmbdb_result($rs, "FIELDID");
-						$GLOBALS["lhist"]["datid"][129][] = lmbdb_result($rs, "DATID");
-						$GLOBALS["lhist"]["level"][130][] = 1;
-						$GLOBALS["lhist"]["linkid"][130] = 130;
+                        history_update(lmbdb_result($rs, "TABID"),lmbdb_result($rs, "FIELDID"),lmbdb_result($rs, "DATID"),130,"/".$url1."/".lmbdb_result($rs, "NAME")."\n --> /".$url2);
 					}
 				}
 			}
@@ -2891,16 +2851,11 @@ function copy_file($copy_file,$level,$dublicates=null,$tabrelation=null){
 
 
 					# --- History-Array ---------
-					if($session["logging"] AND !$commit){
+					if($session["logging"] && !$commit){
 						if($filestruct["level"][$level]){
 							$url1 = lmb_getUrlFromLevel($filestruct["level"][$flevel],$flevel);
 							$url2 = lmb_getUrlFromLevel($filestruct["level"][$level],$level);
-							$GLOBALS["lhist"]["val"][129][] = "/".$url1."/".lmbdb_result($rs, "NAME")."\n --> /".$url2;
-							$GLOBALS["lhist"]["gtabid"][129][] = lmbdb_result($rs, "TABID");
-							$GLOBALS["lhist"]["fieldid"][129][] = lmbdb_result($rs, "FIELDID");
-							$GLOBALS["lhist"]["datid"][129][] = lmbdb_result($rs, "DATID");
-							$GLOBALS["lhist"]["level"][129][] = 1;
-							$GLOBALS["lhist"]["linkid"][129] = 129;
+                            history_update(lmbdb_result($rs, "TABID"),lmbdb_result($rs, "FIELDID"),lmbdb_result($rs, "DATID"),129,"/".$url1."/".lmbdb_result($rs, "NAME")."\n --> /".$url2);
 						}
 					}
 				}else{
@@ -2992,14 +2947,9 @@ function lmb_renameFile($ID,$newname,$level=null){
                     }
 
                     # --- History-Array ---------
-                    if($session['logging']){
+                    if($session['logging'] == 2 && !$commit){
                         $url = lmb_getUrlFromLevel($filestruct['level'][lmbdb_result($rs0,"LEVEL")],lmbdb_result($rs0,"LEVEL"));
-                        $GLOBALS["lhist"]['val'][116][] = "/".$url."/".lmbdb_result($rs0,"NAME")."\n -> $newname";
-                        $GLOBALS["lhist"]['gtabid'][116][] = lmbdb_result($rs0,"TABID");
-                        $GLOBALS["lhist"]['fieldid'][116][] = lmbdb_result($rs0,"FIELDID");
-                        $GLOBALS["lhist"]['datid'][116][] = lmbdb_result($rs0,"DATID");
-                        $GLOBALS["lhist"]['level'][116][] = 1;
-                        $GLOBALS["lhist"]['linkid'][116] = 116;
+                        history_update(lmbdb_result($rs, "TABID"),lmbdb_result($rs, "FIELDID"),lmbdb_result($rs, "DATID"),116,"/".$url."/".lmbdb_result($rs0,"NAME")."\n -> $newname");
 					}
                 }
 
@@ -3094,14 +3044,9 @@ function preview_archive($files,$method,$searchval=null,$format=null,$save=null)
 				}
 
 				# --- History-Array ---------
-				if($session["logging"] == 2){
+				if($session["logging"]){
 					$url = lmb_getUrlFromLevel($filestruct["level"][$level],$level);
-					$GLOBALS["lhist"]["val"][203][] = "/".$url."/".$filename;
-					$GLOBALS["lhist"]["gtabid"][203][] = lmbdb_result($rs,"TABID");
-					$GLOBALS["lhist"]["fieldid"][203][] = lmbdb_result($rs,"FIELDID");
-					$GLOBALS["lhist"]["datid"][203][] = lmbdb_result($rs,"DATID");
-					$GLOBALS["lhist"]["level"][203][] = 2;
-					$GLOBALS["lhist"]["linkid"][203] = 203;
+                    history_update(lmbdb_result($rs, "TABID"),lmbdb_result($rs, "FIELDID"),lmbdb_result($rs, "DATID"),203,"/".$url."/".$filename);
 				}
 
 				if($newfile){
@@ -3450,18 +3395,12 @@ function set_status($ID,$files_status){
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}else{
 			# --- History-Array ---------
-			if($session['logging']){
+			if($session['logging'] == 2){
 				if(lmbdb_result($rs0,"CHECKED") != $hist_c) {$stat = "\ncheck ->".$hist_c;}
 				if(lmbdb_result($rs0,"PERM") != $hist_p) {$stat .= "\nperm ->".$hist_p;}
 				if(lmbdb_result($rs0,"CHECKED") != $hist_l) {$stat .= "\nlock ->".$hist_l;}
-
 				$url = lmb_getUrlFromLevel($filestruct['level'][lmbdb_result($rs0,"LEVEL")],lmbdb_result($rs0,"LEVEL"));
-				$GLOBALS["lhist"]['val'][195][] = "/".$url."/".lmbdb_result($rs0,"NAME").$stat;
-				$GLOBALS["lhist"]['gtabid'][195][] = lmbdb_result($rs0,"TABID");
-				$GLOBALS["lhist"]['fieldid'][195][] = lmbdb_result($rs0,"FIELDID");
-				$GLOBALS["lhist"]['datid'][195][] = lmbdb_result($rs0,"DATID");
-				$GLOBALS["lhist"]['level'][195][] = 1;
-				$GLOBALS["lhist"]['linkid'][195] = 195;
+                history_update(lmbdb_result($rs, "TABID"),lmbdb_result($rs, "FIELDID"),lmbdb_result($rs, "DATID"),195,"/".$url."/".lmbdb_result($rs0,"NAME").$stat);
 			}
 		}
 	}else{lmb_alert($lang[1688]."\\n".get_date(lmbdb_result($rs0, "LOCKDATE"),2)." ".$userdat['vorname'][lmbdb_result($rs0, "LOCKUSER")]." ".$userdat['name'][lmbdb_result($rs0, "LOCKUSER")]);}
@@ -3751,7 +3690,7 @@ function lmb_PHPDownload($file,$disposition=null){
 
         // get mimetype
         if(!$file['mimetype'] && lmb_getMimetype($file) == false){
-            Log::error("lmb_fileDownload - mimetype not found or allowed ( ".$file['path']." )", null, null, null, null , LogLevel::ERROR);
+            Log::limbasError("lmb_fileDownload - mimetype not found or allowed ( ".$file['path']." )", null, null, null, null , LogLevel::ERROR);
             throw new NotFoundHttpException();
         }
 
@@ -3849,15 +3788,15 @@ function download_archive($filellist,$LEVEL){
 						require_once COREPATH . 'extra/explorer/metadata.lib';
 						$metadataArray = getmeta_from_db($ID, false);
 
-						$metadataXml = new SimpleXMLElement('<metadata/>');
+						$metadataXml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><metadata/>');
 
 						foreach ($metadataArray as $key => $value) {
-							$metadataXml->addChild(strtolower($key), trim(e($value)));
+							$metadataXml->addChild(strtolower($key), trim(htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8', false)));
 						}
 
-						$metadataXml = $metadataXml->asXML();
+						$metadataPath = $path."/".lmbdb_result($rs, "NAME").".xml";
 
-						file_put_contents($path."/".lmbdb_result($rs, "NAME").".xml", $metadataXml);
+						$metadataXml->asXML($metadataPath);
 					}
 			}else{
 				lmb_alert($lang[1317]." : (".lmbdb_result($rs, "NAME").")");
@@ -4473,19 +4412,21 @@ function get_ffile($query,$ffilter,$LID,$typ){
  * @param array $fileIDs
  * @return bool
  */
-function lmb_printFileFromDMS(int $printerID,array $fileIDs, array $printerOptions = []) : bool{
+function lmb_printFileFromDMS(int $printerID, array $fileIDs, PrinterOptions $printerOptions = null) : bool {
 
     global $umgvar;
     global $LINK;
 
     $success = true;
 
+	$printerID = $printerOptions?->printerId ?? $printerID;
+
     if (!$LINK[304]) {
-        lmb_log::error('Print failed - permission denied', 'Drucken fehlgeschlagen - keine Berechtigung!');
+        Log::limbasError('Print failed - permission denied', 'Drucken fehlgeschlagen - keine Berechtigung!');
         return false;
     }
 
-	$forcePrint = array_key_exists('directPrint', $printerOptions) && $printerOptions['directPrint'];
+	$forcePrint = $printerOptions?->directPrint ?? false;
 
     foreach ($fileIDs as $fileID) {
         $fileID = parse_db_int($fileID);
@@ -4493,7 +4434,7 @@ function lmb_printFileFromDMS(int $printerID,array $fileIDs, array $printerOptio
         $filePath = $file['path'];
         if (!$file) {
             $success = false;
-            lmb_log::error('Print failed - permission denied', 'drucken fehlgeschlagen - keine Berechtigung!');
+            Log::limbasError('Print failed - permission denied', 'drucken fehlgeschlagen - keine Berechtigung!');
             $success = false;
         }
 
@@ -4505,7 +4446,7 @@ function lmb_printFileFromDMS(int $printerID,array $fileIDs, array $printerOptio
             }
         }
         if (!lmbPrint($printerID, $filePath, $fileID, $forcePrint, $printerOptions)) {
-            lmb_log::error('Print failed', 'drucken fehlgeschlagen!');
+            Log::limbasError('Print failed', 'drucken fehlgeschlagen!');
             $success = false;
         }
     }

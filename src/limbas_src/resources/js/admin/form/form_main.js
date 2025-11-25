@@ -981,7 +981,8 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	subelement = dicoParams.get("SUBELEMENT");
 	categorie = dicoParams.get("CATEGORIE");
 	istabelement = dicoParams.get("IS_TAB_EL");
-	
+    uform_typ = dicoParams.get("UFORM_TYP");
+
 	div = 'div'+id;
 	
 	window.focus();
@@ -1084,7 +1085,6 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	if(EVENT5){document.event_form5.event5.value = EVENT5;}else{document.event_form5.event5.value = "";}
 	if(document.form_menu.input_subelement){if(subelement){document.form_menu.input_subelement.value = subelement;}else{document.form_menu.input_subelement.value = '0';}}
 	if(document.form_menu.input_categorie){if(categorie){document.form_menu.input_categorie.value = categorie;}else{document.form_menu.input_categorie.value = '0';}}
-	if(PICSIZE && TYP == 'dbdat'){document.form_menu.input_formid.value = PICSIZE;}else{document.form_menu.input_formid.value = '';}
 	
 	if(style[25] == 'true'){document.form_menu.input_line_reverse.checked = 1;}else{document.form_menu.input_line_reverse.checked = 0;}
 	if(style[35]){document.form_menu.input_readonly.value = style[35];}else{document.form_menu.input_readonly.value = '0';}
@@ -1264,7 +1264,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	}
 
 	// view relation params
-	if(active_field_type == 11){
+	if(active_field_type == 11 || (TYP == 'uform' && uform_typ == 3)){
 	    edit_relationparams(id);
 	    document.getElementById("relation_params").style.display='';
 	    document.getElementById("lmb_subform_params").style.display='none';

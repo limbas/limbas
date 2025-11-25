@@ -10,7 +10,7 @@
 
 namespace Limbas\admin\setup\umgvar;
 
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 
 class UmgVarController extends LimbasController
 {

@@ -25,7 +25,7 @@
     <thead>
     <tr>
         <th colspan="3">
-            <?= lang('write permissions (recursive)') ?>
+            <?= iLang('write permissions (recursive)') ?>
         </th>
     </tr>
     </thead>
@@ -47,7 +47,7 @@
     <thead>
     <tr>
         <th colspan="3">
-            <?=lang('Functions')?>
+            <?=iLang('Functions')?>
         </th>
     </tr>
     </thead>

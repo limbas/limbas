@@ -9,9 +9,11 @@
 
 
 use Limbas\extra\mail\MailAccount;
+use Limbas\extra\mail\MailSignature;
 
 global $session;
 
 $adminMails = false;
 $userId = $session['user_id'];
 $mailAccounts = MailAccount::all(['user_id'=>$userId]);
+$mailSignatures = MailSignature::all(['user_id'=>$userId]);

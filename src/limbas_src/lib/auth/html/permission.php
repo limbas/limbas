@@ -39,7 +39,7 @@
         <div class="flex-container">
             <div class="text-center">
                 <?php
-                    $topLeft = 'assets/images/logo_topleft.png';
+                    $topLeft = 'assets/images/logo.svg';
                     if(file_exists(LOCALASSETSPATH . 'images/logo_topleft.png')){
                         $topLeft = 'localassets/images/logo_topleft.png';
                     }

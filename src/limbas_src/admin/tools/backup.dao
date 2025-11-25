@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\lib\db\functions\Dbf;
+
 set_time_limit(1200); #20min
 
 
@@ -278,11 +280,11 @@ function lmb_backup_database($path1=null,$path2=null,$medium=1,$device=1,$art=1)
 
         $path = set_backup_path($medium, $path1, $path2, $typ);
         if ($path) {
-            $medium = create_medium($path, $typ);
+            $medium = Dbf::createMedium($path, $typ ?? '');
         }
         if ($medium) {
-            $out = backup_data($medium, $path, $typ);
-            $out2 = delete_medium($path["medname"], $typ);
+            $out = Dbf::backupData($medium, $path, $typ ?? '');
+            $out2 = Dbf::deleteMedium($path["medname"], $typ ?? '');
         }
         if ($path["scp"] and $path["path"]) {
             $sys = "scp " . $path["path"] . ".gz " . $path["scp"];

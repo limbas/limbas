@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\lib\db\functions\Dbf;
 
 
 /*
@@ -30,7 +30,7 @@ function create_exif_conf() {
 	$sysfields = array('id','del');
 	
 	#$gtabid = $gtab['argresult_id']['LDMS_META'];
-	if($fields = dbf_5(array($DBA['DBSCHEMA'],'LDMS_META'))){
+	if($fields = Dbf::getColumns($DBA['DBSCHEMA'],'LDMS_META', null)){
 	    foreach($fields['columnname'] as $key => $value){
 	        
 	        if(in_array(lmb_strtolower($value),$sysfields)){continue;}

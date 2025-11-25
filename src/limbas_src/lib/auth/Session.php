@@ -9,8 +9,10 @@
 
 namespace Limbas\lib\auth;
 
+use Limbas\gtab\lib\tables\TableFilter;
 use Limbas\lib\db\Database;
 use Limbas\admin\tools\update\Updater;
+use Limbas\lib\db\functions\Dbf;
 use Symfony\Component\HttpFoundation\Request;
 
 class Session {
@@ -99,7 +101,7 @@ class Session {
     
     
     
-    public static function load(Request $request): void
+    public static function load(Request $request, bool $refresh = false): void
     {
         global $session;
 
@@ -108,8 +110,10 @@ class Session {
         self::assignSessionVars();
 
         /* --- Session löschen --------------------------------------------- */
-        if($action === 'sess_refresh' || isset($_REQUEST['sess_refresh'])){
+        $wasReset = false;
+        if($action === 'sess_refresh' || isset($_REQUEST['sess_refresh']) || $refresh){
             self::delete();
+            $wasReset = true;
         }
         
         if (empty($session)) {
@@ -130,6 +134,9 @@ class Session {
 
         if ($action !== 'setup_update' && $action !== 'maintenance' && !defined('LIMBAS_INSTALL') AND !defined('IS_CRON')) {
             Updater::checkVersion();
+            if(!$wasReset) {
+                Updater::checkNewVersionAvailable();
+            }
         }
         
         
@@ -251,9 +258,7 @@ class Session {
         $db = Database::get();
         
         /* --- set database variables after session init --------------------------------- */
-        if (function_exists('dbf_setVariables')) {
-            dbf_setVariables($db);
-        }
+        Dbf::setVariables();
         
     }
     
@@ -294,7 +299,7 @@ class Session {
         # check for some changes in snapshots
         if(lmbdb_result($rs,"SNAP_CHANGED")){
             require_once(COREPATH . 'extra/snapshot/snapshot.lib');
-            $gsnap = SNAP_loadInSession(1);
+            $gsnap = TableFilter::loadInSession(1);
         }
 
         # check for some changes in filestructure / execute get_filestructure()

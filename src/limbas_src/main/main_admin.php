@@ -10,6 +10,7 @@
 use Limbas\admin\form\FormController;
 use Limbas\admin\report\ReportController;
 use Limbas\admin\setup\fonts\FontController;
+use Limbas\admin\setup\tinymce\TinyMceController;
 use Limbas\admin\setup\umgvar\UmgVarController;
 use Limbas\admin\tools\datasync\DataSyncController;
 use Limbas\layout\Layout;
@@ -56,6 +57,11 @@ if ($action == "setup_group_erg" AND $LINK[$action] == 1) {
 	$require4 = "admin/group/group_erg.dao";
 	$require5 = "admin/group/group_erg.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
+elseif ($action == "setup_group_settings" AND $LINK[$action] == 1) {
+    $require1 = "admin/group/group_settings.dao";
+    $require3 = "admin/group/group_settings.php";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == "setup_group_nutzrechte" AND $LINK[$action] == 1) {
 	$require1 = "admin/group/group_nutzrechte.dao";
@@ -264,6 +270,10 @@ elseif ($action == "setup_umgvar" AND $LINK[$action] == 1) {
 elseif ($action == "setup_custvar" AND $LINK[$action] == 1) {
     $require1 = "admin/setup/custvar.dao";
     $require2 = "admin/setup/custvar.php";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
+elseif ($action == "setup_tinymce" AND $LINK[$action] == 1) {
+    $controllerAction = [TinyMceController::class, 'index', []];
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == "setup_ftype" AND $LINK[$action] == 1) {
@@ -518,6 +528,11 @@ elseif ($action == 'setup_mail_templates' AND $LINK[$LINK_ID[$action]] == 1) {
     $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
 }
 
+elseif ($action == 'setup_mail_signatures' AND $LINK[$LINK_ID[$action]] == 1) {
+    $require1 = 'admin/setup/mail/signature/signature.dao';
+    $require2 = 'admin/setup/mail/signature/signature.php';
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+}
 elseif ($action == 'setup_template_editor'){// AND $LINK[$LINK_ID[$action]] == 1) {
     $require1 = 'admin/templates/html/editor/init.php';
     $BODYHEADER = '';//$lang[$LINK['desc'][$LINK_ID[$action]]];
@@ -595,11 +610,6 @@ else
 }
 
 /* -------------------------------------------------------------------- */
-
-# ---- History Eintrag ---------
-if(!$ltmp["history_action"] AND $session["logging"] == 2){
-	history_action($gtabid,$ID,$LINK_ID[$action],2);
-}
 
 if($BODY != 1){
     require_once(Layout::getFilePath('main/foot.php'));

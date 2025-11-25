@@ -2,7 +2,7 @@
 
 namespace Limbas\admin\group;
 
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 
 class GroupRightsController extends LimbasController
 {

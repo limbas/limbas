@@ -4,8 +4,8 @@ namespace Limbas\extra\reminder;
 
 use DateTime;
 use Exception;
+use Limbas\Controllers\LimbasController;
 use Limbas\Controllers\UserGroupController;
-use Limbas\lib\LimbasController;
 
 class ReminderController extends LimbasController
 {

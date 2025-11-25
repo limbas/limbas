@@ -7,6 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+global $DBA;
+
+use Limbas\lib\db\functions\Dbf;
 
 ?>
 
@@ -32,7 +35,7 @@
                                     $existing_tables[] = lmb_strtoupper(lmbdb_result($rs, "TABELLE"));
                                 }
 
-                                $odbctable = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
+                                $odbctable = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE','VIEW'");
                                 foreach($odbctable["table_name"] as $tkey => $tvalue) {
                                     if(!in_array(lmb_strtoupper($tvalue),$existing_tables)){
                                         echo "<option value=\"".$tvalue."\">$tvalue</option>";
@@ -68,7 +71,7 @@
 <?php
 if($import_action == 1 AND $covertfromtable){
 	/* --- Tabellenfelder auslesen --------------------------------------------- */
-	$columns = dbf_5(array($DBA["DBSCHEMA"],$tabname));
+	$columns = Dbf::getColumns($DBA["DBSCHEMA"],$tabname ?? '', null);
 	foreach ($columns["columnname"] as $key => $value){
 		$header[] = $value;
 		$e["field_type"][] = $columns["datatype"][$key];

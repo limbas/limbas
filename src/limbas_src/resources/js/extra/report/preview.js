@@ -53,7 +53,7 @@ function reportAction(action, params={}) {
             ID: $('input[name="ID"]').val(),
             use_record: $('input[name="use_record"]').val(),
             report_rename: $('input[name="report_rename"]').val(),
-            report_printer: $('select[name="report_printer"]').val(),
+            printerId: $('select[name="printerId"]').val(),
             resolvedTemplateGroups: $('input[name="resolvedTemplateGroups"]').val(),
             resolvedDynamicData: $('input[name="resolvedDynamicData"]').val(),
             dmsIds: $('#btn-report-archive').data('ids')
@@ -75,11 +75,11 @@ function reportAction(action, params={}) {
                 if(action === 'preview') {
                     reportPreviewCallback(data);
                 }
-                else if(action === 'print' || action === 'archivePrint') {
+                else if(action === 'archive' || action === 'archivePrint') {
                     reportArchiveCallback(data);
                 }
-                else if(action === 'archive') {
-                    reportArchiveCallback(data);
+                else if(action === 'print') {
+                    reportArchiveCallback(data, true);
                 }
                 resolve(data);
             },
@@ -87,10 +87,10 @@ function reportAction(action, params={}) {
                 if(action === 'preview') {
                     reportPreviewCallback({success:false});
                 }
-                else if(action === 'print' || action === 'archivePrint') {
+                else if(action === 'archive' || action === 'archivePrint') {
                     reportArchiveCallback({success:false});
                 }
-                else if(action === 'archive') {
+                else if(action === 'print') {
                     reportArchiveCallback({success:false});
                 }
                 reject();
@@ -123,8 +123,9 @@ function reportPreviewCallback(data) {
 /**
  * Archives the previewed file
  * @param data
+ * @param print
  */
-function reportArchiveCallback(data) {
+function reportArchiveCallback(data,print=false) {
 
     let $btnArchive = $('#btn-report-archive');
     
@@ -132,7 +133,9 @@ function reportArchiveCallback(data) {
 
         $('input[name="report_rename"]').prop('disabled', true); // disable name field
         
-        reportSetArchiveBtn(1);
+        if(!print) {
+            reportSetArchiveBtn(1);
+        }
 
         $('.load-preview').addClass('d-none');
 
@@ -148,9 +151,13 @@ function reportArchiveCallback(data) {
             $btnArchive.data('ids',data.ids);
         }
         
+        $('#btn-report-archive-print').addClass('invisible');
+        
         
     } else {
-        reportSetArchiveBtn(0);
+        if(!print) {
+            reportSetArchiveBtn(0);
+        }
     }
 }
 

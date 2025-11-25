@@ -1,7 +1,17 @@
 <?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
 global $lang;
 
 // todo update to class based approach
+
+use Limbas\lib\db\functions\Dbf;
 
 function getSizeschemaArray(): array
 {
@@ -9,17 +19,17 @@ function getSizeschemaArray(): array
     global $db;
 
     $dbSchema = $DBA['DBSCHEMA'];
-    $odbc_table = dbf_20([$dbSchema, null, "'TABLE','VIEW','MATVIEW'"]);
+    $odbc_table = Dbf::getTableList($dbSchema, null, "'TABLE','VIEW','MATVIEW'");
     $sizeschemaArray = [];
     foreach ($odbc_table['table_name'] as $tableName) {
         // todo make this more efficient
-        $columns = dbf_5([
+        $columns = Dbf::getColumns(
             $dbSchema,
             $tableName,
             null,
             false,
             false
-        ]) ?: [];
+        ) ?: [];
 
         $columnNames = $columns['columnname'];
 
@@ -39,7 +49,7 @@ function getSizeschemaArray(): array
         $sqlQuery = "SELECT pg_size_pretty(pg_table_size('{$tableName}')) AS table_size";
         $rs = lmbdb_exec($db, $sqlQuery);
 
-        [$prettySize, $orderSize] = dbq_30([$dbSchema, $tableName]);
+        [$prettySize, $orderSize] = Dbf::prettyPrintTableSize($dbSchema, $tableName ?? '');
 
         $sizeschemaArray[] = [
             'Name' => $tableName,

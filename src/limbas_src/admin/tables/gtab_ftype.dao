@@ -14,6 +14,9 @@
 ##DATA_TYPE NOT IN (18,31,32,43,48,41,47,13,38,46)
 
 
+use Limbas\lib\db\Database;
+use Limbas\lib\db\functions\Dbf;
+
 $ext_fk = getTypeExensions();
 
 /* --- Transaktion START ------------------------------------------------ */
@@ -110,7 +113,7 @@ if($def){
 
     $def = lmb_get_db_defaultValue($def,$parsetype);
 
-	if($sqlquery = dbq_9(array($DBA["DBSCHEMA"],$new_gtab,$column,$def))){
+	if($sqlquery = Dbf::setColumnDefaultSql($DBA["DBSCHEMA"],$new_gtab ?? '',$column ?? '',$def)){
 		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
@@ -186,11 +189,11 @@ if($uniquefield){
 
 /* --- INDEX ändern --------------------------------------------- */
 if($fieldindex){
-	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],$new_gtab,null,0,$column));
+	$sqlquery = Dbf::getIndicesSql($DBA["DBSCHEMA"], null, $new_gtab, $column, false);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	# drop index
 	while(lmbdb_fetch_row($rs)){
-		$sqlquery1 = dbq_5(array($DBA["DBSCHEMA"],lmbdb_result($rs, "INDEXNAME"),lmbdb_result($rs, "TABLENAME")));
+		$sqlquery1 = Dbf::dropIndexSql(lmbdb_result($rs, "INDEXNAME") ?? '',lmbdb_result($rs, "TABLENAME") ?? '');
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;$findex = LMB_DBDEF_TRUE;}else{$findex = LMB_DBDEF_FALSE;}
 		$dropindex = 1;
@@ -199,7 +202,7 @@ if($fieldindex){
 	# add index
 	if(!$dropindex){
         $indname = lmb_getConstraintName('LMB_IND',$new_gtab,$column);
-		$sqlquery1 = dbq_4(array($DBA["DBSCHEMA"],$indname,$new_gtab,$column));
+		$sqlquery1 = Dbf::createIndexSql($indname,$new_gtab,$column);
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;$findex = LMB_DBDEF_FALSE;}else{$findex = LMB_DBDEF_TRUE;}
 	}
@@ -227,6 +230,14 @@ if($edit_rule){
 if($artleiste){
 	if($artleiste == "artleiste_CHECKED" OR $artleiste == "false"){$artleiste = LMB_DBDEF_FALSE;}else{$artleiste = LMB_DBDEF_TRUE;}
 	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET ARTLEISTE = $artleiste WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $atid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- tablesearch ---------------------------------------------*/
+if($tablesearch){
+	if($tablesearch == "false"){$tablesearch = LMB_DBDEF_TRUE;}else{$tablesearch = LMB_DBDEF_FALSE;}
+	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET TABLESEARCH = $tablesearch WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $atid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
@@ -456,10 +467,18 @@ if($aggregate){
 
 /* --- Argument Editierbar ändern ---------------------------------------------*/
 if($argument_edit){
-	if($argument_edit == "CHECKED"){$argument_edit = LMB_DBDEF_FALSE;}else{$argument_edit = LMB_DBDEF_TRUE;}
+	if($argument_edit == "false"){$argument_edit = LMB_DBDEF_FALSE;}else{$argument_edit = LMB_DBDEF_TRUE;}
 	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET ARGUMENT_EDIT = $argument_edit WHERE FIELD_ID = $fieldid AND TAB_ID = $atid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
+}
+
+
+if(isset($argument_modus)){
+    if(empty($argument_modus) || ($argument_modus != 1)){$argument_modus = 0;}
+    $sqlquery =  "UPDATE LMB_CONF_FIELDS SET ARGUMENT_MODUS = ".parse_db_int($argument_modus)." WHERE FIELD_ID = $fieldid AND TAB_ID = $atid";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
 }
 
 /* --- wysiwyg ändern ---------------------------------------------*/
@@ -470,6 +489,16 @@ if($wysiwyg){
 	if(!$rs) {$commit = 1;}
 }
 
+
+if(isset($wysiwyg_config)){
+	$wysiwygConfigId = intval($val);
+	if($wysiwygConfigId <= 0) {
+		$wysiwygConfigId = null;
+	}
+
+	Database::update('LMB_CONF_FIELDS',['WYSIWYG_CONFIG_ID'=>$wysiwygConfigId],['FIELD_ID'=>$fieldid,'TAB_ID'=>$atid]);
+}
+
 /* --- Memo Index ändern ---------------------------------------------*/
 if($memoindex){
 	if(${"MEMOINDEX_".$fieldid} OR $memoindex == "true"){$memoindex = LMB_DBDEF_TRUE;}else{$memoindex = LMB_DBDEF_FALSE;}
@@ -477,7 +506,7 @@ if($memoindex){
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$new_gtab,"IND_".$fieldid));
+	$odbc_column = Dbf::getColumns($DBA["DBSCHEMA"],$new_gtab ?? '',"IND_".$fieldid);
 	if($odbc_column["columnname"][0]){
 		$present = $odbc_column["columnname"][0];
 	}
@@ -488,14 +517,14 @@ if($memoindex){
 		$newType = array(LMB_DBTYPE_BOOLEAN,LMB_DBTYPE_TIMESTAMP);
 		$newDefault = array(LMB_DBDEF_FALSE,null);
 
-		$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$new_gtab,$newField,$newType,$newDefault));
+		$sqlquery = Dbf::addColumnSql($new_gtab ?? '',$newField,$newType,$newDefault);
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}elseif($present){
-		$sqlquery = dbq_22(array($new_gtab,"IND_".$fieldid));
+		$sqlquery = Dbf::dropColumnSql($new_gtab ?? '',"IND_".$fieldid);
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$sqlquery = dbq_22(array($new_gtab,"INDD_".$fieldid));
+		$sqlquery = Dbf::dropColumnSql($new_gtab ?? '',"INDD_".$fieldid);
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 
@@ -788,8 +817,8 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
 		global $action;
         global $DBA;
 
-        $verkntabid = dbf_4($origin['verkntabid']);
-        $md5tab = dbf_4($origin['md5tab']);
+        $verkntabid = Dbf::handleCaseSensitive($origin['verkntabid']);
+        $md5tab = Dbf::handleCaseSensitive($origin['md5tab']);
 
         // first change field type
         $sqlquery = "UPDATE LMB_CONF_FIELDS SET FIELD_TYPE = ".$lmfieldtype["field_type"][$convert].", DATA_TYPE = ".$lmfieldtype["data_type"][$convert]." WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
@@ -813,14 +842,14 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
             if(!$origin["refint"]){lmb_alert('No referential integrity aktivated. Be shure integrity is valid and activate referential integrity before converting!');return false;}
 
 		    // add relation field
-            $rel_fieldname = dbf_4('LMB_'.substr($tabname,0,12).'_'.substr($origin["field_name"],0,12).'_ID');
-            if(!dbf_5(array($DBA["DBSCHEMA"],$verkntabname,$rel_fieldname))) {
-                $sqlquery = dbq_29(array($DBA["DBSCHEMA"], $verkntabname, $rel_fieldname, LMB_DBTYPE_FIXED . '(18)'));
+            $rel_fieldname = Dbf::handleCaseSensitive('LMB_'.substr($tabname,0,12).'_'.substr($origin["field_name"],0,12).'_ID');
+            if(!Dbf::getColumns($DBA["DBSCHEMA"],$verkntabname ?? '',$rel_fieldname)) {
+                $sqlquery = Dbf::addColumnSql($verkntabname ?? '', $rel_fieldname, LMB_DBTYPE_FIXED . '(18)');
                 $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                 if (!$rs) {return false;}
                 // create index
                 $indname = lmb_getConstraintName('LMB_INDV',$verkntabname,$rel_fieldname);
-                $sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$verkntabname,$rel_fieldname));
+				$sqlquery = Dbf::createIndexSql($indname,$verkntabname,$rel_fieldname);
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             }else{
                 $sqlquery1 = "UPDATE $verkntabname SET $rel_fieldname = NULL";
@@ -841,11 +870,11 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
             }
 
             // drop trigger
-            lmb_deleteTriggerForTable($md5tab);
-            lmb_updateTrigger();
+            lmb_TriggerDropFromDefinition($md5tab);
+            lmb_TriggerSyncToDB();
 
             // drop relation table
-            $sqlquery = dbq_28(array($md5tab));
+            $sqlquery = Dbf::dropTableSql($md5tab);
             #$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             #if(!$rs) {$commit = 1;}
             lmb_alert("you can drop table $md5tab manual if conversion was successfull!\n ($sqlquery)");
@@ -859,7 +888,7 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
             global $session;
 
             // create relation table
-            $newmd5tab = dbf_4("VERK_".lmb_substr(md5(lmb_strtoupper($table).lmb_strtoupper($field).time()),0,13));
+            $newmd5tab = Dbf::handleCaseSensitive("VERK_".lmb_substr(md5(lmb_strtoupper($table).lmb_strtoupper($field).time()),0,13));
             $sqlquery = "CREATE TABLE ".$newmd5tab." (KEYID ".LMB_DBTYPE_FIXED."(18) NOT NULL,ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", ERSTUSER ".LMB_DBTYPE_SMALLINT.", ID ".LMB_DBTYPE_FIXED."(18),VERKN_ID ".LMB_DBTYPE_FIXED."(18),".LMB_DBFUNC_PRIMARY_KEY." (KEYID),SORT SMALLINT)";
             $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             if(!$rs) {$commit = 1;}
@@ -890,11 +919,11 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
             $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             if(!$rs) {$commit = 1;}
             $fieldname = lmbdb_result($rs, 'FIELD_NAME');
-            lmb_relationTrigger($newmd5tab, $verkntabname, $fieldname,0,0,0);
-            lmb_updateTrigger();
+            lmb_TriggerGetRelationTrigger($newmd5tab, $verkntabname, $fieldname,0,0,0);
+            lmb_TriggerSyncToDB();
 
             // drop relation field
-            $sqlquery = dbq_22(array($verkntabname,$md5tab));
+            $sqlquery = Dbf::dropColumnSql($verkntabname ?? '',$md5tab);
             #$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             #if(!$rs) {$commit = 1;}
             lmb_alert("you can drop relation field $md5tab manual if conversion was successfull!\n ($sqlquery)");
@@ -905,7 +934,7 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
             $commit = 1;
         }
 
-        if(!lmb_rebuildTrigger(0,array($tabid))){
+        if(!lmb_TriggerRebuildSystem(0,array($tabid))){
             $commit = 1;
         }
 
@@ -948,12 +977,12 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
 		# ------------- Sonderfälle --------------
 		# Währung
 		if($origin["data_type"] == 30 AND $lmfieldtype["data_type"][$convert] != 30){
-			$sqlquery = dbq_22(array($table,$origin["field_name"]."_C"));
+			$sqlquery = Dbf::dropColumnSql($table ?? '',$origin["field_name"]."_C");
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}elseif($origin["data_type"] != 30 AND $lmfieldtype["data_type"][$convert] == 30){
 			#$sqlquery =  "ALTER TABLE $table ".LMB_DBFUNC_ADD_COLUMN_FIRST." ".$origin["field_name"]."_C ".LMB_DBTYPE_VARCHAR."(5)";
-			$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$origin["field_name"].'_C',LMB_DBTYPE_VARCHAR.'(5)'));
+			$sqlquery = Dbf::addColumnSql($table ?? '',$origin["field_name"].'_C',LMB_DBTYPE_VARCHAR.'(5)');
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
@@ -1100,7 +1129,7 @@ if($table_gtab[$bzm]) {
     }
 
 	/* --- Datenbank Infos --------------------------------------------- */
-	$rs = dbf_5(array($DBA["DBSCHEMA"],$table_gtab[$atid],null,1),1);
+	$rs = Dbf::getColumns($DBA["DBSCHEMA"],$table_gtab[$atid] ?? '',null,true, false, 1);
 	while(lmbdb_fetch_row($rs)) {
 		$fieldsp_name = trim(lmb_strtoupper(lmbdb_result($rs, "COLUMN_NAME")));
 		$result_fieldspecs[$fieldsp_name]["precision"] = lmbdb_result($rs, "PRECISION");
@@ -1113,7 +1142,7 @@ if($table_gtab[$bzm]) {
     #,LMB_FIELD_TYPES.DATA_TYPE_EXP,LMB_FIELD_TYPES.FORMAT,LMB_FIELD_TYPES.FIELD_TYPE,LMB_FIELD_TYPES.DATA_TYPE,LMB_FIELD_TYPES.ID AS DATA_TYPE_ID,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.VERKNGROUP
 	
 	/* --- Tabellen-Abfrage --------------------------------------------- */
-	$sqlquery = "SELECT LMB_CONF_FIELDS.REGEX,LMB_CONF_FIELDS.COL_HIDE,LMB_CONF_FIELDS.DETAILSEARCH,LMB_CONF_FIELDS.CHECKSUM,LMB_CONF_FIELDS.ROW_SIZE,LMB_CONF_FIELDS.HASRECVERKN,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.FULLSEARCH,LMB_CONF_FIELDS.SEARCHVERSION,LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY,LMB_CONF_FIELDS.EDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.INACTIVELINK,LMB_CONF_FIELDS.VERKNGROUP, LMB_CONF_FIELDS.ENCRYPTION_MODE
+	$sqlquery = "SELECT LMB_CONF_FIELDS.REGEX,LMB_CONF_FIELDS.COL_HIDE,LMB_CONF_FIELDS.DETAILSEARCH,LMB_CONF_FIELDS.CHECKSUM,LMB_CONF_FIELDS.ROW_SIZE,LMB_CONF_FIELDS.HASRECVERKN,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.FULLSEARCH,LMB_CONF_FIELDS.SEARCHVERSION,LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY,LMB_CONF_FIELDS.EDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.TABLESEARCH,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.ARGUMENT_MODUS,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.INACTIVELINK,LMB_CONF_FIELDS.VERKNGROUP, LMB_CONF_FIELDS.ENCRYPTION_MODE, LMB_CONF_FIELDS.WYSIWYG_CONFIG_ID
                     FROM LMB_CONF_FIELDS
 					WHERE LMB_CONF_FIELDS.TAB_ID = $atid $sql
 					ORDER BY LMB_CONF_FIELDS.SORT";
@@ -1131,6 +1160,7 @@ if($table_gtab[$bzm]) {
 		$result_fieldtype[$table_gtab[$bzm]]["argument"][$bzm1] = trim(lmbdb_result($rs, "ARGUMENT")); # longtext handle
 		$result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1] = lmbdb_result($rs, "ARGUMENT_TYP");
 		$result_fieldtype[$table_gtab[$bzm]]["argument_edit"][$bzm1] = lmbdb_result($rs, "ARGUMENT_EDIT");
+        $result_fieldtype[$table_gtab[$bzm]]["argument_modus"][$bzm1] = lmbdb_result($rs, "ARGUMENT_MODUS");
 		$result_fieldtype[$table_gtab[$bzm]]["genlink"][$bzm1] = lmbdb_result($rs, "GENLINK");
 		$result_fieldtype[$table_gtab[$bzm]]["verkntab"][$bzm1] = lmbdb_result($rs, "MD5TAB");
 		$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][$bzm1] = lmbdb_result($rs, "VERKNTABID");
@@ -1149,6 +1179,7 @@ if($table_gtab[$bzm]) {
 		$result_fieldtype[$table_gtab[$bzm]]["currency"][$bzm1] = lmbdb_result($rs, "CURRENCY");
 		$result_fieldtype[$table_gtab[$bzm]]["datetime"][$bzm1] = lmbdb_result($rs, "DATETIME");
 		$result_fieldtype[$table_gtab[$bzm]]["wysiwyg"][$bzm1] = lmbdb_result($rs, "WYSIWYG");
+		$result_fieldtype[$table_gtab[$bzm]]["wysiwyg_config"][$bzm1] = intval(lmbdb_result($rs, 'WYSIWYG_CONFIG_ID'));
 		$result_fieldtype[$table_gtab[$bzm]]["select_pool"][$bzm1] = lmbdb_result($rs, "SELECT_POOL");
 		$result_fieldtype[$table_gtab[$bzm]]["select_cut"][$bzm1] = lmbdb_result($rs, "SELECT_CUT");
 		$result_fieldtype[$table_gtab[$bzm]]["indexed"][$bzm1] = lmbdb_result($rs, "INDEXED");
@@ -1163,6 +1194,7 @@ if($table_gtab[$bzm]) {
 		$result_fieldtype[$table_gtab[$bzm]]["trigger"][$bzm1] = explode(",",lmbdb_result($rs, "LMTRIGGER"));
 		$result_fieldtype[$table_gtab[$bzm]]["domain_default"][$bzm1] = lmbdb_result($rs, "DEFAULTVALUE");
 		$result_fieldtype[$table_gtab[$bzm]]["quicksearch"][$bzm1] = lmbdb_result($rs, "QUICKSEARCH");
+        $result_fieldtype[$table_gtab[$bzm]]["tablesearch"][$bzm1] = lmbdb_result($rs, "TABLESEARCH");
 		$result_fieldtype[$table_gtab[$bzm]]["view_rule"][$bzm1] = lmbdb_result($rs, "VIEWRULE");
 		$result_fieldtype[$table_gtab[$bzm]]["edit_rule"][$bzm1] = lmbdb_result($rs, "EDITRULE");
 		$result_fieldtype[$table_gtab[$bzm]]["potency"][$bzm1] = lmbdb_result($rs, "POTENCY");

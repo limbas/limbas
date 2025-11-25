@@ -14,7 +14,8 @@ require_once(COREPATH . 'extra/report/report.dao');
 require_once(COREPATH . 'extra/explorer/filestructure.lib');
 
 use Exception;
-use lmb_log;
+use Limbas\extra\printer\PrinterOptions;
+use Limbas\lib\general\Log\Log;
 use Mpdf\MpdfException;
 use setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException;
 use setasign\Fpdi\PdfParser\Filter\FilterException;
@@ -56,14 +57,13 @@ abstract class Report
      * @param ReportOutput $reportOutput
      * @param $report_rename
      * @param $use_record
-     * @param int $printerId
      * @param $resolvedTemplateGroups
      * @param $resolvedDynamicData
      * @param null $relation
-     * @param array $printerOptions
+     * @param PrinterOptions|null $printerOptions
      * @return bool|string
      */
-    public function generateReport(int $reportId, $gtabid, $ID, ReportOutput $reportOutput, $report_rename, $use_record, int $printerId, $resolvedTemplateGroups, $resolvedDynamicData, $relation = null, array $printerOptions = []): bool|string
+    public function generateReport(int $reportId, $gtabid, $ID, ReportOutput $reportOutput, $report_rename, $use_record, $resolvedTemplateGroups, $resolvedDynamicData, $relation = null, PrinterOptions $printerOptions = null): bool|string
     {
         global $greportlist;
         global $filter, $gsr;
@@ -89,7 +89,7 @@ abstract class Report
         $GLOBALS['resolvedTemplateGroups'] = $resolvedTemplateGroups;
         $GLOBALS['resolvedDynamicData'] = $resolvedDynamicData;
 
-        $generatedReport = $this->createReport($reportId, $gtabid, $ID, $reportOutput, $report_rename, $gsr, $filter, $use_record, $verkn, $printerId, $printerOptions);
+        $generatedReport = $this->createReport($reportId, $gtabid, $ID, $reportOutput, $report_rename, $gsr, $filter, $use_record, $verkn, $printerOptions);
 
 
         if ($generatedReport === false) {
@@ -113,11 +113,10 @@ abstract class Report
      * @param null $filter
      * @param null $use_record
      * @param null $verkn
-     * @param int|null $printerId
-     * @param array $printerOptions
+     * @param PrinterOptions|null $printerOptions
      * @return bool|string
      */
-    public function createReport(int $reportId, $gtabid = null, $ID = null, ReportOutput $reportOutput = ReportOutput::TEMP, $report_rename = null, $gsr = null, $filter = null, $use_record = null, $verkn = null, int $printerId = null, array $printerOptions = []): bool|string
+    public function createReport(int $reportId, $gtabid = null, $ID = null, ReportOutput $reportOutput = ReportOutput::TEMP, $report_rename = null, $gsr = null, $filter = null, $use_record = null, $verkn = null, PrinterOptions $printerOptions = null): bool|string
     {
         global $session;
         global $greportlist;
@@ -155,26 +154,26 @@ abstract class Report
         try {
             if ($ID) {
                 # --- Einzelbericht eines Datensatzes -----------------------------------
-                $generatedReport = $this->createPDF($reportId, $ID, $reportOutput, $report_rename, null, null, $printerId, $printerOptions);
+                $generatedReport = $this->createPDF($reportId, $ID, $reportOutput, $report_rename, null, null, $printerOptions);
             } elseif ($use_record and !$listmode) {
                 # --- Einzelbericht mehrerer Datensätze (gefiltert)  -----------------------------------
-                $generatedReport = $this->createReportForSelected($gtabid, $reportId, $reportOutput, $use_record, $report_rename, $printerId, $printerOptions);
+                $generatedReport = $this->createReportForSelected($gtabid, $reportId, $reportOutput, $use_record, $report_rename, $printerOptions);
             } elseif (!$listmode) {
                 # --- Listenbericht gefiltert -----------------------------------
-                $generatedReport = $this->createReportForFiltered($gtabid, $reportId, $reportOutput, $filter, $gsr, $verkn, $report_rename, $printerId, $printerOptions);
+                $generatedReport = $this->createReportForFiltered($gtabid, $reportId, $reportOutput, $filter, $gsr, $verkn, $report_rename, $printerOptions);
             } elseif ($reportId and $listmode and $gtabid) {
                 # --- Einzelbericht mehrerer Datensätze (ausgewählt) -----------------------------------
-                $generatedReport = $this->createPDF($reportId, 1, $reportOutput, $report_rename, $gsr, $filter, $printerId, $printerOptions);
+                $generatedReport = $this->createPDF($reportId, 1, $reportOutput, $report_rename, $gsr, $filter, $printerOptions);
             } elseif ($reportId and !$gtabid) {
                 # --- freier Einzelbericht ohne Tabelle -----------------------------------
-                $generatedReport = $this->createPDF($reportId, 0, $reportOutput, $report_rename, null, null, $printerId, $printerOptions);
+                $generatedReport = $this->createPDF($reportId, 0, $reportOutput, $report_rename, null, null, $printerOptions);
             }
         } catch (Exception $e) {
 
             if ($session["debug"]) {
-                lmb_log::error($e, $e->getMessage());
+                Log::limbasError($e, $e->getMessage());
             } else {
-                lmb_log::error($e, $lang[56]);
+                Log::limbasError($e, $lang[56]);
             }
         }
 
@@ -412,12 +411,11 @@ abstract class Report
      * @param null $report_rename
      * @param null $gsr
      * @param null $filter
-     * @param int|null $printerId
-     * @param array $printerOptions
+     * @param PrinterOptions|null $printerOptions
      * @return false|string
      * @throws MpdfException
      */
-    protected function createPDF(int $reportId, $ID, ReportOutput $reportOutput, $report_rename = null, $gsr = null, $filter = null, int $printerId = null, array $printerOptions = []): bool|string
+    protected function createPDF(int $reportId, $ID, ReportOutput $reportOutput, $report_rename = null, $gsr = null, $filter = null, PrinterOptions $printerOptions = null): bool|string
     {
         global $LINK;
         global $umgvar;
@@ -464,6 +462,10 @@ abstract class Report
             return false;
         }
 
+        if (function_exists('lmbAfterReportObjectCreated')) {
+            lmbAfterReportObjectCreated($pdf, $report, intval($ID), $reportOutput, $report_rename);
+        }
+        
         # fill PDF with specific content
         $this->renderContent($pdf, $report, intval($ID));
 
@@ -515,9 +517,9 @@ abstract class Report
         # to printer cache
         if ($reportOutput === ReportOutput::PRINT && $LINK[304]) {
 
-            $forcePrint = array_key_exists('directPrint', $printerOptions) && $printerOptions['directPrint'];
+            $forcePrint = $printerOptions?->directPrint ?? false;
             
-            $printed = lmbPrint($printerId, $tempFilePath, $report['archive_fileID'], $forcePrint, $printerOptions);
+            $printed = lmbPrint($printerOptions?->printerId, $tempFilePath, $report['archive_fileID'], $forcePrint, $printerOptions);
 
             if (!$printed) {
                 return false;
@@ -636,12 +638,11 @@ abstract class Report
      * @param $gsr
      * @param $verkn
      * @param null $report_rename
-     * @param int|null $printerId
-     * @param array $printerOptions
+     * @param PrinterOptions|null $printerOptions
      * @return false|string
      * @throws MpdfException
      */
-    private function createReportForFiltered($gtabid, int $reportId, ReportOutput $reportOutput, &$filter, $gsr, $verkn, $report_rename = null, int $printerId = null, array $printerOptions = []): bool|string
+    private function createReportForFiltered($gtabid, int $reportId, ReportOutput $reportOutput, &$filter, $gsr, $verkn, $report_rename = null, PrinterOptions $printerOptions = null): bool|string
     {
         global $gresult;
 
@@ -654,7 +655,7 @@ abstract class Report
             $ids[] = intval($id);
         }
 
-        return $this->generateReportForIds($ids, $reportId, $reportOutput, $report_rename, $printerId, $printerOptions);
+        return $this->generateReportForIds($ids, $reportId, $reportOutput, $report_rename, $printerOptions);
     }
 
 
@@ -666,12 +667,11 @@ abstract class Report
      * @param ReportOutput $reportOutput
      * @param $use_record
      * @param null $report_rename
-     * @param int|null $printerId
-     * @param array $printerOptions
+     * @param PrinterOptions|null $printerOptions
      * @return bool|string
      * @throws MpdfException
      */
-    private function createReportForSelected($gtabid, int $reportId, ReportOutput $reportOutput, $use_record, $report_rename = null, int $printerId = null, array $printerOptions = []): bool|string
+    private function createReportForSelected($gtabid, int $reportId, ReportOutput $reportOutput, $use_record, $report_rename = null, PrinterOptions $printerOptions = null): bool|string
     {
         $use_record = explode(';', $use_record);
         $use_record = array_unique($use_record);
@@ -683,7 +683,7 @@ abstract class Report
                 $ids[] = intval($recel[0]);
             }
         }
-        return $this->generateReportForIds($ids, $reportId, $reportOutput, $report_rename, $printerId, $printerOptions);
+        return $this->generateReportForIds($ids, $reportId, $reportOutput, $report_rename, $printerOptions);
     }
 
     /**
@@ -691,12 +691,11 @@ abstract class Report
      * @param int $reportId
      * @param ReportOutput $reportOutput
      * @param string|null $reportRename
-     * @param int|null $printerId
-     * @param array $printerOptions
+     * @param PrinterOptions|null $printerOptions
      * @return bool|string
      * @throws MpdfException
      */
-    private function generateReportForIds(array $ids, int $reportId, ReportOutput $reportOutput, ?string $reportRename = null, int $printerId = null, array $printerOptions = []): bool|string
+    private function generateReportForIds(array $ids, int $reportId, ReportOutput $reportOutput, ?string $reportRename = null, PrinterOptions $printerOptions = null): bool|string
     {
         $ids = array_unique($ids);
 
@@ -704,7 +703,7 @@ abstract class Report
         $fileList = [];
         $fileCounter = 0;
         foreach ($ids as $id) {
-            $pdfFilePath = $this->createPDF($reportId, $id, $reportOutput, $reportRename . '_' . $id, null, null, $printerId, $printerOptions);
+            $pdfFilePath = $this->createPDF($reportId, $id, $reportOutput, $reportRename . '_' . $id, null, null, $printerOptions);
             if ($pdfFilePath !== false) {
                 $fileList[] = $pdfFilePath;
                 $fileCounter++;

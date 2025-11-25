@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\lib\db\functions\Dbf;
 
 
 /* --- Versionierung -------------------------------------- */
@@ -23,14 +23,14 @@ function set_version($tabid,$tabname,$versioning){
 	if(!$rs) {$commit = 1;}
 
 
-    $odbc_column = dbf_5(array($DBA["DBSCHEMA"], $tabname, "VID"));
+    $odbc_column = Dbf::getColumns($DBA["DBSCHEMA"], $tabname ?? '', "VID");
     if ($versioning AND !$odbc_column) {
 
         $new_['field'] = array('VID','VPID','VACT','VDESC');
 		$new_['type'] = array(LMB_DBTYPE_SMALLINT,LMB_DBTYPE_FIXED.'(18)',LMB_DBTYPE_BOOLEAN,LMB_DBTYPE_VARCHAR.'(399)');
 		$new_['default'] = array(1,null,LMB_DBDEF_TRUE,null);
 
-        $sqlquery1 = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$tabname,$new_['field'],$new_['type'],$new_['default']));
+        $sqlquery1 = Dbf::addColumnSql($tabname,$new_['field'],$new_['type'],$new_['default']);
         $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
         if (!$rs1) {
             $commit = 1;
@@ -40,7 +40,7 @@ function set_version($tabid,$tabname,$versioning){
         if ($tabid != $gtab["argresult_id"]["LDMS_FILES"] AND $tabid != $gtab["argresult_id"]["LDMS_META"]) {
 
             $drop_ = array('VID','VPID','VACT','VDESC');
-            $sqlquery1 = dbq_22(array($tabname,$drop_));
+            $sqlquery1 = Dbf::dropColumnSql($tabname ?? '',$drop_);
             $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
             if (!$rs1) {
                 $commit = 1;
@@ -53,7 +53,7 @@ function set_version($tabid,$tabname,$versioning){
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		
-    	$sqlquery1 = dbq_9(array($DBA["DBSCHEMA"],$tabname,dbf_4('VACT'),LMB_DBDEF_TRUE));
+    	$sqlquery1 = Dbf::setColumnDefaultSql($DBA["DBSCHEMA"],$tabname ?? '',Dbf::handleCaseSensitive('VACT'),LMB_DBDEF_TRUE);
     	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
@@ -73,27 +73,27 @@ function set_datasync($tabid,$tabname,$datasync){
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
-	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$tabname,"LMB_SYNC_ID"));
+	$odbc_column = Dbf::getColumns($DBA["DBSCHEMA"],$tabname ?? '',"LMB_SYNC_ID");
 	if($datasync == 1 AND !$odbc_column) {
         $new_['field'] = array('LMB_SYNC_ID', 'LMB_SYNC_SLAVE');
         $new_['type'] = array(LMB_DBTYPE_FIXED . '(18)', LMB_DBTYPE_SMALLINT);
-        $sqlquery1 = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $tabname, $new_['field'], $new_['type']));
+        $sqlquery1 = Dbf::addColumnSql($tabname, $new_['field'], $new_['type']);
         $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
         if (!$rs1) {$commit = 1;}
 
         // index
         $indexname = lmb_getConstraintName('LMB_INDS',$tabname,'LMB_SYNC_ID');
-        $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indexname, $tabname, 'LMB_SYNC_ID'));
+		$sqlquery = Dbf::createIndexSql($indexname, $tabname, 'LMB_SYNC_ID');
         $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
 	}elseif($datasync == 2 AND $odbc_column){
         $drop_ = array('LMB_SYNC_ID','LMB_SYNC_SLAVE');
-        $sqlquery1 = dbq_22(array($tabname,$drop_));
+        $sqlquery1 = Dbf::dropColumnSql($tabname ?? '',$drop_);
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}elseif($datasync == 0 AND $odbc_column){
         $drop_ = array('LMB_SYNC_ID','LMB_SYNC_SLAVE');
-        $sqlquery1 = dbq_22(array($tabname,$drop_));
+        $sqlquery1 = Dbf::dropColumnSql($tabname ?? '',$drop_);
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$sqlquery1 = "DELETE FROM LMB_SYNC_CONF WHERE TABID = ".parse_db_int($tabid);
@@ -121,7 +121,7 @@ function set_multitenant($tabid,$tabname,$multitenant){
     if(lmbdb_result($rs, 'TYP') == 5){$isview = 1;}else{$isview = 0;}
 
 	// check if field LMB_MID exists
-	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$tabname,dbf_4('LMB_MID')));
+	$odbc_column = Dbf::getColumns($DBA["DBSCHEMA"],$tabname ?? '',Dbf::handleCaseSensitive('LMB_MID'));
 
 
     if($isview){
@@ -142,14 +142,14 @@ function set_multitenant($tabid,$tabname,$multitenant){
             }
 
             #$sqlquery1 =  "ALTER TABLE $tabname ".LMB_DBFUNC_ADD_COLUMN_FIRST." LMB_MID ".$fieldtype;
-            $sqlquery1 = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $tabname, 'LMB_MID', $fieldtype));
+            $sqlquery1 = Dbf::addColumnSql($tabname ?? '', 'LMB_MID', $fieldtype);
             $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
             if (!$rs1) {
                 $commit = 1;
             }
         } elseif ($multitenant == LMB_DBDEF_FALSE AND $odbc_column) {
             #$sqlquery1 =  "ALTER TABLE $tabname ".LMB_DBFUNC_DROP_COLUMN_FIRST." LMB_MID";
-            $sqlquery1 = dbq_22(array($tabname, 'LMB_MID'));
+            $sqlquery1 = Dbf::dropColumnSql($tabname ?? '', 'LMB_MID');
             $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
             if (!$rs1) {
                 $commit = 1;
@@ -178,16 +178,16 @@ function set_checksum($tabid,$tabname,$checksum){
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
-	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$tabname,"LMB_CHECKSUM"));
+	$odbc_column = Dbf::getColumns($DBA["DBSCHEMA"],$tabname ?? '',"LMB_CHECKSUM");
 	if($checksum == 1 AND !$odbc_column) {
         $new_['field'] = array('LMB_CHECKSUM');
         $new_['type'] = array(LMB_DBTYPE_VARCHAR . '(32)');
-        $sqlquery1 = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $tabname, $new_['field'], $new_['type']));
+        $sqlquery1 = Dbf::addColumnSql($tabname ?? '', $new_['field'], $new_['type']);
         $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
         if (!$rs1) {$commit = 1;}
 	}elseif($checksum == 0 AND $odbc_column){
         $drop_ = array('LMB_CHECKSUM');
-        $sqlquery1 = dbq_22(array($tabname,$drop_));
+        $sqlquery1 = Dbf::dropColumnSql($tabname ?? '',$drop_);
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
@@ -518,6 +518,23 @@ if($custmenu) {
 	if(!$rs) {$commit = 1;}
 }
 
+/* --- global_searchmodus -------------------------------------- */
+if($global_searchmodus) {
+	$global_searchmodus = trim($global_searchmodus);
+    $global_searchmodus--;
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET SEARCHMODUS = ".parse_db_int($global_searchmodus)." WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- global_searchmodus -------------------------------------- */
+if($searchbar) {
+    if($searchbar == 1){$searchbar = LMB_DBDEF_TRUE;}else{$searchbar = LMB_DBDEF_FALSE;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET SEARCHBAR = ".parse_db_bool($searchbar)." WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
 /* --- Gruppierung -------------------------------------- */
 if($groupable) {
 	if($groupable == 1){$groupable = 1;}else{$groupable = 0;}
@@ -609,8 +626,40 @@ if($params2 AND $tabid) {
 	if(!$rs) {$commit = 1;}
 }
 
+/* --- menusettings -------------------------------------- */
+if(substr($act,0,5) == 'menu_') {
+
+    $link_typ = explode('_',$act)[1];
+    $link_id = explode('_',$act)[2];
+    $linkstatus = ${'menu_'.$link_typ.'_'. $link_id};
+
+    $sqlquery = "SELECT MENUDISPLAY FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $menudisplay = json_decode(lmbdb_result($rs, 'MENUDISPLAY'),JSON_OBJECT_AS_ARRAY);
+
+    if($linkstatus == 2){
+        $menudisplay[$link_typ][$link_id] = 1;
+    }elseif($menudisplay[$link_typ][$link_id]){
+        unset($menudisplay[$link_typ][$link_id]);
+    }
+
+    if(is_array($menudisplay[$link_typ]) && !count($menudisplay[$link_typ])){
+        unset($menudisplay[$link_typ]);
+    }
+
+    $value = '';
+    if(is_array($menudisplay) && count($menudisplay) > 0) {
+        $value = parse_db_string(json_encode($menudisplay),1000);
+    }
+
+    $sqlquery = "UPDATE LMB_CONF_TABLES SET MENUDISPLAY = '$value' WHERE TAB_ID = $tabid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
 
 
+}
 
 
 /* --- temp refresh -------------------------------------- */
@@ -700,6 +749,8 @@ if(!$import){
             LMB_CONF_TABLES.DETAILFORM_OPENER,
             LMB_CONF_TABLES.DETAILFORM_VIEWMODE,
             LMB_CONF_TABLES.CUSTMENU,
+            LMB_CONF_TABLES.SEARCHMODUS,
+            LMB_CONF_TABLES.SEARCHBAR,
             LMB_CONF_TABLES.RESERVEID,
             LMB_CONF_TABLES.DATASYNC,
             LMB_CONF_TABLES.CHECKSUM,
@@ -708,6 +759,7 @@ if(!$import){
             LMB_CONF_TABLES.PARAMS2,
 			LMB_CONF_VIEWS.VIEWTYPE,
 			LMB_CONF_TABLES.KEYFIELD,
+			LMB_CONF_TABLES.MENUDISPLAY,
 			TABLES2.BESCHREIBUNG AS TABLE2DESC
         FROM LMB_CONF_GROUPS 
         LEFT JOIN LMB_CONF_TABLES ON (LMB_CONF_GROUPS.ID = LMB_CONF_TABLES.TAB_GROUP)
@@ -760,6 +812,8 @@ if(!$import){
             $result_gtab[$tabgroupid]['ajaxpost'][$tabIndex] = lmbdb_result($rs, 'AJAXPOST');
             $result_gtab[$tabgroupid]['numrowcalc'][$tabIndex] = lmbdb_result($rs, 'NUMROWCALC');
             $result_gtab[$tabgroupid]['custmenu'][$tabIndex] = lmbdb_result($rs, 'CUSTMENU');
+            $result_gtab[$tabgroupid]['global_searchmodus'][$tabIndex] = lmbdb_result($rs, 'SEARCHMODUS');
+            $result_gtab[$tabgroupid]['searchbar'][$tabIndex] = lmbdb_result($rs, 'SEARCHBAR');
             $result_gtab[$tabgroupid]['detailform'][$tabIndex] = lmbdb_result($rs, 'DETAILFORM');
             $result_gtab[$tabgroupid]['detailform_opener'][$tabIndex] = lmbdb_result($rs, 'DETAILFORM_OPENER');
             $result_gtab[$tabgroupid]['detailform_viewmode'][$tabIndex] = lmbdb_result($rs, 'DETAILFORM_VIEWMODE');
@@ -775,6 +829,9 @@ if(!$import){
             $result_gtab[$tabgroupid]['validate'][$tabIndex] = lmbdb_result($rs, 'VALIDATE');
             $result_gtab[$tabgroupid]['recursiv_delete'][$tabIndex] = lmbdb_result($rs, 'RECURSIV_DELETE');
             $result_gtab[$tabgroupid]['recursiv_archive'][$tabIndex] = lmbdb_result($rs, 'RECURSIV_ARCHIVE');
+
+            # menu display
+            $result_gtab[$tabgroupid]['menudisplay'][$tabIndex] = json_decode(lmbdb_result($rs, 'MENUDISPLAY'), JSON_OBJECT_AS_ARRAY);
 
             # count tables per group
             $tabgroup_['tabellen'][$tabgroupid]++;
@@ -831,6 +888,31 @@ function getTabgroupParents($groupIndex) {
     }
     
     return $parents;
+}
+
+function getRalationParents($gtabid){
+    global $db;
+
+
+    $sqlquery = "SELECT TAB_ID, FIELD_ID, MD5TAB, DATA_TYPE, VERKNTABLETYPE FROM LMB_CONF_FIELDS WHERE VERKNTABID = $gtabid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+     while (lmbdb_fetch_row($rs)){
+
+        $parentrelation['tabid'][] = lmbdb_result($rs, 'TAB_ID');
+        $parentrelation['fieldid'][] = lmbdb_result($rs, 'FIELD_ID');
+        $parentrelation['md5tab'][] = lmbdb_result($rs, 'MD5TAB');
+        $parentrelation['datatype'][] = lmbdb_result($rs, 'DATA_TYPE');
+        $parentrelation['verkntabletype'][] = lmbdb_result($rs, 'VERKNTABLETYPE');
+
+     }
+
+    if(!$parentrelation){
+        return false;
+    }
+
+    return $parentrelation;
+
 }
 
 ?>

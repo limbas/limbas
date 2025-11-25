@@ -9,14 +9,12 @@
 
 namespace Limbas\admin\tools\datasync;
 
+use Limbas\admin\tools\datasync\Enums\ConflictMode;
 use Limbas\lib\db\Database;
-use LimbasLogger;
 use Throwable;
 
 class DatasyncProcess
 {
-
-    private array $log;
 
     /**
      * Initializes synchronisation on master
@@ -27,9 +25,6 @@ class DatasyncProcess
      */
     public function start(int $templateId, int $clientId = null): ?int
     {
-
-        $this->log = [];
-
         $fp = fopen(TEMPPATH . 'datasync.lock', 'w+');
 
         if ($fp === false || !flock($fp, LOCK_EX | LOCK_NB)) {
@@ -65,7 +60,7 @@ class DatasyncProcess
     private function runSync(int $templateId, DatasyncClient $client): void
     {
         global $umgvar;
-        
+
 
         $latestLog = $client->logLatestFile();
         $dailyLog = $client->logDailyFile();
@@ -76,15 +71,14 @@ class DatasyncProcess
             unlink($latestLog->path);
         }
 
-        LimbasLogger::$logfile = $latestLog->path;
+        DatasyncLog::setLogFile($latestLog->path);
 
         $this->endAllHistoryEntries();
         $historyId = $this->createHistoryEntry($client->id, $templateId, $dailyLog->name);
 
-        
 
-        LimbasLogger::log('[' . $historyId . '] Start sync');
-        
+        DatasyncLog::info('[' . $historyId . '] Start sync');
+
 
         //run import process
         $status = 2;
@@ -94,18 +88,19 @@ class DatasyncProcess
             $template = $this->loadTemplate($templateId);
 
             if (is_array($template)) {
-                $datasyncMain = new DatasyncMain($template, $client->id);
+                $datasyncMain = new DatasyncMainHandler($template, $client->id);
 
                 $result = false;
 
-                if ($umgvar['sync_method'] == 'soap') {
+                if ($umgvar['sync_method'] === 'soap') {
 
                     $result = $datasyncMain->runSyncWithSlaveSoap($client->url, $client->username, $client->pass);
 
-                } elseif ($umgvar['sync_method'] == 'socket') {
+                } elseif ($umgvar['sync_method'] === 'socket') {
 
-                    $result = $datasyncMain->runSyncWithSlaveSocket($client->url, $client->username, $client->pass);
-
+                    DatasyncLog::error('Socket sync currently not supported.');
+                    return;
+                    //$result = $datasyncMain->runSyncWithSlaveSocket($client->url, $client->username, $client->pass);
                 }
 
 
@@ -114,9 +109,9 @@ class DatasyncProcess
                     $startTime = $datasyncMain->getCacheTimestamp();
                     $globalCache = $this->resetGlobalCache($startTime);
                     if ($globalCache !== true) {
-                        LimbasLogger::error('Global cache could not be cleaned');
+                        DatasyncLog::error('Global cache could not be cleaned');
                     } else {
-                        LimbasLogger::log('Global cache cleaned');
+                        DatasyncLog::info('Global cache cleaned');
                     }
 
                     if (!empty($globalTables)) {
@@ -130,44 +125,42 @@ class DatasyncProcess
                     $status = 1;
                 }
             } else {
-                LimbasLogger::error('Failed to load template');
+                DatasyncLog::error('Failed to load template');
             }
-            
+
 
         } catch (Throwable $t) {
-            LimbasLogger::error('Error during sync: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
+            DatasyncLog::error('Error during sync: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
         }
 
         $client->setSynced(true);
         $this->updateHistoryEntry($client->id, $status);
 
-        LimbasLogger::log('Sync finished' . ($status != 1 ? ' with errors' : ''));
+        DatasyncLog::info('Sync finished' . ($status !== 1 ? ' with errors' : ''));
 
     }
 
     /**
-     * @param $timestamp
+     * @param int $timestamp
      * @return bool
      */
-    private function resetGlobalCache($timestamp): bool
+    private function resetGlobalCache(int $timestamp): bool
     {
         global $umgvar;
-        
+
         $db = Database::get();
-        
-        $timestamp = intval($timestamp);
-        
-        if(empty($timestamp)) {
+
+        if (empty($timestamp)) {
             return true;
         }
 
-        if($umgvar['sync_ignore_inactive']) {
+        if ($umgvar['sync_ignore_inactive']) {
             $clientCount = DatasyncClient::count(true);
         } else {
             $clientCount = DatasyncClient::count();
         }
-        
-        
+
+
         $sql = 'SELECT Count(ID) as CC, CACHE_ID FROM LMB_SYNC_CACHE LEFT JOIN LMB_SYNC_GLOBAL ON LMB_SYNC_GLOBAL.CACHE_ID = LMB_SYNC_CACHE.ID WHERE SLAVE_ID = 0 AND LMB_SYNC_CACHE.PROCESS_KEY = ' . $timestamp . ' GROUP BY CACHE_ID';
         $rs = lmbdb_exec($db, $sql);
         if (!$rs) {
@@ -209,9 +202,10 @@ class DatasyncProcess
     /**
      * initially loads a template
      *
-     * @return array|false
+     * @param int $templateId
+     * @return bool|array
      */
-    private function loadTemplate($templateId): bool|array
+    private function loadTemplate(int $templateId): bool|array
     {
         global $db;
         global $gtab;
@@ -219,18 +213,19 @@ class DatasyncProcess
         $template = [];
 
         //load all tables marked for synchronisation
-        foreach ($gtab['datasync'] as $tabid => $value) {
+        foreach ($gtab['datasync'] as $tabId => $value) {
+            $value = intval($value);
             if ($value) {
 
-                $template[$tabid] = [
+                $template[$tabId] = [
                     'global' => false,
                     'master' => [],
                     'slave' => []
                 ];
 
-                if ($gtab['datasync'][$tabid] == 2) {
-                    $template[$tabid]['global'] = true;
-                    $globalTables[] = $gtab['table'][$tabid];
+                if ($value === 2) {
+                    $template[$tabId]['global'] = true;
+                    $globalTables[] = $gtab['table'][$tabId];
                 }
 
             }
@@ -244,32 +239,48 @@ class DatasyncProcess
         $sql = 'SELECT CONFLICT_MODE FROM LMB_SYNC_TEMPLATE WHERE ID = ' . parse_db_int($templateId);
         $rs = lmbdb_exec($db, $sql);
         if (lmbdb_num_rows($rs) > 0 && lmbdb_fetch_row($rs)) {
-            $template['conflict_mode'] = lmbdb_result($rs, 'CONFLICT_MODE');
+            $templateConflictMode = ConflictMode::from(intval(lmbdb_result($rs, 'CONFLICT_MODE')));
+            $template['conflict_mode'] = [
+                'global' => $templateConflictMode
+            ];
         } else {
             //Template does not exist
             return false;
         }
 
         //load specific field rules
-        $sql = 'SELECT TABID, FIELDID, MASTER, SLAVE FROM LMB_SYNC_CONF WHERE TEMPLATE = ' . parse_db_int($templateId);
+        $sql = 'SELECT TABID, FIELDID, MASTER, SLAVE, CONFLICT_MODE FROM LMB_SYNC_CONF WHERE TEMPLATE = ' . parse_db_int($templateId);
         $rs = lmbdb_exec($db, $sql);
-        if (lmbdb_num_rows($rs) > 0) {
-            while ($row = lmbdb_fetch_array($rs)) {
-                $row = array_change_key_case($row, CASE_UPPER);
-                $tabid = $row['TABID'];
-                if (!array_key_exists($tabid, $template)) {
-                    continue;
-                }
-                if ($row['MASTER']) {
-                    $template[$tabid]['master'][] = $row['FIELDID'];
-                }
-                if ($row['SLAVE']) {
-                    $template[$tabid]['slave'][] = $row['FIELDID'];
+        $templateHasRows = false;
+        while ($row = lmbdb_fetch_array($rs)) {
+            $row = array_change_key_case($row, CASE_UPPER);
+            $tabId = intval($row['TABID']);
+            $fieldId = intval($row['FIELDID']);
+
+            if (!isset($template[$tabId])) {
+                continue;
+            }
+
+            $templateHasRows = true;
+
+            if (!empty($row['MASTER'])) {
+                $template[$tabId]['master'][] = $fieldId;
+            }
+
+            if (!empty($row['SLAVE'])) {
+                $template[$tabId]['slave'][] = $fieldId;
+            }
+
+            if ($row['CONFLICT_MODE'] !== null) {
+                $conflictMode = ConflictMode::from((int)$row['CONFLICT_MODE']);
+                if ($conflictMode !== $templateConflictMode) {
+                    $template['conflict_mode'][$tabId] = $template['conflict_mode'][$tabId] ?? [];
+                    $template['conflict_mode'][$tabId][$fieldId] = $templateConflictMode;
                 }
             }
-        } else {
-            //Template is empty
-            return false;
+        }
+        if (!$templateHasRows) {
+            return false; // Template is empty
         }
 
         return $template;
@@ -339,12 +350,8 @@ class DatasyncProcess
 
         $rs = lmbdb_exec($db, $sql);
 
-        $clientId = 0;
-
-        while (lmbdb_fetch_row($rs)) {
-            $clientId = (int)lmbdb_result($rs, 'CLIENT_ID');
-            break;
-        }
+        $clientData = lmbdb_fetch_object($rs);
+        $clientId = intval($clientData->CLIENT_ID);
 
         return DatasyncClient::get($clientId);
     }

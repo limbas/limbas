@@ -9,9 +9,9 @@
 
 namespace Limbas\admin\templates;
 
+use Limbas\Controllers\LimbasController;
 use Limbas\extra\template\report\ReportTemplateResolver;
 use Limbas\extra\template\wysiwyg\Wysiwyg;
-use Limbas\lib\LimbasController;
 
 class TemplateController extends LimbasController
 {

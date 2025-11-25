@@ -307,7 +307,7 @@
     }
 </style>
 
-<script src="<?=rtrim($umgvar['url'],'/')?>/assets/js/extra/template/template_select.js?v=<?=$umgvar['version']?>"></script>
+<script src="assets/js/extra/template/template_select.js?v=<?=$umgvar['version']?>"></script>
 
 <div id="lmbTemplateSelect" data-gtabid="<?=$gtabid?>" data-type="" title="<?=$lang[1502]?>" style="display: none">
 

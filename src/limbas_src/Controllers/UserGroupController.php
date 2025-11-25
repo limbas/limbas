@@ -2,8 +2,6 @@
 
 namespace Limbas\Controllers;
 
-use Limbas\lib\LimbasController;
-
 class UserGroupController extends LimbasController
 {
 

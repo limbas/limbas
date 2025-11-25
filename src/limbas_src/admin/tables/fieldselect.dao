@@ -11,7 +11,9 @@
 
 set_time_limit(10000);
 
-
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Log;
+use Limbas\lib\general\Log\LogLevel;
 
 
 
@@ -147,70 +149,103 @@ if($select_del AND $pool){
 	}
 }
 
+/*
+ *  update table entries
+ */
+function lmb_selectPoolTableUpdate($pool,$id,$typ,$langid,$value,$oldvalue){
+    global $db;
+    global $DBA;
+    global $gfield;
+    global $gtab;
+
+	$sqlquery = "SELECT TAB_ID,FIELD_ID FROM LMB_CONF_FIELDS WHERE (DATA_TYPE = 12 OR DATA_TYPE = 14) AND FIELD_TYPE = 4 AND SELECT_POOL = $pool";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+
+        $gtabid = lmbdb_result($rs, 'TAB_ID');
+        $fieldid = lmbdb_result($rs, 'FIELD_ID');
+
+        $fieldname = Dbf::handleCaseSensitive($gfield[$gtabid]['field_name'][$fieldid]);
+        if($langid){
+            $fieldname = Dbf::handleCaseSensitive('LANG'.$langid.'_'.$fieldname);
+        }
+
+        $odbc_column = Dbf::getColumns($DBA["DBSCHEMA"], $gtab['table'][$gtabid] ?? '', $fieldname);
+        if($odbc_column['columnname_lower'][0] == $fieldname) {
+            $sqlquery1 = "UPDATE " . $gtab['table'][$gtabid] . " SET $fieldname = '" . parse_db_string($value) . "' WHERE $fieldname = '" . parse_db_string($oldvalue) . "'";
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if (!$rs1) {
+                return false;
+            }
+        }else{
+             return false;
+        }
+
+    }
+
+    return true;
+
+}
+
+function lmb_selectPoolUpdate($pool,$id,$typ,$langid){
+    global $db;
+    global $select_color;
+    global $select_keyw;
+
+    $fieldname = 'WERT';
+    $value = $GLOBALS['select_wert'][$id];
+    if($langid && is_numeric($langid)){
+        $fieldname = Dbf::handleCaseSensitive('LANG'.$langid.'_WERT');
+        $value = $GLOBALS['select_wert_'.$langid][$id];
+    }
+
+    $update[$fieldname] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',$value))),160);
+    $update['KEYWORDS'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',$select_keyw[$id]))),250);
+    $update['COLOR'] = parse_db_string($select_color[$id]);
+
+    foreach($update as $key => $cvalue){
+         $sql[] = $key ." = '$cvalue'";
+    }
+
+    // update pool values
+    $sqlquery = "SELECT * FROM ".$typ."_W WHERE ID = $id AND POOL = ".$pool;
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {
+        return false;
+    }
+    $oldvalue = lmbdb_result($rs, $fieldname);
+
+    $sqlquery = 'UPDATE '.$typ.'_W SET '.implode(',',$sql)." WHERE ID = $id AND POOL = $pool";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {
+        return false;
+    }
+
+    if(!lmb_selectPoolTableUpdate($pool,$id,$typ, $langid,$value, $oldvalue)){
+        return false;
+    }
+
+    return true;
+
+}
+
 /* --- Select-Feld ändern --------------------------------------------- */
 if($select_change AND $pool){
 
-    $multi_language = $umgvar['multi_language'];
 	$select_change = explode(";",$select_change);
 	$select_change = array_unique($select_change);
-	foreach($select_change as $_key => $value){
-		if(is_numeric($value)){
-		    
-		    $update = array();
-            $sql = array();
-            $oldvalue = array();
-            $upd = null;
 
-			// old values
-			if($gfield[$atid]['data_type'][$fieldid] == 12 OR $gfield[$atid]['data_type'][$fieldid] == 14){
-				$sqlquery = "SELECT * FROM ".$typ."_W WHERE ID = $value AND POOL = ".$pool;
-				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-				if(!$rs) {$commit = 1;}
-			}
-			
-			// multilang
-			if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $multi_language){
-			    foreach($multi_language as $lkey => $langid){
-			         $update['LANG'.$langid.'_WERT'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',${'select_wert_'.$langid}[$value]))),160);
-			         $oldvalue[$langid] = lmbdb_result($rs,'LANG'.$langid.'_WERT');
-			    }
-			}
-			$oldvalue[$umgvar['default_language']] = lmbdb_result($rs,'WERT');
-			
-			$update['WERT'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',$select_wert[$value]))),160);
-			$update['KEYWORDS'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',$select_keyw[$value]))),250);
-			$update['COLOR'] = parse_db_string($select_color[$value]);
-
-			foreach($update as $key => $cvalue){
-			     $sql[] = $key ." = '$cvalue'";
-			}
-			
-			// update pool values
-			$sqlquery = 'UPDATE '.$typ.'_W SET '.implode(',',$sql)." WHERE ID = $value AND POOL = $pool";
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs) {$commit = 1;}
-	
-			// update table entries
-			if($gfield[$atid]['data_type'][$fieldid] == 12 OR $gfield[$atid]['data_type'][$fieldid] == 14){
-			    foreach($oldvalue as $langid => $oval){
-			        if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $langid != $umgvar['default_language']){
-			             if($oldvalue[$langid] == ${'select_wert_'.$langid}[$value]){continue;}
-    			         $upd[] = 'LANG'.$langid.'_'.$gfield[$atid]['field_name'][$fieldid]." = '".parse_db_string(${'select_wert_'.$langid}[$value],160)."'";
-			        }else{
-			             if($oldvalue[$langid] == $select_wert[$value]){continue;}
-			             $upd[] = $gfield[$atid]['field_name'][$fieldid]." = '".parse_db_string($select_wert[$value],160)."'";
-			        }
-			    }
-			    
-                if ($upd) {
-                    $sqlquery = 'UPDATE ' . $gtab['table'][$atid] . ' SET '.implode(',',$upd).' WHERE ' . $gfield[$atid]['field_name'][$fieldid] . " = '" . parse_db_string($oldvalue[$umgvar['default_language']], 160) . "' AND " . $gfield[$atid]['field_name'][$fieldid] . ' IS NOT NULL AND ' . $gfield[$atid]['field_name'][$fieldid] . " != ''";
-                    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                    if (! $rs) {$commit = 1;}
-                }
-
-			}
-
-		}
+	foreach($select_change as $_key => $id){
+        if(!$id){continue;}
+        $val = explode('_',$id);
+        if(is_numeric($val[0])) {
+            lmb_StartTransaction();
+            $commit = lmb_selectPoolUpdate($pool, $val[0], $typ, $val[1]);
+            if(!$commit){
+                Log::limbasError("update not successfully for pool $pool", null, null, $val[0]);
+            }
+            lmb_EndTransaction($commit);
+        }
 	}
 }
 
@@ -225,7 +260,7 @@ if($select_default AND $pool){
 		$sqlquery = 'UPDATE '.$typ.'_W SET DEF = '.LMB_DBDEF_TRUE." WHERE POOL = $pool AND ID = $select_default";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
-	
+
 	# single select
 	if($gfield[$atid]['data_type'][$fieldid] == 12 OR $gfield[$atid]['data_type'][$fieldid] == 14){
 		$sqlquery = 'UPDATE '.$typ.'_W SET DEF = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID != $select_default";
@@ -333,15 +368,24 @@ if($select_defaulttype AND $pool AND $atid AND $fieldid){
 if($add_select AND $new_wert AND $pool){
 
 	lmb_StartTransaction();
-	
+
+
+
+	$new_wert = trim(str_replace("\t",'',str_replace("\n",'',$new_wert)));
+	$new_keyword = trim(str_replace("\t",'',str_replace("\n",'',$new_keyword)));
+
+	$sqlquery = "SELECT ID FROM ".$typ."_W WHERE POOL = $pool AND LOWER(WERT) = '".lmb_strtolower(parse_db_string($new_wert,250))."'";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+    if(lmbdb_result($rs,'ID')){
+        lmb_alert($lang[3207]);
+    }
+
 	/* --- Next ID ---------------------------------------- */
 	$NEXTID = next_db_id(''.$typ.'_W');
 	$sqlquery = "SELECT MAX(SORT) AS NEXTID FROM ".$typ."_W WHERE POOL = $pool";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	
-	$new_wert = trim(str_replace("\t",'',str_replace("\n",'',$new_wert)));
-	$new_keyword = trim(str_replace("\t",'',str_replace("\n",'',$new_keyword)));
 
 	$NEXTSORT = lmbdb_result($rs,'NEXTID') + 1;
 	if($typ == 'LMB_ATTRIBUTE'){
@@ -352,20 +396,20 @@ if($add_select AND $new_wert AND $pool){
 
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	
+
 	$sqlquery = "SELECT COUNT(ID) AS ERG FROM ".$typ."_W WHERE POOL = $pool";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$num = lmbdb_result($rs, 'ERG');
 	$sqlquery = 'UPDATE '.$typ.'_P SET SNUM = '.parse_db_int($num,1000)." WHERE ID = $pool";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	
+
 	if($level_id > 0){
 		$sqlquery = 'UPDATE '.$typ.'_W SET HASLEVEL = '.LMB_DBDEF_TRUE.' WHERE ID = '.parse_db_int($level_id);
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
-	
+
 	lmb_EndTransaction(!$commit);
 }
 
@@ -390,7 +434,7 @@ if($select_sort){
 			$NEXTID++;
 		}
 	#}
-	
+
 	/* --- nach oben  ------------------------------- */
 	if($select_sort_d == 1 AND $pool) {
 		if($sort > 1){
@@ -534,7 +578,7 @@ if($pool){
         $result_fieldselect['field_type'] = lmbdb_result($rs, 'FIELD_TYPE');
         $result_fieldselect['data_type'] = lmbdb_result($rs, 'DATA_TYPE');
 	}
-	
+
 
 	# TODO improve recursively?
 	$result_fieldselect['parent'] = array();
@@ -588,7 +632,7 @@ if($pool){
             $result_fieldselect['type'][$bzm] = lmbdb_result($rs, 'TYPE');
             $result_fieldselect['hidetag'][$bzm] = lmbdb_result($rs, 'HIDETAG');
 		}
-		
+
 		$multi_language = $umgvar['multi_language'];
 		if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $multi_language){
 			foreach($multi_language as $lkey => $langid){

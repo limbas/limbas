@@ -153,14 +153,18 @@ $profileMenuWrapper .= '</a><div class="dropdown-menu rounded-0 border-light py-
     <div class="container-fluid">
         <a class="navbar-brand pe-4 pe-sm-5" href="<?=e($logoLink)?>"  title="<?php echo $lang[$LINK['name'][301]]; ?>">
             <?php
-                $topLeft = 'assets/images/logo_topleft.png';
+                $topLeft = 'assets/images/logo.svg';
                 $customLogo = false;
                 if(file_exists(LOCALASSETSPATH . 'images/logo_topleft.png')){
                     $topLeft = 'localassets/images/logo_topleft.png';
                     $customLogo = true;
                 }
+                elseif(file_exists(LOCALASSETSPATH . 'images/logo_topleft.svg')){
+                    $topLeft = 'localassets/images/logo_topleft.svg';
+                    $customLogo = true;
+                }
             ?>
-            <img src="<?=$topLeft?>" class="d-inline-block align-middle top-logo-img" alt="" style="max-height: 40px;" title="<?=$umgvar['company']?>">
+            <img src="<?=$topLeft?>" class="d-inline-block align-middle top-logo-img" alt="<?=$umgvar['company']?>" title="<?=$umgvar['company']?>">
             <?php if (!$customLogo): ?>
                 <span class="top-logo-limbas" title="<?=$umgvar['company']?>">L<span style="color:orange">I</span>MBAS</span>
             <?php endif; ?>

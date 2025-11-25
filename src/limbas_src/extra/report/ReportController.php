@@ -9,8 +9,8 @@
 
 namespace Limbas\extra\report;
 
+use Limbas\Controllers\LimbasController;
 use Limbas\extra\printer\Printer;
-use Limbas\lib\LimbasController;
 
 require_once(COREPATH . 'extra/report/report.dao');
 require_once(COREPATH . 'extra/explorer/filestructure.lib');
@@ -45,7 +45,7 @@ class ReportController extends LimbasController
         
         if ($reportOutput === ReportOutput::PRINT && array_key_exists('dmsIds', $request) && is_array($request['dmsIds']) && !empty($request['dmsIds'])) {
 
-            lmb_printFileFromDMS(intval($request['report_printer']),$request['dmsIds'], $printerOptions);
+            lmb_printFileFromDMS($printerOptions->printerId,$request['dmsIds'], $printerOptions);
 
             return [
                 'success' => true
@@ -65,7 +65,7 @@ class ReportController extends LimbasController
 
         $report = Report::create(intval($request['gtabid']), intval($request['report_id']));
         
-        $reportUrl = $report->generateReport(intval($request['report_id']), $request['gtabid'], $request['ID'], $reportOutput, $request['report_rename'], $request['use_record'], intval($request['report_printer']), $request['resolvedTemplateGroups'], $request['resolvedDynamicData'], $relation, $printerOptions);
+        $reportUrl = $report->generateReport(intval($request['report_id']), $request['gtabid'], $request['ID'], $reportOutput, $request['report_rename'], $request['use_record'], $request['resolvedTemplateGroups'], $request['resolvedDynamicData'], $relation, $printerOptions);
 
         // download link
         $downloadUrl = lmb_getDownloadHash(DEPENDENTPATH.$reportUrl,'','application/pdf',permanent:1);

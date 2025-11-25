@@ -141,7 +141,7 @@ class LMBForm
 
         $gtabid = $this->gtabid;
         $gresult = $this->gresult;
-        $verkn_addfrom = $GLOBALS["verkn_addfrom"];
+        $verkn_relationpath = $GLOBALS["verkn_relationpath"];
         $readonly = $this->readonly;
         $showheader = null;
         

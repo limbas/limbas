@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\admin\tools\datasync\Enums\ConflictMode;
 
 if(!$tab){$tab = 3;}
 
@@ -125,9 +126,13 @@ if($edit_template AND $rules){
             $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
             // add
-            if ($templ_conf[$srule[0]][$srule[1]][1] OR $templ_conf[$srule[0]][$srule[1]][2]) {
+            if ($templ_conf[$srule[0]][$srule[1]][1] || $templ_conf[$srule[0]][$srule[1]][2] || $templ_conf[$srule[0]][$srule[1]][4]) {
                 $NEXTID = next_db_id("LMB_SYNC_CONF");
-                $sqlquery = "INSERT INTO LMB_SYNC_CONF (ID,TABID,FIELDID,TEMPLATE,MASTER,SLAVE) VALUES( $NEXTID, " . parse_db_int($srule[0]) . "," . parse_db_int($srule[1]) . "," . parse_db_int($template) . "," . parse_db_bool($templ_conf[$srule[0]][$srule[1]][1]) . "," . parse_db_bool($templ_conf[$srule[0]][$srule[1]][2]) . ")";
+                $conflictMode = intval($templ_conf[$srule[0]][$srule[1]][4]);
+                if($conflictMode < 0) {
+                    $conflictMode = LMB_DBDEF_NULL;
+                }
+                $sqlquery = "INSERT INTO LMB_SYNC_CONF (ID,TABID,FIELDID,TEMPLATE,MASTER,SLAVE,CONFLICT_MODE) VALUES( $NEXTID, " . parse_db_int($srule[0]) . "," . parse_db_int($srule[1]) . "," . parse_db_int($template) . "," . parse_db_bool($templ_conf[$srule[0]][$srule[1]][1]) . "," . parse_db_bool($templ_conf[$srule[0]][$srule[1]][2]) . ", $conflictMode)";
                 $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                 if (!$rs) {$commit = 1;}
             }
@@ -153,7 +158,7 @@ while(lmbdb_fetch_row($rs)) {
 	$result_params['params'][lmbdb_result($rs, "TABID")] = lmbdb_result($rs, "PARAMS");
 }
 
-$sqlquery = "SELECT ID,TEMPLATE,TABID,FIELDID,MASTER,SLAVE FROM LMB_SYNC_CONF";
+$sqlquery = "SELECT ID,TEMPLATE,TABID,FIELDID,MASTER,SLAVE,CONFLICT_MODE FROM LMB_SYNC_CONF";
 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 while(lmbdb_fetch_row($rs)) {
     $cid = lmbdb_result($rs, "ID");
@@ -164,6 +169,8 @@ while(lmbdb_fetch_row($rs)) {
     $result_conf[$ctemplate][$ctabid][$cfieldid]['id'] = $cid;
 	$result_conf[$ctemplate][$ctabid][$cfieldid]['master'] = lmbdb_result($rs, "MASTER");
 	$result_conf[$ctemplate][$ctabid][$cfieldid]['slave'] = lmbdb_result($rs, "SLAVE");
+    $conflictMode = lmbdb_result($rs, "CONFLICT_MODE");
+    $result_conf[$ctemplate][$ctabid][$cfieldid]['conflict'] = $conflictMode !== null ? ConflictMode::tryFrom(intval($conflictMode)) : null;
 }
 
 

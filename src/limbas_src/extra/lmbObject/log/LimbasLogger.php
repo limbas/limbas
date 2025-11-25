@@ -7,7 +7,11 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\lib\general\Log\Log;
 
+/**
+ * @deprecated Use Limbas\lib\general\Log\Logger instead
+ */
 class LimbasLogger {
 	/*
 	 * Log Level
@@ -39,6 +43,7 @@ class LimbasLogger {
 	 * @param int $level the level to use
 	 */
 	public static function log($str, $level=self::LL_INFO) {
+        Log::deprecated('LimbasLogger is deprecated, use Limbas\lib\general\Log\Logger instead');
 		if (self::$loglevel <= $level) {
 			self::$log[] = array('timestamp' => self::formatedTime(), 'level' => $level, 'message' => $str);
 			

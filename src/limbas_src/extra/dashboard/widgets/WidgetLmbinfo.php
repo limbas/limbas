@@ -15,7 +15,7 @@ class WidgetLmbinfo extends Widget
 {
     public function __construct(int $id, ?array $options = [])
     {
-        $this->minWidth = 5;
+        $this->minWidth = 6;
         $this->minHeight = 5;
         $this->noresize = true;
         $this->name = 'Limbas Info';

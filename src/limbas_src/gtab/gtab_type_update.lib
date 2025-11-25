@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\lib\general\Log\Log;
 
 
 /* -------------------------- Number --------------------------------- */
@@ -32,7 +33,7 @@ function uftyp_1($gtab_id,$field_id,$ID,&$change_value){
 	}
 	
 	if($change_value && !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
+        Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -46,7 +47,7 @@ function uftyp_2($gtab_id,$field_id,$ID,&$change_value,$language=null) {
 	global $gfield;
 
 	if($change_value && !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
+        Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -67,7 +68,7 @@ function uftyp_3($gtab_id, $field_id, $ID, &$change_value,$language=null) {
     global $gfield;
 
 	if($change_value && !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
+        Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -101,6 +102,8 @@ function uftyp_9($gtab_id,$field_id,$ID,&$change_value) {
         if ($session['dlanguage'] != $umgvar['default_language']) {
             $prefix = "LANG" . $session['dlanguage'] . "_";
         }
+
+        // check if value in pool - todo
 
         // change values
         if ($change_value) {
@@ -146,13 +149,15 @@ function uftyp_9($gtab_id,$field_id,$ID,&$change_value) {
     } else {
         // check if value in pool
         if($change_value) {
-        $sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = " . $gfield[$gtab_id]["select_pool"][$field_id] . " AND WERT = '" . parse_db_string($change_value, 160) . "'";
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        if (!$rs) {$commit = 1;}
-        if (!lmbdb_fetch_row($rs)) {
-            lmb_log::error('update_data - value not in pool', null, $gtab_id, $field_id);
-            return false;
-        }
+            $sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = " . $gfield[$gtab_id]["select_pool"][$field_id] . " AND WERT = '" . parse_db_string($change_value, 160) . "'";
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+            if (!lmbdb_fetch_row($rs)) {
+                Log::limbasError('update_data - value not in pool', null, $gtab_id, $field_id);
+                return false;
+            }
         }
         return uftyp_2($gtab_id, $field_id, $ID, $change_value);
     }
@@ -170,7 +175,7 @@ function uftyp_4($gtab_id,$field_id,$ID,&$change_value) {
     }
 
 	if($change_value AND !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id,$ID);
+        Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id,$ID);
 		return false;
 	}
 
@@ -236,7 +241,7 @@ function uftyp_7($gtab_id, $field_id, $ID, &$change_value) {
         # check if value is valid
         $cval = parse_db_float($cval, $gfield[$gtab_id]['size'][$field_id], $gfield[$gtab_id]['scale'][$field_id]);
         if (!preg_match('/' . $gfield[$gtab_id]['regel'][$field_id] . '/', $cval)) {
-            lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
+            Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id, $ID);
             return false;
         }
         $ccur = "'" . parse_db_string($ccur, 10) . "'";
@@ -303,7 +308,7 @@ function uftyp_12($gtab_id,$field_id,$ID,&$change_value) {
 /* -------------------------- PHP Argument --------------------------------- */
 function uftyp_13($gtab_id,$field_id,$ID,&$change_value) {
 
-	return false;
+	return true;
 }
 
 /* -------------------------- Relations --------------------------------- */
@@ -336,7 +341,7 @@ function uftyp_18($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 	
 	if(!preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
+		Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -462,7 +467,9 @@ function uftyp_22($gtab_id,$field_id,$ID,&$change_value,$language=null) {
 
         if(!$commit){
             // postcheck routine
-            if(!update_data_postcheck($gtab_id,$ID,$query_dataid,$old_gresult,$triggerResult)){return false;}
+            if(!update_data_postcheck($gtab_id,$ID,$query_dataid,$old_gresult,$triggerResult)){
+                return false;
+            }
         }
 
 	}
@@ -488,7 +495,7 @@ function uftyp_25($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 
 	if($change_value AND !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
+        Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -507,7 +514,7 @@ function uftyp_29($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 
 	if(!preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
+		Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -524,7 +531,7 @@ function uftyp_30($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 
 	if(!preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
+		Log::limbasError('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 

@@ -22,23 +22,24 @@ class MailTemplateSelector extends TemplateSelector
     }
 
 
-    public function getElementListRendered(int $gtabid, string $search = '', int $page = 1, int $perPage = 10, int $id = 0): array
+    public function getElementListRendered(int $gtabid, string $search = '', int $page = 1, int $perPage = 10, int $id = 0, bool $firstCall = false, array $appendData = []): array
     {
+        global $umgvar;
 
         // if no template is found => directly open mail form
 
         $mailTemplates = MailTemplate::all(['TAB_ID' => $gtabid]);
 
-        if (empty($mailTemplates)) {
+        if (empty($mailTemplates) || ($firstCall && $umgvar['mail_skip_selection'])) {
             return [
                 'skipResolve' => true,
                 'table' => '',
                 'pagination' => '',
-                'params' => $this->getFinalResolvedParameters(0, $gtabid, $id,[], null, null)
+                'params' => $this->getFinalResolvedParameters(0, $gtabid, $id,[], null, null, $appendData)
             ];
         }
 
-        return parent::getElementListRendered($gtabid, $search, $page, $perPage, $id);
+        return parent::getElementListRendered($gtabid, $search, $page, $perPage, $id, $firstCall, $appendData);
     }
 
     protected function getElementList(int $gtabid, string $search = '', int $page = 1, int $perPage = 10): array
@@ -79,16 +80,23 @@ class MailTemplateSelector extends TemplateSelector
     }
 
 
-    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, array $ids, $use_record, $resolvedTemplateGroups): array
+    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, array $ids, $use_record, $resolvedTemplateGroups, array $appendData = []): array
     {
         $ids= array_unique($ids);
-        $url = 'main.php?' . http_build_query(array(
-                'action' => 'mail_preview',
-                'gtabid' => $gtabid,
-                'id' => !empty($ids) ? $ids : $id,
-                'template_id' => $elementId,
-                'resolvedTemplateGroups' => urldecode($resolvedTemplateGroups),
-            ));
+        
+        $queryData = [
+            'action' => 'mail_preview',
+            'gtabid' => $gtabid,
+            'id' => !empty($ids) ? $ids : $id,
+            'template_id' => $elementId,
+            'resolvedTemplateGroups' => urldecode($resolvedTemplateGroups)
+        ];
+        
+        if(!empty($appendData)) {
+            $queryData['appendData'] = $appendData;
+        }
+        
+        $url = 'main.php?' . http_build_query($queryData);
 
         return [
             'url' => $url,

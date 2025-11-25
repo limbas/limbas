@@ -12,7 +12,7 @@ namespace Limbas\extra\template\base;
 use Exception;
 use Limbas\extra\template\base\HtmlParts\AbstractHtmlPart;
 use Limbas\extra\template\base\HtmlParts\SubTemplateElementPlaceholder;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
 use Parser;
 use SyntaxError;
 
@@ -109,9 +109,9 @@ class TemplateElement {
                 $from = max(0, $ex->grammarOffset - 15);
                 $len = min(30, lmb_strlen($html));
                 $region = html_entity_decode(lmb_substr($html, $from, $len));
-                lmb_log::error($ex->getMessage() . " Near:\n$region", $ex->getMessage() . " Near:\n$region");
+                Log::limbasError($ex->getMessage() . " Near:\n$region", $ex->getMessage() . " Near:\n$region");
             } else {
-                lmb_log::error($ex->getMessage(), $ex->getMessage());
+                Log::limbasError($ex->getMessage(), $ex->getMessage());
             }
             $result = array();
         }
@@ -255,7 +255,7 @@ class TemplateElement {
         
         return array_filter($placeholders, function(&$placeholder) use ($recursion) {
             if ($placeholder->getName() === $this->name && $recursion > 1) {
-                //lmb_log::error("Found recursion: {$this->name} contains {$this->name} again", "Found recursion: {$this->name} contains {$this->name} again");
+                //Log::limbasError("Found recursion: {$this->name} contains {$this->name} again", "Found recursion: {$this->name} contains {$this->name} again");
                 return false;
             }
             return true;

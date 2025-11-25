@@ -350,7 +350,6 @@ function set_rights($ID,$ismaingroup,$addsub){
 				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
 				if(is_array(${"tab_globalfilter_".$srule[0]})){$tab_globalfilter = implode(",",${"tab_globalfilter_".$srule[0]});}
 				$sqlquery = "UPDATE LMB_RULES_TABLES SET GLOBALFILTER = '". parse_db_string($tab_globalfilter,250)."' WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
-                error_log($sqlquery);
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}

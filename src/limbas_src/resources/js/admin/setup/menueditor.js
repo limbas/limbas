@@ -6,6 +6,10 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+$(function() {
+   $('#check-show-search-menu').on('change', updateShowSearchMenu) 
+});
+
 function lmb_loadMenueditor(el,id,parent,act) {
 
     let linkid = $('[data-linkid]').data('linkid');
@@ -26,6 +30,28 @@ function lmb_loadMenueditor(el,id,parent,act) {
         $('#lmbDetailContainer').dialog("destroy").remove();
     }
 
+}
+
+function updateShowSearchMenu() {
+    const linkId = $(this).val();
+    const show = $(this).prop('checked');
+    $.ajax({
+        url: 'main_dyns_admin.php',
+        type: 'POST',
+        data: {
+            actid: 'menuEditor',
+            linkid: linkId,
+            act: 'searchMenu',
+            show : show ? 1 : 0
+        },
+        dataType: 'json',
+        success: function (data) {
+            resolve(data)
+        },
+        error: function (error) {
+            reject(error)
+        }
+    });
 }
 
 

@@ -7,6 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\lib\db\functions\Dbf;
 use Symfony\Component\HttpFoundation\Request;
 
 /* 
@@ -63,7 +64,7 @@ if($auth_user){
     require_once(COREPATH . 'lib/auth/Session.php');
 
     # --- Datenbankverbindung -------------------------------------------
-    $db = dbq_0($DBA["DBHOST"],$DBA["DBNAME"],$DBA["DBUSER"],$DBA["DBPASS"],$DBA["ODBCDRIVER"],$DBA["PORT"]);
+    $db = Dbf::connect($DBA["DBHOST"],$DBA["DBNAME"],$DBA["DBUSER"],$DBA["DBPASS"],$DBA["ODBCDRIVER"],intval($DBA["PORT"]));
     
     /* --- LMB_UMGVAR ------------------- */
 	$sqlquery = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
@@ -153,7 +154,7 @@ require_once(COREPATH . 'admin/tools/jobs_ext.lib');
 
 
 
-$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ID = $job AND ACTIV = ".LMB_DBDEF_TRUE;
+$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ID = $job AND ACTIV = " . LMB_DBDEF_TRUE;
 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 if(lmbdb_fetch_row($rs)) {
@@ -180,10 +181,9 @@ if(lmbdb_fetch_row($rs)) {
 		$templatefile = COREPATH . "admin/tools/jobs/$kattempl.lib";
 		if(file_exists($templatefile)){
 			require_once($templatefile);
-			#$kategorie = "indize.lib";$kategoriedesc = "INDIZE";
-			lmb_loghandle("$kattempl.log","starting job \t(".$cron_id.")");
+			lmb_loghandle("$kattempl.log","starting job \t($cron_id)");
 			periodic_job($cronvalue);
-			lmb_loghandle("$kattempl.log","ending job \t(".$cron_id.")");
+			lmb_loghandle("$kattempl.log","ending job \t($cron_id)");
 		}
 	}
 }

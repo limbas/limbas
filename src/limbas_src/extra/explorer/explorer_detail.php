@@ -8,7 +8,7 @@
  */
 
 
-
+global $farbschema, $ID, $umgvar, $level, $lang, $gtab, $gformlist, $gfield;
 
 # include extensions
 if($GLOBALS["gLmbExt"]["ext_explorer_detail.inc"]){
@@ -18,258 +18,258 @@ if($GLOBALS["gLmbExt"]["ext_explorer_detail.inc"]){
 }
 
 ?>
+<script src="assets/js/extra/printer/printer.js?v=<?=$umgvar['version']?>"></script>
 
-<script>
+<div class="container-fluid" id="explorer-detail-container">
+    <?php
+/*<div class="border bg-contrast w-100 mb-2"><?=$file_url?></div>*/
+ if($ffile["vact"]){$vidnr = "<SPAN STYLE=\"color:green;\"><b>".$ffile["vid"]."</b>";}else{$vidnr = "<SPAN STYLE=\"color:red;\"><b>".$ffile["vid"]."</b>";}?>
 
-// ---------------- Abteilungen verstecken ----------------------
-function hide_part() {
-	document.getElementById('format').style.display = 'none';
-	document.getElementById('metadata').style.display = 'none';
-	<?php if($forigin OR $ffile["d_tabid"]){?>
-	document.getElementById('origin').style.display = 'none';
-	<?php }?>
-	<?php if($exifdata){?>
-	document.getElementById('exifdata').style.display = 'none';
-	<?php }if($vfile['count']){?>
-	document.getElementById('versioning').style.display = 'none';
-	<?php }if($dfile){?>
-	document.getElementById('duplicates').style.display = 'none';
-	<?php }?>
-}
+<ul class="nav nav-tabs" id="explorer-detail-tab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <?=empty($show_part) ? 'active' : ''?>" id="menu_format" data-bs-toggle="tab" data-bs-target="#format" type="button" role="tab" aria-controls="format" aria-selected="<?=empty($show_part) ? 'true' : 'false'?>>"><?=$lang[1634]?></button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <?=$show_part == 'metadata' ? 'active' : ''?>" id="menu_metadata" data-bs-toggle="tab" data-bs-target="#metadata" type="button" role="tab" aria-controls="metadata" aria-selected="<?=$show_part == 'metadata' ? 'true' : 'false'?>"><?=$lang[1635]?>&nbsp;</button>
+    </li>
 
+    <?php if($vfile['count']){?>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <?=$show_part == 'versioning' ? 'active' : ''?>" id="menu_versioning" data-bs-toggle="tab" data-bs-target="#versioning" type="button" role="tab" aria-controls="versioning" aria-selected="<?=$show_part == 'versioning' ? 'true' : 'false'?>"><?=$lang[2]?>&nbsp;<?=$vidnr?>&nbsp;</button>
+    </li> <?php }?>
 
-// ---------------- Zeige Abteilung ----------------------
-function show_part(part) {
-	hide_part();
-	
-	el = document.getElementById("menu_"+part);
-	limbasSetLayoutClassTabs(el,'tabpoolItemInactive','tabpoolItemActive');
-	document.getElementById(part).style.display = '';
-}
+    <?php if($dfile["id"]){?>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <?=$show_part == 'duplicates' ? 'active' : ''?>" id="menu_duplicates" data-bs-toggle="tab" data-bs-target="#duplicates" type="button" role="tab" aria-controls="duplicates" aria-selected="<?=$show_part == 'duplicates' ? 'true' : 'false'?>"><?=$lang[1685]?>&nbsp;<span style="color:Green">(<?=lmb_count($dfile["id"])?>)&nbsp;</span></button>
+    </li> <?php }?>
 
+    <?php if($forigin OR $ffile["d_tabid"]){?>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <?=$show_part == 'origin' ? 'active' : ''?>" id="menu_origin" data-bs-toggle="tab" data-bs-target="#origin" type="button" role="tab" aria-controls="origin" aria-selected="<?=$show_part == 'origin' ? 'true' : 'false'?>"><?=$lang[2236]?>&nbsp;</button>
+    </li> <?php }?>
 
-
-</SCRIPT>
-
-
-<FORM ACTION="main.php" METHOD="post" name="form1">
-<input type="hidden" name="action" value="explorer_detail">
-<input type="hidden" name="gtabid" value="<?=$gtabid?>">
-<input type="hidden" name="ID" value="<?=$ID?>">
-<input type="hidden" name="LID" value="<?=$LID?>">
-<input type="hidden" name="show_part">
-<input type="hidden" name="history_fields">
-<input type="hidden" name="change_ok">
-<input type="hidden" name="verkn_addfrom" VALUE="<?=$verkn_addfrom;?>">
-
-<div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
-
-<div class="lmbPositionContainerMain">
-<TABLE class="tabfringe" CELLPADDING="0" CELLSPACING="0" style="width:660px;">
-
-<TR><TD>
-
-<?php if($ffile["vact"]){$vidnr = "<SPAN STYLE=\"color:green;\"><b>".$ffile["vid"]."</b>";}else{$vidnr = "<SPAN STYLE=\"color:red;\"><b>".$ffile["vid"]."</b>";}?>
-<TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR class="tabpoolItemTR">
-<TD ID="menu_format" class="tabpoolItemActive" OnClick="show_part('format');"><?=$lang[1634]?>&nbsp;</TD>
-<TD ID="menu_metadata" class="tabpoolItemInactive" OnClick="show_part('metadata');"><?=$lang[1635]?>&nbsp;</TD>
-<?php if($vfile['count']){?><TD ID="menu_versioning" class="tabpoolItemInactive" OnClick="show_part('versioning');"><?=$lang[2]?>&nbsp;<?=$vidnr?>&nbsp;</TD><?php }?>
-        <?php if($dfile["id"]){?><TD ID="menu_duplicates" class="tabpoolItemInactive" OnClick="show_part('duplicates');"><?=$lang[1685]?>&nbsp;<span style="color:Green">(<?=lmb_count($dfile["id"])?>)&nbsp;</span></TD><?php }?>
-<?php if($forigin OR $ffile["d_tabid"]){?><TD ID="menu_origin" class="tabpoolItemInactive" OnClick="show_part('origin');"><?=$lang[2236]?>&nbsp;</TD><?php }?>
-<?php if($exifdata){?><TD ID="menu_exifdata" class="tabpoolItemInactive" OnClick="show_part('exifdata');"><?=$lang[1737]?>&nbsp;</TD><?php }?>
-
-<?php /*
-<TD ID="menu_iptcdata" class="tabpoolItemInactive" OnClick="show_part('iptcdata');"><?=$lang[1738]?>&nbsp;</TD>
-<TD ID="menu_xmpdata" class="tabpoolItemInactive" OnClick="show_part('xmpdata');"><?=$lang[1740]?>&nbsp;</TD>
-*/
-?>
+    <?php if($exifdata){?>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link <?=$show_part == 'exifdata' ? 'active' : ''?>" id="menu_exifdata" data-bs-toggle="tab" data-bs-target="#exifdata" type="button" role="tab" aria-controls="exifdata" aria-selected="<?=$show_part == 'exifdata' ? 'true' : 'false'?>"><?=$lang[1737]?>&nbsp;</button>
+    </li> <?php }?>
+</ul>
 
 
-<TD class="tabpoolItemSpace">&nbsp;</TD>
-</TR></TABLE>
+<div class="tab-content bg-contrast ps-2 border-start border-bottom border-end" id="myTabContent">
+    <div class="tab-pane <?=empty($show_part) ? 'show active' : ''?>" id="format" role="tabpanel" aria-labelledby="format-tab">
+        <div class="row">
+        <div class="col-6">
+            <dl class="row">
+                <?php //# --- Allgemein --- ?>
+                <h5 class="mt-4"><?=$lang[1634]?></h5>
+                <dt class="col-3"><?=$lang[4]?></dt><dd class="col-9"><A HREF="main.php?action=download&ID=$ID" TARGET="new"><?=htmlentities($ffile["name"],ENT_QUOTES,$umgvar["charset"])?></A></dd>
+                <dt class="col-3"><?=$lang[1638]?></dt><dd class="col-9"><?=$ffile['erstuser']?></dd>
+                <dt class="col-3"><?=$lang[1639]?></dt><dd class="col-9"><?=$ffile['datum']?></dd>
+                <dt class="col-3"><?=$lang[210]?></dt><dd class="col-9"><?=$ffile['size']?></dd>
 
 
-<tr class="tabBody"><td class="tabpoolfringe">
-<TABLE ID="tab1" width="100%" cellspacing="0" cellpadding="0" class="tabBody">
+                <?php # --- Format --- ?>
+                <h5 class="mt-4"><?=$lang[1667]?></h5>
+                <?php
+                if($ffile['mimetype']) {
+                    echo "<dt class=\"col-3\">$lang[1637]</dt><dd class=\"col-7\">".nl2br(htmlentities($ffile["mimetype"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</dd>";
+                }
+                if($ffile['format']) {
+                    echo "<dt class=\"col-3\">$lang[1563]</dt><dd class=\"col-7\">".nl2br(htmlentities($ffile["format"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</dd>";
+                }
+                if($ffile['geometry']) {
+                    echo "<dt class=\"col-3\">$lang[1564]</dt><dd class=\"col-7\">".nl2br(htmlentities($ffile["geometry"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</dd>";
+                }
+                if($ffile['resolution']) {
+                    echo "<dt class=\"col-3\">$lang[1565]</dt><dd class=\"col-7\">".nl2br(htmlentities($ffile["resolution"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</dd>";
+                }
+                if($ffile['depth']) {
+                    echo "<dt class=\"col-3\">$lang[1566]</dt><dd class=\"col-7\">".nl2br(htmlentities($ffile["depth"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</dd>";
+                }
+                if($ffile['colors']) {
+                    echo "<dt class=\"col-3\">$lang[1567]</dt><dd class=\"col-7\">".nl2br(htmlentities($ffile["colors"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</dd>";
+                }
+                if($ffile['type']) {
+                    echo "<dt class=\"col-3\">$lang[623]</dt><dd class=\"col-7\">".nl2br(htmlentities($ffile["type"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</dd>";
+                }
 
-<TR style="height:40px;"><TD><INPUT TYPE="TEXT" STYLE="border:1px solid <?=$farbschema['WEB4']?>;width:100%;height:16px;overflow:hidden;color:blue;" VALUE="<?=$file_url?>"></TD></TR>
-<tr><td>
-
-<DIV ID="format" STYLE="display:none;">
-<TABLE BORDER="0" cellspacing="0" cellpadding="2">
-<?php
-# --- Allgemein ---
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=\"2\">$lang[1634]</TD></TR>";
-echo "<TR class=\"tabBody\"><TD VALIGN=\"TOP\" STYLE=\"width:20%\">$lang[4]:</TD><TD><A HREF=\"main.php?action=download&ID=$ID\" TARGET=\"new\">".htmlentities($ffile["name"],ENT_QUOTES,$umgvar["charset"])."</A></TD></TR>";
-echo "<TR class=\"tabBody\"><TD VALIGN=\"TOP\">$lang[1638]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".$ffile['erstuser']."</TD></TR>";
-echo "<TR class=\"tabBody\"><TD VALIGN=\"TOP\">$lang[1639]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".$ffile['datum']."</TD></TR>";
-echo "<TR class=\"tabBody\"><TD VALIGN=\"TOP\">$lang[210]: </TD><TD STYLE=\"color:{$farbschema['WEB4']};cursor:pointer;\">".$ffile['size']."</TD></TR>";
-
-
-# --- Format ---
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=\"2\">$lang[1667]</TD></TR>";
-if($ffile['mimetype']){echo "<TR class=\"tabBody\"><TD  VALIGN=\"TOP\">$lang[1637]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".nl2br(htmlentities($ffile["mimetype"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</TD></TR>";}
-if($ffile['format']){echo "<TR class=\"tabBody\"><TD  VALIGN=\"TOP\">$lang[1563]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".nl2br(htmlentities($ffile["format"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</TD></TR>";}
-if($ffile['geometry']){echo "<TR class=\"tabBody\"><TD  VALIGN=\"TOP\">$lang[1564]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".nl2br(htmlentities($ffile["geometry"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</TD></TR>";}
-if($ffile['resolution']){echo "<TR class=\"tabBody\"><TD  VALIGN=\"TOP\">$lang[1565]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".nl2br(htmlentities($ffile["resolution"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</TD></TR>";}
-if($ffile['depth']){echo "<TR class=\"tabBody\"><TD  VALIGN=\"TOP\">$lang[1566]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".nl2br(htmlentities($ffile["depth"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</TD></TR>";}
-if($ffile['colors']){echo "<TR class=\"tabBody\"><TD  VALIGN=\"TOP\">$lang[1567]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".nl2br(htmlentities($ffile["colors"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</TD></TR>";}
-if($ffile['type']){echo "<TR class=\"tabBody\"><TD  VALIGN=\"TOP\">$lang[623]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".nl2br(htmlentities($ffile["type"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]))."</TD></TR>";}
-
-# --- Indizierung ---
-if($ffile["indize"]){
-	echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=\"2\">$lang[1720]</TD></TR>";
-	echo "<TR class=\"tabBody\"><TD VALIGN=\"TOP\">$lang[1719]: </TD><TD STYLE=\"color:{$farbschema['WEB4']}\">".get_date($ffile['indize_time'],2)." (".round($ffile['indize_needtime'],2)."sec.)</TD></TR>";
-}
-
-# --- Vorschau ---
-$size = explode("x",$umgvar["thumbsize2"]);
-$img = lmb_getThumbnail(array($ID,$ffile["secname"],$ffile["mimeid"],$ffile["thumb_ok"],null,$ffile["mid"]),$size[0],$size[1],1);
-if($img){
-	#$filename = $umgvar["upload_pfad"].$ffile["secname"].".".$ffile["ext"];
-	$filename = lmb_getFilePath($ID,$level,$ffile["secname"],$ffile["ext"]);
-	echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=\"2\">$lang[1739]</TD></TR>";
-	echo "<TR class=\"tabBody\"><TD></TD><TD><IMG SRC=\"$img\" BORDER=\"1\" STYLE=\"padding:10px;background-color:#CCCCCC\"></TD></TR>";
-}
+                # --- Indizierung ---
+                if($ffile["indize"]){
+                    echo "<h5 class=\"mt-4\">".$lang[1720]."</h5>";
+                    echo "<dt class=\"col-3\">$lang[1719]</dt><dd class=\"col-7\">".get_date($ffile['indize_time'],2)." (".round($ffile['indize_needtime'],2)."sec)<dd>";
+                }
 
 
-?>
-</TABLE>
-</DIV>
+                ?>
+            </dl>
+        </div>
+        <div class="col-6">
+            <div class="text-end mt-2 me-2">
+                <div class="dropdown">
+                    <button type="button" class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown"><i class="fa fa-cog"></i></button>
+                    <div class="dropdown-menu p-2 bg-contrast">
+                        <?php
+                        ob_start();
+                        include(COREPATH . 'extra/printer/html/options.php');
+                        echo ob_get_clean(); ?>
+                    </div>
+                    <button type="button" id="dms-print" class="btn btn-outline-dark" data-file-action="print" data-text="<?=$lang[391]?>" onclick="explorerDetailPrintFile(<?=$ffile['id']?>)"><i class="fas fa-print me-2"></i><?=$lang[391]?></button>
+                </div>
 
+            </div>
+            <?php
+            # --- Vorschau ---
+            $size = explode("x",$umgvar["thumbsize2"]);
+            try {
+                $img = lmb_getThumbnail(array($ID, $ffile["secname"], $ffile["mimeid"], $ffile["thumb_ok"], null, $ffile["mid"]), $size[0], $size[1], 1);
+            } catch (ImagickException $e) {
+                lmb_error_log('explorer_detail image preview', $e);
+            }
+            if($img){
+                #$filename = $umgvar["upload_pfad"].$ffile["secname"].".".$ffile["ext"];
+                $filename = lmb_getFilePath($ID,$level,$ffile["secname"],$ffile["ext"]);
+                echo "<img class=\"border mt-2\" src=\"$img\">";
+            } ?>
+        </div>
+        </div>
+    </div>
+    <div class="tab-pane <?=$show_part == 'metadata' ? 'show active' : ''?>" id="metadata" role="tabpanel" aria-labelledby="metadata-tab">
+        <div class="ratio ratio-4x3">
+            <iframe src="main.php?action=gtab_change&old_action=explorer&gtabid=<?=$gtab["argresult_id"]["LDMS_META"]?>&ID=<?=$ID?>" class="frame-fill"></iframe>
+        </div>
 
+        <?php
+        /*
+        $gtabid = $gtab["argresult_id"]["LDMS_META"];
+        if($gtab["tab_view_form"][$gtabid]){
+            $dimension = explode('x',$gformlist[$gtabid]["dimension"][$gtab["tab_view_form"][$gtabid]]);
+            require_once(COREPATH . 'gtab/gtab_form.lib');
+            $gresult = get_gresult($gtabid,null,null,null,0,0,$ID);
+            form_gresult($ID,$gtabid,$gtab["tab_view_form"][$gtabid],$gresult); # need for fields of related tables
+            form_gresult($ID,$gtab["argresult_id"]["LDMS_FILES"],$gtab["tab_view_form"][$gtabid],$gresult); # need for fields of related tables
+            echo '<div style="width:100%;position:relative;height:'.$dimension[1].'px;">';
+            formListElements('gtab_change',$gtabid,$ID,$gresult,$gtab["tab_view_form"][$gtabid]);
+            echo '</div>';
+        }else{
+            $gresult = get_gresult($gtabid,null,null,null,0,0,$ID);
+            echo "<table width=\"650px\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border-collapse:collapse;\">\n";
+            defaultViewElements($gtabid,$ID,$gresult);
+            echo "<tr><td></td><td><input class=\"submit\" type=\"button\" name=\"LmEx_changeMeta\" style=\"cursor:pointer\" value=\"$lang[33]\" onclick=\"document.form1.show_part.value='metadata';send_form('1');\"></td></tr>";
+            echo "</table>";
+        }*/
 
-<?php # ----------- Herkunft ---------------?>
-<DIV ID="origin" STYLE="display:none;">
-<TABLE BORDER="0" cellspacing="0" cellpadding="0" WIDTH="650px" STYLE="border-collapse:collapse;"><TR><TD>
-<?php
-# Feldtyp Upload
-#if($ffile["d_tabid"]){
-#	echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=\"5\">".htmlentities($ffile["d_tab"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."&nbsp;&nbsp;(".htmlentities($ffile["d_field"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]).")</TD></TR>";
-#	echo "<TR class=\"tabBody\" OnClick=\"open_tab('".$ffile["d_tabid"]."','".$ffile["d_id"]."')\"><TD style=\"width:20px;\"></TD><TD class=\"link\" VALIGN=\"TOP\">".$ffile["d_id"]."</TD><TD></TD></TR>";
-#}
+        ?>
+    </div>
+    <div class="tab-pane <?=$show_part == 'versioning' ? 'show active' : ''?>" id="versioning" role="tabpanel" aria-labelledby="versioning-tab">
+        <?php if($vfile['count']) { ?>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>diff</th>
+                    <th>version</th>
+                    <th>upload date</th>
+                    <th>upload user</th>
+                    <th>note</th>
+                </tr>
+            </thead>
 
-# Verknüpfungen
-if($forigin){
-	foreach($forigin as $key => $value){
-		foreach($value as $key1 => $value1){
-			echo "<tr class=\"tabHeader\"><td class=\"tabHeaderItem\" COLSPAN=\"5\">".$gtab["desc"][$key]."&nbsp;&nbsp;(".$forigin[$key][$key1]["field"].")</td></tr>";
-			echo "<tr class=\"tabSubHeader\"><td class=\"tabSubHeaderItem\" style=\"width:20px;\"></td><td class=\"tabSubHeaderItem\">id</td><td class=\"tabSubHeaderItem\">".$lang[2235]."</td><td class=\"tabSubHeaderItem\">".$lang[2111]."</td><td class=\"tabSubHeaderItem\">".$lang[160]."</td></tr>";
-			foreach($forigin[$key][$key1]["id"] as $key2 => $value2){
-				echo "<tr class=\"tabBody\">
-				<td style=\"width:20px;\"></td><td OnClick=\"lmEx_openDataset('".$key."','".$forigin[$key][$key1]["id"][$key2]."')\" class=\"link\">".$forigin[$key][$key1]["id"][$key2]."</td>
-				<td OnClick=\"lmEx_openDataset('".$key."','".$forigin[$key][$key1]["id"][$key2]."')\" class=\"link\">".$forigin[$key][$key1]["value"][$key2]."</td>
-				<td>".$forigin[$key][$key1]["folder"][$key2]."</td>";
-				if($gfield[$key]["perm_edit"][$key1]){echo "<td class=\"link\"><i class=\"lmb-icon lmb-trash\" border=0 OnClick=\"lmEx_dropRelation($ID,$level,'".$key."_".$key1."_".$forigin[$key][$key1]["id"][$key2]."')\"></i></td>";}
-				echo "</tr>";
-			}
-		}
-	}
-}
-?>
-</TD></TR></TABLE>
-<BR><BR>
-</DIV>
+            <tbody>
+            <?php
+            $maxvid = lmb_count($vfile['id']);
+            $bzm=1;
+            if($vfile['id'] AND lmb_count($vfile['id']) > 1){
+                if($ffile['mimetype']){$meta = explode("/",$ffile['mimetype']);}
 
-<?php # ----------- Metadaten ---------------?>
-<div id="metadata" STYLE="display:none;">
-<?php
-$gtabid = $gtab["argresult_id"]["LDMS_META"];
-if($gtab["tab_view_form"][$gtabid]){
-	$dimension = explode('x',$gformlist[$gtabid]["dimension"][$gtab["tab_view_form"][$gtabid]]);
-	require_once(COREPATH . 'gtab/gtab_form.lib');
-	$gresult = get_gresult($gtabid,null,null,null,0,0,$ID);
-	form_gresult($ID,$gtabid,$gtab["tab_view_form"][$gtabid],$gresult); # need for fields of related tables
-	form_gresult($ID,$gtab["argresult_id"]["LDMS_FILES"],$gtab["tab_view_form"][$gtabid],$gresult); # need for fields of related tables
-	echo '<div style="width:100%;position:relative;height:'.$dimension[1].'px;">';
-	formListElements('gtab_change',$gtabid,$ID,$gresult,$gtab["tab_view_form"][$gtabid]);
-	echo '</div>';
-}else{
-	$gresult = get_gresult($gtabid,null,null,null,0,0,$ID);
-	echo "<table width=\"650px\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border-collapse:collapse;\">\n";
-	defaultViewElements($gtabid,$ID,$gresult);
-	echo "<tr><td></td><td><input class=\"submit\" type=\"button\" name=\"LmEx_changeMeta\" style=\"cursor:pointer\" value=\"$lang[33]\" onclick=\"document.form1.show_part.value='metadata';send_form('1');\"></td></tr>";
-	echo "</table>";
-}
+                foreach($vfile['id'] as $key => $value){
+                    echo "<tr>";
+                    if($value == $ffile['id']){$fstyle = "color:black;";}else{$fstyle = "color:grey;";}
+                    if($vfile['nr'][$key] == $maxvid){$fdesc = " ($lang[2018])";}else{$fdesc = "";}
+                    if($meta[0] != "image" AND  $meta[0] != "video" AND $meta[0] != "audio"){
+                        echo "<td>";
+                        if($maxvid != $bzm){
+                            echo "&nbsp;<i class=\"lmb-icon lmb-file-code\" OnClick=\"limbasFileVersionDiff(this,$value,".$vfile['id'][$key+1].",1,'#versioning')\" STYLE=\"cursor:pointer;\"></i>";
+                        }
+                        echo "</td>";
+                    }
 
-?>
+                    if($value != $ffile['id']){echo "<A HREF=\"JavaScript:document.location.href='main.php?&action=explorer_detail&level=$level&LID=$level&ID=$value'\"></A>";}
+                    echo "<td><SPAN STYLE=\"$fstyle\">".$lang[2]." ".$vfile['nr'][$key]."</SPAN></A> $fdesc</td>
+                        <td>".$vfile['erstdatum'][$key]."</td><td>".$vfile['erstuser'][$key]."</td>
+                        <td>".$vfile['vnote'][$key]."</td></tr>";
+
+                    $bzm++;
+                }
+            }
+            ?>
+            </tbody>
+        </table>
+        <?php } ?>
+    </div>
+    <div class="tab-pane <?=$show_part == 'duplicates' ? 'show active' : ''?>" id="duplicates" role="tabpanel" aria-labelledby="duplicates-tab">
+        <table class="table">
+                <?php
+                if($dfile["id"]){
+                    echo "<thead>
+                            <tr>
+                                <th>name</th>
+                                <th>path</th>
+                                <th>size</th>
+                                <th>upload date</th>
+                                <th>upload user</th>
+                            </tr></thead><tbody>";
+                    foreach ($dfile["id"] as $key => $value){
+                        echo "<tr>
+                                <td nowrap><A HREF=\"main.php?&action=download&ID=".$dfile["id"][$key]."\" TARGET=\"new\">".$dfile["name"][$key]."</A></td>
+                                <td><I class='text-break'>"."/".lmb_getUrlFromLevel($dfile["level"][$key],0)."</I></A></td>
+                                <td >".file_size($dfile["size"][$key])."</td>
+                                <td>".get_date($dfile["erstdatum"][$key],1)."</td>
+                                <td>".$userdat["vorname"][$dfile["erstuser"][$key]]." ".$userdat["name"][$dfile["erstuser"][$key]]."</td>
+                              </tr>";
+                    }
+                    echo "</tbody>";
+                }
+                ?>
+        </table>
+    </div>
+    <div class="tab-pane <?=$show_part == 'origin' ? 'show active' : ''?>" id="origin" role="tabpanel" aria-labelledby="origin-tab">
+
+        <?php
+        # Feldtyp Upload
+        #if($ffile["d_tabid"]){
+        #	echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=\"5\">".htmlentities($ffile["d_tab"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."&nbsp;&nbsp;(".htmlentities($ffile["d_field"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]).")</TD></TR>";
+        #	echo "<TR class=\"tabBody\" OnClick=\"open_tab('".$ffile["d_tabid"]."','".$ffile["d_id"]."')\"><TD style=\"width:20px;\"></TD><TD class=\"link\" VALIGN=\"TOP\">".$ffile["d_id"]."</TD><TD></TD></TR>";
+        #}
+
+        # Verknüpfungen
+        if($forigin){
+            foreach($forigin as $key => $value){
+                foreach($value as $key1 => $value1){
+                    echo "<h5 class='pt-2'>".$gtab["desc"][$key].".".$forigin[$key][$key1]["field"]."</h5>";
+                    echo "<table class='table'>";
+                    echo "<thead><tr><th>id</th><th>".$lang[2235]."</th><th>".$lang[2111]."</th><th>".$lang[160]."</th></tr></thead>";
+                    echo "<tbody>";
+
+                    foreach($forigin[$key][$key1]["id"] as $key2 => $value2){
+                        echo "<tr>
+                            <td OnClick=\"lmEx_openDataset('".$key."','".$forigin[$key][$key1]["id"][$key2]."')\" class=\"link\">".$forigin[$key][$key1]["id"][$key2]."</td>
+                            <td OnClick=\"lmEx_openDataset('".$key."','".$forigin[$key][$key1]["id"][$key2]."')\" class=\"link\">".$forigin[$key][$key1]["value"][$key2]."</td>
+                            <td>".$forigin[$key][$key1]["folder"][$key2]."</td>";
+                        if($gfield[$key]["perm_edit"][$key1]){echo "<td class=\"link\"><i class=\"lmb-icon lmb-trash\" border=0 OnClick=\"lmEx_dropRelation($ID,$level,'".$key."_".$key1."_".$forigin[$key][$key1]["id"][$key2]."')\"></i></td>";}
+                        echo "</tr>";
+                    }
+                    echo "</tbody></table>";
+                }
+            }
+        }
+        ?>
+    </div>
+    <div class="tab-pane <?=$show_part == 'exifdata' ? 'show active' : ''?>" id="exifdata" role="tabpanel" aria-labelledby="exifdata-tab">
+        <?php if($exifdata){?>
+            <table class="table">
+                <TR><TD><?= $exifdata ?></TD></TR>
+            </table>
+        <?php }?>
+    </div>
 </div>
 
-<?php # ----------- Exifdaten ---------------
-if($exifdata){?>
-<DIV ID="exifdata" STYLE="display:none;">
-<TABLE BORDER="0" cellspacing="0" cellpadding="0" WIDTH="650px" STYLE="border-collapse:collapse;"><TR><TD>
-<?= $exifdata ?>
-</TD></TR></TABLE>
-<BR><BR>
-</DIV>
-<?php }?>
-
-
-
-
-<?php # ----------- Dublikate ---------------?>
-<DIV ID="duplicates" STYLE="display:none;">
-<br>
-<TABLE BORDER="0" cellspacing="0" cellpadding="0" WIDTH="650px" STYLE="border-collapse:collapse;"><TR><TD>
-<?php
-if($dfile["id"]){
-	foreach ($dfile["id"] as $key => $value){
-		echo "<tr><td nowrap><A HREF=\"main.php?&action=download&ID=".$dfile["id"][$key]."\" TARGET=\"new\">".$dfile["name"][$key]."</A></td><td nowrap>".file_size($dfile["size"][$key])."</td><td nowrap>".$userdat["vorname"][$dfile["erstuser"][$key]]." ".$userdat["name"][$dfile["erstuser"][$key]]."</td><td nowrap>".get_date($dfile["erstdatum"][$key],1)."</td></tr>";
-		echo "<TR><td colspan=\"4\" style=\"overflow:hidden;border-bottom:1px solid grey;\"><div style=\"overflow:hidden;width:100%;\"><I>"."/".lmb_getUrlFromLevel($dfile["level"][$key],0)."</I></A></div></td></TR>";
-	}
-}
-?>
-</TD></TR></TABLE>
-<BR><BR>
-</DIV>
-
-<?php # ----------- Versionen ---------------?>
-
-<DIV ID="versioning" STYLE="display:none;">
-<TABLE BORDER="0" cellspacing="0" cellpadding="2" WIDTH="650px" STYLE="border-collapse:collapse;">
-<TR><TD></TD><TD BGCOLOR="<?=$farbschema["WEB7"]?>" colspan="3"><B>diff</B></TD></TR>
-
-<?php
-$maxvid = lmb_count($vfile['id']);
-$bzm=1;
-if($vfile['id'] AND lmb_count($vfile['id']) > 1){
-if($ffile['mimetype']){$meta = explode("/",$ffile['mimetype']);}
-
-foreach($vfile['id'] as $key => $value){
-	if($value == $ffile['id']){$fstyle = "color:black;";}else{$fstyle = "color:grey;";}
-	if($vfile['nr'][$key] == $maxvid){$fdesc = " ($lang[2018])";}else{$fdesc = "";}
-	echo "<TR><TD ROWSPAN=\"2\">&nbsp;</TD>";
-	if($meta[0] != "image" AND  $meta[0] != "video" AND $meta[0] != "audio"){
-		echo "<TD NOWRAP ROWSPAN=\"2\" VALIGN=\"TOP\" STYLE=\"border:1px solid {$farbschema['WEB4']};width:50px;\">";
-		if($maxvid != $bzm){
-			echo "&nbsp;<i class=\"lmb-icon lmb-file-code\" OnClick=\"limbasFileVersionDiff(this,$value,".$vfile['id'][$key+1].",1)\" STYLE=\"cursor:pointer;\"></i>";
-		}
-	}
-	echo "</TD>";
-	echo "<TD ROWSPAN=\"2\" VALIGN=\"TOP\" STYLE=\"border:1px solid {$farbschema['WEB4']};\">";
-	if($value != $ffile['id']){echo "<A HREF=\"JavaScript:document.location.href='main.php?&action=explorer_detail&level=$level&LID=$level&ID=$value'\">";}
-	echo "<SPAN STYLE=\"$fstyle\">".$lang[2]." ".$vfile['nr'][$key]."</SPAN></A> $fdesc</TD>
-	<TD STYLE=\"width:120px;border:1px solid ".$farbschema['WEB4'].";\">".$vfile['erstdatum'][$key]."</TD><TD STYLE=\"border:1px solid ".$farbschema['WEB4']."\">".$vfile['erstuser'][$key]."</TD></TR>
-	<TR><TD COLSPAN=\"2\" STYLE=\"border:1px solid ".$farbschema['WEB4'].";font-size:9px;\">".$vfile['vnote'][$key]."</TD></TR>\n";
-
-	$bzm++;
-}
-}
-?>
-</TABLE>
-<BR><BR>
-</DIV>
-
-</td></tr></table>
-</td></tr></table></div>
-</FORM>
-
-
-
-
-<script language="JavaScript">
-<?php if($show_part){?>
-show_part('<?=$show_part?>');
-<?php }?>
-</script>
+</div>

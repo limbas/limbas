@@ -84,6 +84,7 @@ if($filter_reset AND !$snap_id AND $action != 'explorer_main'){
 		}
 		#$filter_page[$gtabid] = 1;
 	}
+
 	if($filter_popups){
 		$tmp = explode("|",$filter_popups);
 		$bzm = 0;
@@ -203,8 +204,12 @@ if($filter_reset AND !$snap_id AND $action != 'explorer_main'){
 	}
 
 	if($filter_page){
-		$filter_page_ = explode("/",$filter_page[key($filter_page)]);
-		$filter["page"][key($filter_page)] = $filter_page_[0];
+        if(is_numeric($filter_page)){
+            $filter["page"][$gtabid] = $filter_page;
+        }elseif(is_array($filter_page)) {
+            $filter_page_ = explode("/", $filter_page[key($filter_page)]);
+            $filter["page"][key($filter_page)] = $filter_page_[0];
+        }
 	}
 
     if ($filter_anzahl) {
@@ -267,6 +272,10 @@ if($filter_reset AND !$snap_id AND $action != 'explorer_main'){
 		}else{
 			$session["symbolbar"] = 1;
 		}
+        $data = ['SYMBOLBAR' => $session["symbolbar"]];
+        $where = ['USER_ID' => $session["user_id"]];
+
+        \Limbas\lib\db\Database::update("LMB_USERDB", $data, $where);
 	}
 
 

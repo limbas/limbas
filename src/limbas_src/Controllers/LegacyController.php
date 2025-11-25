@@ -12,7 +12,7 @@ namespace Limbas\Controllers;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class LegacyController
+class LegacyController extends AbstractController
 {
     public function main(Request $request): Response
     {

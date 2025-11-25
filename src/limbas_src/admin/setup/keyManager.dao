@@ -197,9 +197,6 @@ function keyEncryptFile($source, $key, $dest)
                 #$ciphertext = openssl_encrypt($plaintext, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
                 openssl_seal($plaintext, $ciphertext, $ekeys, array($key), "AES256", $iv);
 
-
-                error_log(print_r($ekeys,1));
-
                 // Use the first 16 bytes of the ciphertext as the next initialization vector
                 $iv = substr($ciphertext, 0, 16);
                 fwrite($fpOut, $ciphertext);
@@ -230,13 +227,7 @@ function KeyDecryptFile($source, $key, $dest)
             while (!feof($fpIn)) {
                 $iv = fread($fpIn, 16);
                 $ciphertext = fread($fpIn, 16 * (FILE_ENCRYPTION_BLOCKS + 1)); // we have to read one block more for decrypting than for encrypting
-
-
-
                 openssl_open($ciphertext, $plaintext, $env_key, $key[0],  "AES256", $iv);
-
-                error_log($plaintext);
-
 
                 // Use the first 16 bytes of the ciphertext as the next initialization vector
                 $iv = substr($ciphertext, 0, 16);

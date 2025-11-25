@@ -112,7 +112,7 @@ foreach($menu as $key1 => $menuType){
 		}
 
         echo '<li><div class="menu-side-header" '.$onClick.'>
-                <i class="lmbMenuHeaderImage lmb-icon-32 '.($firstLevel['gicon'] ?? $firstLevel['icon']).'"></i>
+                <i class="lmbMenuHeaderImage lmb-icon '.($firstLevel['gicon'] ?? $firstLevel['icon']).'"></i>
             <span class="hide-menu">'.$firstLevel["name"].'</span>
             ';
 

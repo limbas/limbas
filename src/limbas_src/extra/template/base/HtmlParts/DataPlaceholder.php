@@ -10,7 +10,7 @@
 namespace Limbas\extra\template\base\HtmlParts;
 
 use Limbas\extra\template\base\TemplateConfig;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
 
 /**
  * Class DataPlaceholder
@@ -124,7 +124,7 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
             $tableName = $fieldIdentifiers[0]['table'];
             $tableID = $gtab['argresult_id'][lmb_strtoupper($tableName)];
             if ($tableID != $currentGtabid) {
-                lmb_log::error(
+                Log::limbasError(
                     "Given table '$tableName' ($tableID) doesn't match base table {$gtab['table'][$currentGtabid]} ($currentGtabid)!",
                     'Repeating table row: Given table doesn\'t match base table!',
                     $currentGtabid
@@ -172,7 +172,7 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
 
                     // not current table & not 1:1 relation table -> not allowed
                     if ($currentGtabid != $relationTableID) {
-                        lmb_log::error("Invalid table {$tableName} in placeholder {$this->fullMatch}!", "Invalid table {$tableName}!", $currentGtabid);
+                        Log::limbasError("Invalid table {$tableName} in placeholder {$this->fullMatch}!", "Invalid table {$tableName}!", $currentGtabid);
                         $this->fieldlist = null;
                         $this->setValue('');
                         return;
@@ -188,7 +188,7 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
             $fieldID = $gfield[$currentGtabid]['argresult_name'][lmb_strtoupper($fieldIdentifiers[$i]['name'])];
             if ($fieldID === null) {
                 if(!empty($currentGtabid)) {
-                    lmb_log::error("Invalid field {$fieldIdentifiers[$i]['name']} in placeholder {$this->fullMatch}!", "Invalid field {$fieldIdentifiers[$i]['name']}!", $currentGtabid);   
+                    Log::limbasError("Invalid field {$fieldIdentifiers[$i]['name']} in placeholder {$this->fullMatch}!", "Invalid field {$fieldIdentifiers[$i]['name']}!", $currentGtabid);   
                 }
                 $this->fieldlist = null;
                 $this->setValue('');
@@ -213,7 +213,7 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
 
         # no permission?
         if(!$gfield[$currentGtabid]['sort'][$fieldID]){
-            lmb_log::error("No permission in data placeholder {$this->fullMatch}!", 'No permission for field!', $currentGtabid, $fieldID);
+            Log::limbasError("No permission in data placeholder {$this->fullMatch}!", 'No permission for field!', $currentGtabid, $fieldID);
             $this->fieldlist = null;
             $this->setValue('');
             return;
@@ -226,7 +226,7 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
     {
         // if i fetch the base table, I must not be dependent on another table row
         if ($this->isModeFetchBaseTable() && $this->isDependent()) {
-            lmb_log::error(
+            Log::limbasError(
                 "Usage of table row repeating on base table is only allowed in list forms!",
                 "Usage of table row repeating on base table is only allowed in list forms!",
                 TemplateConfig::$instance->getGtabid()
@@ -234,7 +234,7 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
         }
 
         if (!$this->isResolved or $this->fieldlist === null) {
-            lmb_log::error("Data placeholder {$this->fullMatch} could not be resolved!", 'Not all data placeholders could be resolved!');
+            Log::limbasError("Data placeholder {$this->fullMatch} could not be resolved!", 'Not all data placeholders could be resolved!');
         }
 
         $value = $this->getValue();

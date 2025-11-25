@@ -10,12 +10,13 @@ class CSV extends FiletypeExporter
     const MIME_TYPE = "text/csv";
     const CF_TYP_RETURN_TYPE = 5;
 
-    public function export(array $gresult, int $gtabid, bool $onlyGetVisibleRows): void
+    public function export(array $gresult, int $gtabid): void
     {
         global $gfield;
         global $filter;
+        global $umgvar;
 
-        $sortKeys = array_keys($gfield[$gtabid]["sort"]);
+        $sortKeys = array_keys($gfield[$gtabid]["key"]);
 
         $outputStream = fopen("php://output", "w");
 
@@ -23,7 +24,7 @@ class CSV extends FiletypeExporter
 
         // Set the column titles in the top row
         foreach ($sortKeys as $fieldId) {
-            if (!$gfield[$gtabid]["funcid"][$fieldId]) {
+            if (!$gfield[$gtabid]["funcid"][$fieldId] OR $gfield[$gtabid]["col_hide"][$fieldId]) {
                 continue;
             }
 
@@ -31,24 +32,25 @@ class CSV extends FiletypeExporter
             $hideCols = $filter["hidecols"][$gtabid][$fieldId];
 
             if (!$hideCols && $fieldType < 100 && $fieldType != 20) {
-                $titles[] = $gfield[$gtabid]["field_name"][$fieldId];
+                if($umgvar['export_sys_column_header']) {
+                    $titles[] = $gfield[$gtabid]['field_name'][$fieldId];
+                }
+                else
+                {
+                    $titles[] = $gfield[$gtabid]['spelling'][$fieldId];
+                }
             }
         }
 
         fputcsv($outputStream, $titles, escape:false);
 
-        // Only get results of visible rows
-        if (!$onlyGetVisibleRows) {
-            $rescount = $gresult[$gtabid]["res_count"];
-        } else {
-            $rescount = $gresult[$gtabid]["res_viewcount"];
-        }
+        $rescount = $gresult[$gtabid]["res_count"];
 
         // Set the data in the rows
         for ($resultCounter = 0; $resultCounter < $rescount; $resultCounter++) {
             $row = [];
             foreach ($sortKeys as $fieldId) {
-                if (!$gfield[$gtabid]["funcid"][$fieldId]) {
+                if (!$gfield[$gtabid]["funcid"][$fieldId] OR $gfield[$gtabid]["col_hide"][$fieldId]) {
                     continue;
                 }
 

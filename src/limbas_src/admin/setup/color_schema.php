@@ -68,12 +68,12 @@
                         </thead>
 
                         <tbody>
-                        <?php foreach ($color_schemas as $id => $colorSchema) : ?>
+                        <?php foreach ($colorSchemas as $colorSchema) : ?>
                             <tr>
-                                <td class="align-middle"><?=$id?></td>
-                                <td class="align-middle"><?=e($colorSchema['name']).' ('.e($colorSchema['layout']).')'?></td>
-                                <td class="align-middle"><?=e($colorSchema['theme'] ?: 'light') ?></td>
-                                <td class="align-middle text-nowrap ps-3"><button type="button" class="btn btn-outline-secondary btn-sm me-1" data-editcolor="<?=$id?>"><i class="lmb-icon lmb-pencil"></i></button><?php if($colorSchema['regenerate']) : ?><a href="main_admin.php?action=setup_color_schema&regenerate=1&id=<?=$id?>" class="btn btn-outline-secondary btn-sm me-1 btn-regen" title="Regenerate CSS"><i class="lmb-icon lmb-refresh"></i></a><?php endif; ?><a href="main_admin.php?action=setup_color_schema&del=1&id=<?=$id?>" class="btn btn-outline-danger btn-sm me-1 text-danger"><i class="lmb-icon lmb-trash"></i></a></td>
+                                <td class="align-middle"><?=$colorSchema->id?></td>
+                                <td class="align-middle"><?=e($colorSchema->name).' ('.e($colorSchema->layout).')'?></td>
+                                <td class="align-middle"><?=e($colorSchema->theme ?: 'light') ?></td>
+                                <td class="align-middle text-nowrap ps-3"><button type="button" class="btn btn-outline-secondary btn-sm me-1" data-editcolor="<?=$colorSchema->id?>"><i class="lmb-icon lmb-pencil"></i></button><?php if($colorSchema->regenerate) : ?><a href="main_admin.php?action=setup_color_schema&regenerate=1&id=<?=$colorSchema->id?>" class="btn btn-outline-secondary btn-sm me-1 btn-regen" title="Regenerate CSS"><i class="lmb-icon lmb-refresh"></i></a><?php endif; ?><a href="main_admin.php?action=setup_color_schema&del=1&id=<?=$colorSchema->id?>" class="btn btn-outline-danger btn-sm me-1 text-danger"><i class="lmb-icon lmb-trash"></i></a></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -98,22 +98,22 @@
             </div>
         </div>
         <div class="col-md-7">
-            <?php foreach ($color_schemas as $id => $colorSchema) : ?>
+            <?php foreach ($colorSchemas as $colorSchema) : ?>
                 <FORM ACTION="main_admin.php" METHOD="post">
                     <input type="hidden" name="action" value="setup_color_schema">
-                    <input type="hidden" name="id" value="<?=$id?>">
-                    <div class="card d-none color-card" id="edit-colors-<?=$id?>">
+                    <input type="hidden" name="id" value="<?=$colorSchema->id?>">
+                    <div class="card d-none color-card" id="edit-colors-<?=$colorSchema->id?>">
                         <div class="card-header">
                             <div class="d-flex justify-content-between align-items-center">
-                                <input type="text" name="name" class="form-control form-control-sm w-auto" value="<?=e($colorSchema['name'])?>">
-                                <?=e($colorSchema['layout'])?>
+                                <input type="text" name="name" class="form-control form-control-sm w-auto" value="<?=e($colorSchema->name)?>">
+                                <?=e($colorSchema->layout)?>
                                 <div>
                                     <select class="form-select form-select-sm" name="theme">
-                                        <option value="light" <?=empty($colorSchema['theme']) || $colorSchema['theme'] === 'light' ? 'selected' : ''?>>light</option>
-                                        <option value="dark" <?=$colorSchema['theme'] === 'dark' ? 'selected' : ''?>>dark</option>
-                                        <option value="custom" <?=!empty($colorSchema['theme']) && $colorSchema['theme'] !== 'light' && $colorSchema['theme'] !== 'dark' ? 'selected' : ''?>>custom</option>
+                                        <option value="light" <?=empty($colorSchema->theme) || $colorSchema->theme === 'light' ? 'selected' : ''?>>light</option>
+                                        <option value="dark" <?=$colorSchema->theme === 'dark' ? 'selected' : ''?>>dark</option>
+                                        <option value="custom" <?=!empty($colorSchema->theme) && $colorSchema->theme !== 'light' && $colorSchema->theme !== 'dark' ? 'selected' : ''?>>custom</option>
                                     </select>
-                                    <input type="text" value="<?=e($colorSchema['theme'] ?: 'light')?>" class="form-control form-control-sm <?=!empty($colorSchema['theme']) && $colorSchema['theme'] !== 'light' && $colorSchema['theme'] !== 'dark' ? '' : 'd-none'?>" name="custom_theme" placeholder="Name of the theme">
+                                    <input type="text" value="<?=e($colorSchema->theme ?: 'light')?>" class="form-control form-control-sm <?=!empty($colorSchema->theme) && $colorSchema->theme !== 'light' && $colorSchema->theme !== 'dark' ? '' : 'd-none'?>" name="custom_theme" placeholder="Name of the theme">
                                 </div>
                             </div>
                         </div>
@@ -122,38 +122,38 @@
         
                             <tbody>
                             
-                            <?php foreach ($colorSchema['variables'] as $name => $group) :                        
+                            <?php foreach ($colorSchema->variables as $name => $group) :                        
                                 ?>
                                 <tr class="table-section"><th colspan="2"><?=$name?></th></tr>
                                 <?php foreach ($group as $variable => $value) : ?>
                                     <tr>
                                         <td class="align-middle"><?=$variable?></td>
-                                        <td><div class="row"><div class="col-2 pe-0"><input type="text" value="<?=$value?>" data-colorselect="cs<?=$id?>var<?=$variable?>"></div><div class="col-10 ps-0"><input class="form-control form-control-sm" type="text" id="cs<?=$id?>var<?=$variable?>" name="var[<?=$variable?>]" value="<?=$value?>"></div></div></td>
+                                        <td><div class="row"><div class="col-2 pe-0"><input type="text" value="<?=$value?>" data-colorselect="cs<?=$colorSchema->id?>var<?=$variable?>"></div><div class="col-10 ps-0"><input class="form-control form-control-sm" type="text" id="cs<?=$colorSchema->id?>var<?=$variable?>" name="var[<?=$variable?>]" value="<?=$value?>"></div></div></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endforeach; ?>
 
                             <tr class="table-section"><th colspan="2">Eigene Variablen</th></tr>
-                            <?php if (!empty($colorSchema['custvars'])) :
+                            <?php if (!empty($colorSchema->customVariables)) :
                                 ?>
                                 
-                                <?php foreach ($colorSchema['custvars'] as $variable => $value) : ?>
+                                <?php foreach ($colorSchema->customVariables as $variable => $value) : ?>
                                 <tr>
                                     <td class="align-middle"><?=$variable?></td>
-                                    <td><div class="row"><div class="col-2 pe-0"><input type="text" value="<?=$value?>" data-colorselect="cs<?=$id?>var<?=$variable?>"></div><div class="col-10 ps-0"><input class="form-control form-control-sm" type="text" id="cs<?=$id?>var<?=$variable?>" name="var[<?=$variable?>]" value="<?=$value?>"></div></div></td>
+                                    <td><div class="row"><div class="col-2 pe-0"><input type="text" value="<?=$value?>" data-colorselect="cs<?=$colorSchema->id?>var<?=$variable?>"></div><div class="col-10 ps-0"><input class="form-control form-control-sm" type="text" id="cs<?=$colorSchema->id?>var<?=$variable?>" name="var[<?=$variable?>]" value="<?=$value?>"></div></div></td>
                                 </tr>
                             <?php endforeach; ?>
                             <?php endif; ?>
                             <tr>
                                 <td class="align-middle"><input class="form-control form-control-sm" type="text" name="addvartitle"></td>
-                                <td><div class="row"><div class="col-2 pe-0"><input type="text" data-colorselect="cs<?=$id?>addvar"></div><div class="col-10 ps-0"><input class="form-control form-control-sm" type="text" id="cs<?=$id?>addvar" name="addvarvalue"></div></div></td>
+                                <td><div class="row"><div class="col-2 pe-0"><input type="text" data-colorselect="cs<?=$colorSchema->id?>addvar"></div><div class="col-10 ps-0"><input class="form-control form-control-sm" type="text" id="cs<?=$colorSchema->id?>addvar" name="addvarvalue"></div></div></td>
                             </tr>
                             </tbody>
                         </table>
                         <div class="card-footer">
                             <div class="row">
                                 <div class="col-sm-6">
-                                    <button class="btn btn-outline-secondary" type="button" name="resetdefault" value="1">Standard wiederherstellen</button>
+                                    <button class="btn btn-outline-secondary" type="submit" name="resetdefault" value="1">Standard wiederherstellen</button>
                                 </div>
                                 <div class="col-sm-6 text-end">
                                     <button class="btn btn-primary" type="submit" name="change" value="1">Speichern</button>

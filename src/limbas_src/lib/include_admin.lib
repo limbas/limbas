@@ -1,4 +1,8 @@
 <?php
+
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Log;
+
 /**
  * @copyright Limbas GmbH <https://limbas.com>
  * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
@@ -147,10 +151,11 @@ function getTypeExensions(){
                     while($line = fgets($file, 100000)){
                             if($fline = lmb_stristr($line,"function")){
                                     $na = trim(lmb_substr($fline,9,(lmb_strpos($fline,"(")-9)));
-                                    if(lmb_stristr($line,"lmbd_") OR lmb_stristr($line,"lmbc_") OR lmb_stristr($line,"lmbu_")){
+                                    if(lmb_stristr($line,"lmbd_") OR lmb_stristr($line,"lmbc_") OR lmb_stristr($line,"lmbu_") OR lmb_stristr($line,"lmbs_")){
                                         $na = preg_replace("/lmbd_/","",$na);
                                         $na = preg_replace("/lmbc_/","",$na);
                                         $na = preg_replace("/lmbu_/","",$na);
+                                        $na = preg_replace("/lmbs_/","",$na);
                                         $name[] = $na;
                                     }
                             }
@@ -222,99 +227,107 @@ function getGroupTree($name,$items,$selected=null,$LEVEL=0,$l=null){
 /*
 trigger name = LMB_TRG_md5(TABNAME_EVENT)
 */
-function lmb_updateTrigger(){
+function lmb_TriggerSyncToDB(){
 	global $db;
 	global $DBA;
 
-	lmb_dropAllDBTrigger();
+    // delete all DB Trigger
+	lmb_TriggerDropFromDB();
 
-	$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE ACTIVE = ".LMB_DBDEF_TRUE." AND TYPE IS NOT NULL AND INTERN = ".LMB_DBDEF_FALSE." ORDER BY TABLE_NAME,TYPE";
+	$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE ACTIVE = ".LMB_DBDEF_TRUE." AND TYPE IS NOT NULL AND SQLTRIGGER = ".LMB_DBDEF_TRUE." ORDER BY TABLE_NAME,TYPE,POSITION,INTERN";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	while(lmbdb_fetch_row($rs)){
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],lmbdb_result($rs,"TABLE_NAME"),"'TABLE'"));
+        // check if table exists
+		$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],lmbdb_result($rs,"TABLE_NAME"),"'TABLE'");
 		if(!$odbc_table){
-			lmb_deleteTriggerForTable(lmbdb_result($rs,"TABLE_NAME"));
+			lmb_TriggerDropFromDefinition(lmbdb_result($rs,"TABLE_NAME"));
 		}else{
-			$triggers["name"][] = lmbdb_result($rs,"NAME");
-			$triggers["table"][] = lmbdb_result($rs,"TABLE_NAME");
-			$triggers["type"][] = lmbdb_result($rs,"TYPE");
-			$triggers["value"][] = lmbdb_result($rs,"TRIGGER_VALUE");
-			$triggers["vendor"][] = lmbdb_result($rs,"DBVENDOR");
-			$triggers["position"][] = lmbdb_result($rs,"POSITION");
+			$triggers['name'][] = lmbdb_result($rs,"NAME");
+			$triggers['table'][] = lmbdb_result($rs,"TABLE_NAME");
+			$triggers['type'][] = lmbdb_result($rs,"TYPE");
+			$triggers['value'][] = lmbdb_result($rs,"TRIGGER_VALUE");
+			$triggers['vendor'][] = lmbdb_result($rs,"DBVENDOR");
+			$triggers['position'][] = lmbdb_result($rs,"POSITION");
 		}
 	}
 
-	if($triggers){
-		foreach($triggers["name"] as $key => $value){
-			if($triggers["value"][$key] AND $triggers["name"][$key] AND lmb_strtolower($triggers["vendor"][$key]) == lmb_strtolower($DBA["DB"])){
-				if(!$triggers["position"][$key]){$triggers["position"][$key] = "AFTER";}
-				$sqlquery = dbq_13(array($DBA["DBSCHEMA"],$triggers["name"][$key],$triggers["table"][$key],$triggers["type"][$key],$triggers["value"][$key],$triggers["position"][$key]));
-				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-				if(!$rs){$commit = 1;}
-			}
-		}
+	if(is_array($triggers)){
+        foreach($triggers['name'] as $tkey => $tvalue) {
+            if($triggers['value'][$tkey] AND $triggers['name'][$tkey] AND $triggers['position'][$tkey]  AND lmb_strtolower($triggers['vendor'][$tkey]) == lmb_strtolower($DBA['DB'])) {
+                $sqlquery = Dbf::createTriggerSql($DBA['DBSCHEMA'], $triggers['name'][$tkey], $triggers['table'][$tkey], $triggers['type'][$tkey], $triggers['value'][$tkey], $triggers['position'][$tkey]);
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                if (!$rs) {
+                    Log::error("error adding trigger ".$triggers['name'][$tkey]." - ".lmbdb_errormsg($db));
+                    $commit = 1;
+                }else{
+                    Log::info("adding trigger ".$triggers['name'][$tkey]);
+                }
+            }
+        }
 	}
 	if($commit){
-		lmb_alert("Error during update of triggers, please check the error log\nThe other triggers have been updated successfully.");
+		#lmb_alert("Error during update of triggers, please check the error log\nThe other triggers have been updated successfully.");
 		return false;
 	}else{
 		return true;
 	}
 }
 
-function lmb_dropAllDBTrigger($triggername=null,$delData=false){
+function lmb_TriggerDropFromDB($triggername=null,$tablename=null){
 	global $db;
 	global $DBA;
-	
-	# delete database trigger
-	if($triggerlist = dbf_3(array($DBA["DBSCHEMA"],$triggername))){
+
+	# delete all database trigger
+	if($triggerlist = Dbf::getTriggerInformation($DBA["DBSCHEMA"],$triggername)){
 		foreach ($triggerlist["triggername"] as $tkey => $tname){
-			#if(lmb_substr($tname,0,12) == "INSERT_VERK_" AND lmb_substr($tname,0,12) == "INSERT_VERK_"){continue;}
-			$sqlquery = dbq_10(array($triggerlist["triggername"][$tkey],$triggerlist["tablename"][$tkey]));
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs) {$commit = 1;}
+            $sqlquery = Dbf::dropTriggerSql($triggerlist["tablename"][$tkey], $triggerlist["triggername"][$tkey]);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+			if(!$rs) {
+                Log::error("error drop trigger $tname - ".lmbdb_errormsg($db));
+                $commit = 1;
+            }else{
+                Log::info("drop trigger $tname");
+            }
 		}
 	}
-	# delete limbas trigger
-	if($delData){
-		if($triggername){$where = "AND NAME LIKE '$triggername'";}
-		$sqlquery = "DELETE FROM LMB_TRIGGER WHERE INTERN = ".LMB_DBDEF_FALSE." AND (UPPER(DESCRIPTION) LIKE 'INSERT_VERK_%' OR UPPER(DESCRIPTION) LIKE 'DELETE_VERK_%') ".$where;
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-	}
-	
-	if($commit){return false;}else{return true;}
+
+	if($commit){
+        return false;
+    }else{
+        return true;
+    }
 }
 
-function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER",$replace=null){
+function lmb_TriggerDropFromDefinition($tablename){
+    global $db;
+
+    $sqlquery = "DELETE FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower($tablename)."' AND SQLTRIGGER = ".LMB_DBDEF_TRUE;
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+}
+
+function lmb_TriggerAdd($desc,$type,$table,$value,$sqltrigger=null,$position="AFTER",$replace=null,$intern=null){
 	global $db;
 	global $session;
 	global $DBA;
 
 	if(!$position){$position = "AFTER";}
 	
-	// check for duplicates in DB Trigger
-	if(!$intern){
-    	$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($table,20))."' AND TYPE = '$type' AND POSITION = '$position' AND INTERN = ".LMB_DBDEF_FALSE;
+	// replace intern trigger
+	if($sqltrigger && $replace){
+    	$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($table,20))."' AND TYPE = '$type' AND POSITION = '$position' AND SQLTRIGGER = ".LMB_DBDEF_TRUE." AND INTERN = ".LMB_DBDEF_TRUE;
     	$rs0 = lmbdb_exec($db,$sqlquery0);
     	while(lmbdb_fetch_row($rs0)){
-    		if($replace){
-    			$sqlquery1 = "DELETE FROM LMB_TRIGGER WHERE ID = ".lmbdb_result($rs0,"ID");
-    			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-    		}else{
-    			if($GLOBALS["action"] == "setup_trigger"){
-    				lmb_alert("trigger already exists!");
-    			}
-    			return false;  ### check for database if supported!
-    		}
+            $sqlquery1 = "DELETE FROM LMB_TRIGGER WHERE ID = ".lmbdb_result($rs0,"ID");
+            $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
     	}
 	}
-	
-	$md5Hash = md5($table . "_" . $type . "_" . $position);
+
+    $nextid = next_db_id("LMB_TRIGGER");
+	$md5Hash = md5($table . "_" . $type . "_" . $position.'_'.$nextid);
 	$trigerName = lmb_substr("LMB_TRG_" . $md5Hash ,0,18);
-	$nextid = next_db_id("LMB_TRIGGER");
-	$sqlquery = "INSERT INTO LMB_TRIGGER (ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,DESCRIPTION,ACTIVE,INTERN,SORT,DBVENDOR,POSITION) VALUES ($nextid,".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".parse_db_int($session["user_id"]).",".parse_db_int($session["user_id"]).",'".parse_db_string(lmb_strtoupper($trigerName),25)."','".parse_db_string(lmb_strtoupper($table),50)."','".parse_db_string($type,20)."','".parse_db_string($value,4000)."','".parse_db_string($desc,50)."',".LMB_DBDEF_TRUE.",".parse_db_bool($intern).",0,'".parse_db_string($DBA["DB"],15)."','".parse_db_string($position,6)."')";
+	$sqlquery = "INSERT INTO LMB_TRIGGER (ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,DESCRIPTION,ACTIVE,INTERN,SORT,DBVENDOR,POSITION,SQLTRIGGER) 
+	VALUES ($nextid,".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".parse_db_int($session["user_id"]).",".parse_db_int($session["user_id"]).",'".parse_db_string(lmb_strtoupper($trigerName),25)."','".parse_db_string(lmb_strtoupper($table),50)."','".parse_db_string($type,20)."','".parse_db_string($value,4000)."','".parse_db_string($desc,50)."',".LMB_DBDEF_TRUE.",".parse_db_bool($intern).",0,'".parse_db_string($DBA["DB"],15)."','".parse_db_string($position,6)."',".parse_db_bool($sqltrigger).")";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){
 		return false;
@@ -323,27 +336,21 @@ function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER"
 	return true;
 }
 
-function lmb_deleteTriggerForTable($tablename){
-	global $db;
-	$sqlquery = "DELETE FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($tablename,40))."' AND INTERN = ".LMB_DBDEF_FALSE;
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-}
-
-function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kindFeld=null,$archive=1){
+function lmb_TriggerGetRelationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kindFeld=null,$archive=1){
 	global $db;
 	global $DBA;
 
 	# backward relation (view)
 	if($kindFeld){
-		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+',dbf_4($kindTab),dbf_4($kindFeld),$archive));
-		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-',dbf_4($kindTab),dbf_4($kindFeld),$archive));
+        $trigger_add_func = Dbf::relationTriggerFunctionSql($DBA["DBSCHEMA"],Dbf::handleCaseSensitive($verknTabName),Dbf::handleCaseSensitive($elternTab),Dbf::handleCaseSensitive($elternFeld),'+',Dbf::handleCaseSensitive($kindTab),Dbf::handleCaseSensitive($kindFeld),intval($archive));
+        $trigger_del_func = Dbf::relationTriggerFunctionSql($DBA["DBSCHEMA"],Dbf::handleCaseSensitive($verknTabName),Dbf::handleCaseSensitive($elternTab),Dbf::handleCaseSensitive($elternFeld),'-',Dbf::handleCaseSensitive($kindTab),Dbf::handleCaseSensitive($kindFeld),intval($archive));
 	}else{
-		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+',dbf_4($kindTab),null,$archive));
-		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-',dbf_4($kindTab),null,$archive));
+        $trigger_add_func = Dbf::relationTriggerFunctionSql($DBA["DBSCHEMA"],Dbf::handleCaseSensitive($verknTabName),Dbf::handleCaseSensitive($elternTab),Dbf::handleCaseSensitive($elternFeld),'+',Dbf::handleCaseSensitive($kindTab),null,intval($archive));
+        $trigger_del_func = Dbf::relationTriggerFunctionSql($DBA["DBSCHEMA"],Dbf::handleCaseSensitive($verknTabName),Dbf::handleCaseSensitive($elternTab),Dbf::handleCaseSensitive($elternFeld),'-',Dbf::handleCaseSensitive($kindTab),null,intval($archive));
 	}
 
-	$success1 = lmb_addTrigger("INSERT_".$verknTabName,"INSERT",$verknTabName,$trigger_add_func,0,0,1);
-	$success2 = lmb_addTrigger("DELETE_".$verknTabName,"DELETE",$verknTabName,$trigger_del_func,0,0,1);
+	$success1 = lmb_TriggerAdd("INSERT_".$verknTabName,"INSERT",$verknTabName,$trigger_add_func,1,0,1,1);
+	$success2 = lmb_TriggerAdd("DELETE_".$verknTabName,"DELETE",$verknTabName,$trigger_del_func,1,0,1,1);
 	
 	if($success1 AND $success2){
 		return true;
@@ -353,21 +360,25 @@ function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kind
 	
 }
 
-
 /**
  * rebuild limbas specific triggers
  *
  * @param array $gtabid
  */
-function lmb_rebuildTrigger($rebuild=null,$onlytabs=null){
+function lmb_TriggerRebuildSystem($rebuild=null,$onlytabs=null){
 	global $db;
 	
 	if(!LMB_DBFUNC_PROCEDUREHANDLE){return true;}
-	
+
 	# drop all limbas trigger
 	if($rebuild){
-		#lmb_dropAllDBTrigger("LMB_TRG_%",1);
-		lmb_dropAllDBTrigger(null,1);
+		lmb_TriggerDropFromDB();
+
+        # delete intern trigger from lmb_trigger
+        $sqlquery = "DELETE FROM LMB_TRIGGER WHERE SQLTRIGGER = ".LMB_DBDEF_TRUE." AND INTERN = ".LMB_DBDEF_TRUE;
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+
 	}
 
 	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
@@ -389,7 +400,7 @@ function lmb_rebuildTrigger($rebuild=null,$onlytabs=null){
 		# Calendar Trigger
 		if($typ == 2){
 			# kalendar trigger lastmodified
-			lmb_addTrigger("LMB_LASTMODIFIED_".$tableid,"UPDATE",$tablename,dbq_27(array($GLOBALS['DBA']["DBSCHEMA"],$tableid)),0,0,1);
+			lmb_TriggerAdd("LMB_LASTMODIFIED_".$tableid,"UPDATE",$tablename,Dbf::lastModifiedTriggerFunctionSql($tableid),1,0,1,1);
 		}
 				
 		# Relation Trigger
@@ -404,6 +415,11 @@ function lmb_rebuildTrigger($rebuild=null,$onlytabs=null){
 					$ftable = lmbdb_result($rs1,"MD5TAB");
 					// VERKNGROUP used for archived triggercount if VERKNGROUP = 2
 					$archive = lmbdb_result($rs1,"VERKNGROUP");
+
+                    // skip count calculation
+                    if($archive == 3){
+                        continue;
+                    }
 						
 					if(lmbdb_result($rs1,"HASRECVERKN")){
 						$sqlquery2 = "SELECT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = ".lmbdb_result($rs1,"VERKNTABID")." AND FIELD_ID = ".lmbdb_result($rs1,"HASRECVERKN");
@@ -411,18 +427,18 @@ function lmb_rebuildTrigger($rebuild=null,$onlytabs=null){
 						$pfieldname = lmbdb_result($rs2,"FIELD_NAME");
 						if($pfieldname){
 							$updtrigg = 1;
-							if(!lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,$pfieldname,$archive)){
+							if(!lmb_TriggerGetRelationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,$pfieldname,$archive)){
 								$commit = 1;
 							}
 						}else{
 							$updtrigg = 1;
-							if(!$success = lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,0,$archive)){
+							if(!$success = lmb_TriggerGetRelationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,0,$archive)){
 								$commit = 1;
 							}
 						}
 					}else{
 						$updtrigg = 1;
-						if(!lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,0,$archive)){
+						if(!lmb_TriggerGetRelationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,0,$archive)){
 							$commit = 1;
 						}
 					}
@@ -432,7 +448,7 @@ function lmb_rebuildTrigger($rebuild=null,$onlytabs=null){
 	}
 	
 	if($updtrigg AND !$commit){
-		if(lmb_updateTrigger()){
+		if(lmb_TriggerSyncToDB()){
 			return true;
 		}else{
 			return false;
@@ -451,7 +467,7 @@ function lmb_dropTable($name=null){
 	global $DBA;
 
 	if($name){
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'TABLE'"));
+		$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$name,"'TABLE'");
 		if($odbc_table) {
 
             // check dependency views
@@ -459,7 +475,7 @@ function lmb_dropTable($name=null){
                 return false;
             }
 
-			$sqlquery1 = dbq_28(array(dbf_4($name)));
+			$sqlquery1 = Dbf::dropTableSql(Dbf::handleCaseSensitive($name));
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if($rs1){
 			    return true;
@@ -482,12 +498,12 @@ function lmb_createView($query,$name){
 	global $DBA;
 	
 	if($query AND $name){
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'VIEW'"));
+		$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$name,"'VIEW'");
 		if($odbc_table) {
 			lmb_alert("View $name already exists!");
 			return true;
 		}else{
-			$sqlquery = "CREATE VIEW ".dbf_4($name)." AS ".$query;
+			$sqlquery = "CREATE VIEW ".Dbf::handleCaseSensitive($name)." AS ".$query;
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if($rs){return true;}else{return  false;}
 		}
@@ -530,7 +546,7 @@ function lmb_dropView($name=null){
 
 	if(!$name){return;}
 
-    $odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'VIEW'"));
+    $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$name,"'VIEW'");
     if($odbc_table) {
 
         // check dependency views
@@ -538,12 +554,12 @@ function lmb_dropView($name=null){
             return false;
         }
 
-        $sqlquery1 = dbq_20(array(dbf_4($name)));
+        $sqlquery1 = Dbf::dropViewSql(Dbf::handleCaseSensitive($name));
         $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
         if($rs1){
             return true;
         }else{
-            LimbasLogger::log("Could not delete view! [$name]", LimbasLogger::LL_ERROR);
+            Log::error("Could not delete view! [$name]");
             return false;
         }
     }
@@ -600,15 +616,15 @@ function lmb_getViewInfo($name){
 	global $db;
 	#global $DBA;
 	
-	$sqlquery = "SELECT MD5TAB FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".dbf_4($name)."' AND VERKNTABLETYPE = 2)";
+	$sqlquery = "SELECT MD5TAB FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".Dbf::handleCaseSensitive($name)."' AND VERKNTABLETYPE = 2)";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	return dbf_4(lmbdb_result($rs, "MD5TAB"));
+	return Dbf::handleCaseSensitive(lmbdb_result($rs, "MD5TAB"));
 	
 	/*
 	$sqlquery = dbq_12(array($DBA["DBSCHEMA"],$name));
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(lmbdb_fetch_row($rs)) {
-		return dbf_4(lmbdb_result($rs, "TABLENAME"));
+		return Dbf::handleCaseSensitive(lmbdb_result($rs, "TABLENAME"));
 	}
 	*/
 }
@@ -620,7 +636,7 @@ function lmb_getViewDef($name){
 	global $DBA;
 
 	if(!$name){return false;}
-	$sqlquery = dbq_8(array($DBA["DBSCHEMA"],$name));
+    $sqlquery = Dbf::getViewDefinitionSql($DBA['DBSCHEMA'], $name);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(lmbdb_fetch_row($rs)) {
 		return lmbdb_result($rs, "DEFINITION");
@@ -636,8 +652,8 @@ function lmb_checkViewDependency($tablename,$fieldname=null,$debug=null,$clear=n
 
     if(!LMB_DBFUNC_VIEWDEPENDENCY){return true;}
     if(!$dependency OR !$clear){$dependency = array();}
-    
-    if($dep = dbf_25(array($DBA['DBSCHEMA'],$tablename,$fieldname))){
+
+    if($dep = Dbf::getViewDependencies($DBA['DBSCHEMA'],$tablename ?? '',$fieldname)){
 
         foreach($dep as $key => $value){
             if(!in_array($value,$dependency)){
@@ -668,13 +684,13 @@ function lmb_getViewDepPath($table,$fieldname=null,$level=0){
     static $depview;
 
     if(!$level){$depview = null;}
-    $table = dbf_4($table);
+    $table = Dbf::handleCaseSensitive($table);
     $level++;
 
     $dep = lmb_checkViewDependency($table,$fieldname);
     if(is_array($dep)) {
         foreach ($dep as $k => $v) {
-            $v = dbf_4($v);
+            $v = Dbf::handleCaseSensitive($v);
             if(!$depview[$v] OR $depview[$v] < $level){
                 $depview[$v] = $level;
             }
@@ -723,7 +739,7 @@ function lmb_getFullViewDepPath(): array
 
     $fullPath = [];
     
-    $tables = dbf_20(array($DBA['DBSCHEMA'],null,'TABLE'));
+    $tables = Dbf::getTableList($DBA['DBSCHEMA'],null,'TABLE');
     $tables = $tables["table_name"];
     foreach($tables as $key => $table) {
 
@@ -758,10 +774,10 @@ function lmb_dropDependViews($table){
     arsort($dep);
 
     foreach ($dep as $viewname => $level) {
-        $viewname = dbf_4($viewname);
+        $viewname = Dbf::handleCaseSensitive($viewname);
         if ($def[$viewname] = lmb_getViewDef($viewname)) {
             if (!lmb_dropView($viewname)) {
-                LimbasLogger::log("Could not drop view '$viewName'!", LimbasLogger::LL_ERROR);
+                Log::error("Could not drop view '$viewname'!");
                 $commit = 1;
                 break;
             }
@@ -793,7 +809,7 @@ function lmb_addDependViews($viewdef,$viewexists=null){
             }
 
             if (!lmb_createView($query, $viewname)) {
-                LimbasLogger::log("Could not add view '$viewName'!", LimbasLogger::LL_ERROR);
+                Log::error("Could not add view '$viewname'!");
                 $commit = 1;
             }
         }
@@ -814,7 +830,7 @@ function lmb_addDependViews($viewdef,$viewexists=null){
  */
 function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 	global $db;
-	
+
 	# limbas keyname syntax:  "LMB_[parent-tableid]_[parent-fieldid]_V/ID_[child-tableid]"
 	# for 1:1 relation parent-fieldid = "0"
 	
@@ -844,10 +860,10 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 
         # search foreign key
         foreach ($fkys["keyname"] as $key => $keyname){
-            if($fkys["tablename"][$key] == dbf_4($spForKey['ftable'][$fkey]) &&
-                $fkys["columnname"][$key] == dbf_4($spForKey['ffield'][$fkey]) &&
-                $fkys["reftablename"][$key] == dbf_4($spForKey['ptable'][$fkey]) &&
-                $fkys["refcolumnname"][$key] == dbf_4($spForKey['pfield'][$fkey])){
+            if($fkys["tablename"][$key] == Dbf::handleCaseSensitive($spForKey['ftable'][$fkey]) &&
+                $fkys["columnname"][$key] == Dbf::handleCaseSensitive($spForKey['ffield'][$fkey]) &&
+                $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($spForKey['ptable'][$fkey]) &&
+                $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive($spForKey['pfield'][$fkey])){
 
                 $f0 = $keyname;
             }
@@ -891,7 +907,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 			# search foreign key
 			if($fkys["keyname"]){
 			foreach ($fkys["keyname"] as $key => $value){
-				if($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)){
+				if($fkys["tablename"][$key] == Dbf::handleCaseSensitive($ftable) AND $fkys["columnname"][$key] == Dbf::handleCaseSensitive($ffield) AND $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($ptable) AND $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive($pfield)){
 					$f0 = $fkys["keyname"][$key];
 				}
 			}}
@@ -931,7 +947,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 
                     if ($fkys["keyname"]) {
                         foreach ($fkys["keyname"] as $key => $value) {
-                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                            if ($fkys["tablename"][$key] == Dbf::handleCaseSensitive($ftable) AND $fkys["columnname"][$key] == Dbf::handleCaseSensitive($ffield) AND $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($ptable) AND $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive($pfield)) {
                                 $f1 = $fkys["keyname"][$key];
                             }
                         }
@@ -952,7 +968,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
                     # search foreign key
                     if ($fkys["keyname"]) {
                         foreach ($fkys["keyname"] as $key => $value) {
-                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                            if ($fkys["tablename"][$key] == Dbf::handleCaseSensitive($ftable) AND $fkys["columnname"][$key] == Dbf::handleCaseSensitive($ffield) AND $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($ptable) AND $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive($pfield)) {
                                 $f2 = $fkys["keyname"][$key];
                             }
                         }
@@ -974,7 +990,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
                     # search foreign key
                     if ($fkys["keyname"]) {
                         foreach ($fkys["keyname"] as $key => $value) {
-                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                            if ($fkys["tablename"][$key] == Dbf::handleCaseSensitive($ftable) AND $fkys["columnname"][$key] == Dbf::handleCaseSensitive($ffield) AND $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($ptable) AND $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive($pfield)) {
                                 $f1 = $fkys["keyname"][$key];
                             }
                         }
@@ -1007,13 +1023,13 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
  */
 function lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$fkname,$ondelete=null){
 	global $db;
-	
-	$sqlquery = dbq_11(array($ftable,$ffield,$ptable,$pfield,$fkname,$ondelete));
+
+    $sqlquery = Dbf::addForeignKeySql($ftable ?? '',$ffield ?? '',$ptable ?? '',$pfield,$fkname ?? '',$ondelete);
 	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){
-		LimbasLogger::error('error adding foreign key - '.lmbdb_errormsg($db));
+        Log::error('error adding foreign key - '.lmbdb_errormsg($db));
 	}else{
-        LimbasLogger::info("adding foreign key $fkname");
+        Log::info("adding foreign key $fkname");
     }
 	if($rs){return true;}else{return false;}
 }
@@ -1028,8 +1044,8 @@ function lmb_dropAllForeignKeys($only_lmb=null){
 	global $db;
 	global $DBA;
 	
-	if($only_lmb){$qu = dbf_4("LMB_%");}else{$qu = null;}
-	$sqlquery = dbq_3(array($DBA["DBSCHEMA"],null,$qu));
+	if($only_lmb){$qu = Dbf::handleCaseSensitive("LMB_%");}else{$qu = null;}
+    $sqlquery = Dbf::getForeignKeySql($DBA["DBSCHEMA"],null,$qu);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)){
 		if(!lmb_dropForeignKey(lmbdb_result($rs,"TABLENAME"),lmbdb_result($rs,"FKEYNAME"))){
@@ -1045,18 +1061,18 @@ function lmb_dropAllForeignKeys($only_lmb=null){
  *
  * @param string $ftable
  * @param string $fkname
- * @return success
+ * @return bool success
  */
 function lmb_dropForeignKey($ftable,$fkname){
 	global $db;
-	
-	$sqlquery = dbq_6(array($ftable,$fkname));
+
+    $sqlquery = Dbf::dropForeignKeySql($ftable ?? '', $fkname ?? '');
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if(!$rs){
-        LimbasLogger::error('error deleting foreign key - '.lmbdb_errormsg($db));
+        Log::error('error deleting foreign key - '.lmbdb_errormsg($db));
         return false;
     }else{
-        LimbasLogger::info("delete foreign key $fkname");
+        Log::info("delete foreign key $fkname");
 	    return true;
     }
 }
@@ -1073,16 +1089,15 @@ function lmb_dropForeignKey($ftable,$fkname){
 function lmb_getForeignKeys($ftable=null,$fkname=null){
 	global $db;
 	global $DBA;
-	
-	# get foreign keys
-	$sqlquery = dbq_3(array($DBA["DBSCHEMA"],$ftable,$fkname));
+
+    $sqlquery = Dbf::getForeignKeySql($DBA["DBSCHEMA"],$ftable,$fkname);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)){
-		$fk["keyname"][] = dbf_4(lmbdb_result($rs,"FKEYNAME"));
-		$fk["tablename"][] = dbf_4(lmbdb_result($rs,"TABLENAME"));
-		$fk["columnname"][] = dbf_4(lmbdb_result($rs,"COLUMNNAME"));
-		$fk["reftablename"][] = dbf_4(lmbdb_result($rs,"REFTABLENAME"));
-		$fk["refcolumnname"][] = dbf_4(lmbdb_result($rs,"REFCOLUMNNAME"));
+		$fk["keyname"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"FKEYNAME"));
+		$fk["tablename"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"TABLENAME"));
+		$fk["columnname"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"COLUMNNAME"));
+		$fk["reftablename"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"REFTABLENAME"));
+		$fk["refcolumnname"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"REFCOLUMNNAME"));
 	}
 	return $fk;
 }
@@ -1102,10 +1117,11 @@ function lmb_rebuildSequences($tablename=null,$field=null,$rebuild=null){
 
     // drop all sequences
     if($rebuild){
-        $sequence = dbf_26(array($DBA["DBSCHEMA"]));
+        $sequence = Dbf::getSequences($DBA["DBSCHEMA"]);
         foreach ($sequence as $key => $squname) {
-            dbf_22(array($DBA["DBSCHEMA"], dbf_4($squname)));
+            Dbf::dropSequence(Dbf::handleCaseSensitive($squname));
         }
+        Log::info('drop all sequences');
     }
 
 
@@ -1125,7 +1141,7 @@ function lmb_rebuildSequences($tablename=null,$field=null,$rebuild=null){
 		}
 		
 		# relation tables
-		$rellist = dbf_20(array($DBA["DBSCHEMA"],dbf_4("VERK_%"),"'TABLE'"));
+		$rellist = Dbf::getTableList($DBA["DBSCHEMA"],Dbf::handleCaseSensitive("VERK_%"),"'TABLE'");
 		foreach ($rellist["table_name"] as $rkey => $rval){
 			$table[] = array($rval,'KEYID');
 		}
@@ -1140,9 +1156,12 @@ function lmb_rebuildSequences($tablename=null,$field=null,$rebuild=null){
 
 		$lastid = next_db_id($tablename,$field);
 		# add new sequence
-		if(!dbf_21(array("",dbf_4("LMB_".$tablename."_".$field),$lastid))){
-			$error = 1;
-		}
+		if(Dbf::createSequence(Dbf::handleCaseSensitive("LMB_".$tablename."_".$field),$lastid)){
+			Log::info('adding or update sequence '."LMB_".$tablename."_".$field." ($lastid)");
+		}else{
+            Log::error('adding sequence '."LMB_".$tablename."_".$field." ($lastid)");
+            $error = 1;
+        }
 	}
 	
 	
@@ -1160,7 +1179,7 @@ function lmb_rebuildSequences($tablename=null,$field=null,$rebuild=null){
  * @return string
  */
 function lmb_getConstraintName($name,$table,$field){
-    return dbf_4(substr($name.'_'.md5(dbf_4($table).'_'.dbf_4($field)),0,LMB_DBFUNC_MAXTABLENAMESIZE));
+    return Dbf::handleCaseSensitive(substr($name.'_'.md5(Dbf::handleCaseSensitive($table).'_'.Dbf::handleCaseSensitive($field)),0,LMB_DBFUNC_MAXTABLENAMESIZE));
 }
 
 
@@ -1178,46 +1197,46 @@ function lmb_dropAllConstraints($systemindex=null){
     #print_r($systemindex);
 
     // drop unique constraints
-    $contraint = dbq_26(array($DBA["DBSCHEMA"]));
+    $contraint = Dbf::getUniqueConstraints($DBA["DBSCHEMA"]);
     if(is_array($contraint)){
         foreach($contraint["TABLE_NAME"] as $key => $table){
 
             // check if is systemindex
-            if(!$systemindex[dbf_4($table)][dbf_4($contraint['COLUMN_NAME'][$key])]){continue;}
+            if(!$systemindex[Dbf::handleCaseSensitive($table)][Dbf::handleCaseSensitive($contraint['COLUMN_NAME'][$key])]){continue;}
 
-            $sqlquery =  dbq_25(array(dbf_4($contraint['TABLE_NAME'][$key]), dbf_4($contraint['COLUMN_NAME'][$key]), dbf_4($contraint['PK_NAME'][$key])));
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$sqlquery = Dbf::dropConstraintSql(Dbf::handleCaseSensitive($contraint['TABLE_NAME'][$key]), Dbf::handleCaseSensitive($contraint['PK_NAME'][$key]));
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             if($rs) {
                 $ind[$md5tab][$ind_field] = 1;
-                LimbasLogger::info('drop contraint '.$contraint['PK_NAME'][$key].' for '.$contraint['TABLE_NAME'][$key].' ('.$contraint['COLUMN_NAME'][$key].')');
+                Log::info('drop contraint '.$contraint['PK_NAME'][$key].' for '.$contraint['TABLE_NAME'][$key].' ('.$contraint['COLUMN_NAME'][$key].')');
             }else{
                 $commit = 1;
-                LimbasLogger::error('drop contraint '.$contraint['PK_NAME'][$key].' for '.$contraint['TABLE_NAME'][$key].' ('.$contraint['COLUMN_NAME'][$key].') : '.lmbdb_errormsg($db));
+                Log::error('drop contraint '.$contraint['PK_NAME'][$key].' for '.$contraint['TABLE_NAME'][$key].' ('.$contraint['COLUMN_NAME'][$key].') : '.lmbdb_errormsg($db));
             }
         }
     }
 
     // drop indizes
-	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1));
+    $sqlquery = Dbf::getIndicesSql($DBA["DBSCHEMA"], null, null, null, true);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
 	while(lmbdb_fetch_row($rs)){
 
-        $tablename = dbf_4(lmbdb_result($rs, "TABLENAME"));
-        $fieldname = dbf_4(lmbdb_result($rs, "COLUMNNAME"));
-        $indexname = dbf_4(lmbdb_result($rs, "INDEXNAME"));
+        $tablename = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABLENAME"));
+        $fieldname = Dbf::handleCaseSensitive(lmbdb_result($rs, "COLUMNNAME"));
+        $indexname = Dbf::handleCaseSensitive(lmbdb_result($rs, "INDEXNAME"));
 
         // check if is systemindex
         if(!$systemindex[$tablename][$fieldname]){continue;}
 
-		$sqlquery1 = dbq_5(array($DBA["DBSCHEMA"],$indexname,$tablename));
+        $sqlquery1 = Dbf::dropIndexSql($indexname,$tablename);
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
             if($rs1) {
                 $ind[$md5tab][$ind_field] = 1;
-                LimbasLogger::info('drop index '.$indexname.' for '.$tablename.' ('.$fieldname.')');
+                Log::info('drop index '.$indexname.' for '.$tablename.' ('.$fieldname.')');
             }else{
                 $commit = 1;
-                LimbasLogger::error('drop index '.$indexname.' for '.$tablename.' ('.$fieldname.') : '.lmbdb_errormsg($db));
+                Log::error('drop index '.$indexname.' for '.$tablename.' ('.$fieldname.') : '.lmbdb_errormsg($db));
             }
 	}
 
@@ -1247,12 +1266,12 @@ function lmb_rebuildIndex($rebuild=null){
     }
 
     // existing indexes
-	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1));
+    $sqlquery = Dbf::getIndicesSql($DBA["DBSCHEMA"], null, null, null, true);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
 	while(lmbdb_fetch_row($rs)){
-		$table = dbf_4(lmbdb_result($rs,"TABLENAME"));
-		$field = dbf_4(lmbdb_result($rs,"COLUMNNAME"));
+		$table = Dbf::handleCaseSensitive(lmbdb_result($rs,"TABLENAME"));
+		$field = Dbf::handleCaseSensitive(lmbdb_result($rs,"COLUMNNAME"));
 		$existingIndexes[$table][$field] = 1;
 	}
 
@@ -1266,17 +1285,17 @@ function lmb_rebuildIndex($rebuild=null){
                 $indexname = $value[$indextype];
 
                 if($indextype == 'index') {
-                    $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indexname, $table, $field));
+                    $sqlquery = Dbf::createIndexSql($indexname, $table, $field);
                 }else{
-                    $sqlquery = dbq_24(array($table,$field,$indexname));
+                    $sqlquery = Dbf::createConstraintSql($table, $field, $indexname);
                 }
                 $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                 if ($rs1) {
                     $existingIndexes[$table][$field] = 1;
-                    LimbasLogger::info("adding $indextype $indexname for $table ($field)");
+                    Log::info("adding $indextype $indexname for $table ($field)");
                 } else {
                     $commit = 1;
-                    LimbasLogger::error("adding $indextype failed $indexname for $table ($field) : " . lmbdb_errormsg($db));
+                    Log::error("adding $indextype failed $indexname for $table ($field) : " . lmbdb_errormsg($db));
                 }
 
             }
@@ -1308,26 +1327,26 @@ function lmb_getSystemConstraints(){
     $rs = lmbdb_exec($db,$sqlquery);
     while(lmbdb_fetch_row($rs)) {
 
-        $field_name = dbf_4(lmbdb_result($rs,"FIELD_NAME"));
-        $md5tab = dbf_4(lmbdb_result($rs,"MD5TAB"));
+        $field_name = Dbf::handleCaseSensitive(lmbdb_result($rs,"FIELD_NAME"));
+        $md5tab = Dbf::handleCaseSensitive(lmbdb_result($rs,"MD5TAB"));
         $data_type = lmbdb_result($rs,"DATA_TYPE");
         $verkntabid = lmbdb_result($rs,"VERKNTABID");
 
         if(!$md5tab){continue;}
 
         if($data_type != 25) {
-            $ind_field = dbf_4('ID');
+            $ind_field = Dbf::handleCaseSensitive('ID');
             $indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
             $index[$md5tab][$ind_field] = array('index' => $indname);
 
             /*
-            $ind_field = dbf_4('SORT'); // todo - check if needed
+            $ind_field = Dbf::handleCaseSensitive('SORT'); // todo - check if needed
             #$indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
             #$index[$md5tab][$ind_field] = array('index' => $indname);
             */
         }
 
-        $ind_field = dbf_4('VERKN_ID');
+        $ind_field = Dbf::handleCaseSensitive('VERKN_ID');
         # only n:m
         if($data_type == 24){
             $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
@@ -1339,10 +1358,10 @@ function lmb_getSystemConstraints(){
             $index[$md5tab][$ind_field] = array('constraint'=>$indname);
         # i:n direct
         }elseif($data_type == 25){
-            $ind_field = dbf_4($md5tab);
+            $ind_field = Dbf::handleCaseSensitive($md5tab);
             $sqlquery1 = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $verkntabid";
             $rs1 = lmbdb_exec($db,$sqlquery1);
-            $md5tab = lmbdb_result($rs1,"TABELLE");
+            $md5tab = Dbf::handleCaseSensitive(lmbdb_result($rs1,"TABELLE"));
             if($md5tab) {
                 $indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
                 $index[$md5tab][$ind_field] = array('index' => $indname);
@@ -1351,11 +1370,11 @@ function lmb_getSystemConstraints(){
     }
 
     // sync indexes
-    $ind_field = dbf_4('LMB_SYNC_ID');
+    $ind_field = Dbf::handleCaseSensitive('LMB_SYNC_ID');
     $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE DATASYNC = 1";
     $rs = lmbdb_exec($db,$sqlquery);
     while(lmbdb_fetch_row($rs)){
-        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
+        $table = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABELLE"));
         $indname = lmb_getConstraintName('LMB_INDS',$table,$ind_field);
         $index[$table][$ind_field] = array('index'=>$indname);
     }
@@ -1368,8 +1387,8 @@ function lmb_getSystemConstraints(){
     AND LMB_CONF_FIELDS.ISUNIQUE = ".LMB_DBDEF_TRUE;
     $rs = lmbdb_exec($db,$sqlquery);
     while(lmbdb_fetch_row($rs)){
-        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
-        $ind_field = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+        $table = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABELLE"));
+        $ind_field = Dbf::handleCaseSensitive(lmbdb_result($rs, "FIELD_NAME"));
         $indname = lmb_getConstraintName('LMB_CONSTR',$table,$ind_field);
         $index[$table][$ind_field] = array('constraint'=>$indname);
     }
@@ -1383,8 +1402,8 @@ function lmb_getSystemConstraints(){
     AND LMB_CONF_FIELDS.INDEXED = ".LMB_DBDEF_TRUE;
     $rs = lmbdb_exec($db,$sqlquery);
     while(lmbdb_fetch_row($rs)){
-        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
-        $ind_field = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+        $table = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABELLE"));
+        $ind_field = Dbf::handleCaseSensitive(lmbdb_result($rs, "FIELD_NAME"));
         $indname = lmb_getConstraintName('LMB_IND',$table,$ind_field);
         $index[$table][$ind_field] = array('index'=>$indname);
     }
@@ -1420,8 +1439,8 @@ function lmb_getSystemConstraints(){
     $systemindex[] = array('lmb_reminder_group'=>'reminder_id');
 
 	foreach ($systemindex as $key => $value){
-		$table = dbf_4(key($value));
-		$ind_field = dbf_4(current($value));
+		$table = Dbf::handleCaseSensitive(key($value));
+		$ind_field = Dbf::handleCaseSensitive(current($value));
         $indname = lmb_getConstraintName('LMB_INDS',$table,$ind_field);
         $index[$table][$ind_field] = array('index'=>$indname);
 	}
@@ -1708,7 +1727,7 @@ function soap_call_client($lmpar,$LIM){
 			$lmb = $client->__soapCall("runlmb", $lmpar, array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
 		}catch(Exception $e){
 			//lmb_alert('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
-            LimbasLogger::log('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage(), LimbasLogger::LL_ERROR);
+            Log::error('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
 			return false;
 		}
 
@@ -1743,8 +1762,6 @@ function lmb_delete_user_filesave($userid=null){
 
 	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE".($userid ? " WHERE USER_ID = ".parse_db_int($userid) : "");
 	$rs = lmbdb_exec($db,$sqlquery);
-
-    error_log($sqlquery);
 
     lmb_alert('User settings deleted successfully!');
 

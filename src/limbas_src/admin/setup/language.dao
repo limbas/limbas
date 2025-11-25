@@ -11,9 +11,16 @@
 
 
 /* --- Transaktion START -------------------------------------- */
+
+use Limbas\lib\globals\Lang;
+
 lmb_StartTransaction();
 
 if(!$language_typ){$language_typ = 1;}
+
+if(isset($resetLanguage) && intval($resetLanguage) === 1) {
+	Lang::reSeedLanguage();
+}
 
 if(($language_typ == 1 AND !$LINK[108]) OR ($language_typ == 2 AND !$LINK[258]) OR !is_numeric($language_typ)){
 	die("permission denied!");

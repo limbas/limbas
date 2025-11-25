@@ -53,6 +53,8 @@ use Limbas\admin\tools\datasync\DatasyncClient;
                                     <td>Type</td>
                                     <td>Date</td>
                                     <td>ProcessKey</td>
+                                    <td>Error</td>
+                                    <td>Try Count</td>
                                 </tr>
                             </thead>
                             <tbody></tbody>

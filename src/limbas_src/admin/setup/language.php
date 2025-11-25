@@ -290,6 +290,15 @@ function change_file(val) {
                                     </table>
                                 </div>
                             </div>
+
+
+                            <?php if($language_typ == 1) : ?>
+                                <div class="card mt-3">
+                                    <div class="card-body text-center">
+                                        <a href="main_admin.php?action=setup_language&resetLanguage=1" class="btn btn-warning"><?=e(lang(3223))?></a>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 

@@ -12,11 +12,14 @@ use Limbas\admin\form\FormController;
 use Limbas\admin\group\GroupRightsController;
 use Limbas\admin\mailTemplates\MailTemplateController;
 use Limbas\admin\report\ReportController;
+use Limbas\admin\setup\tinymce\TinyMceController;
 use Limbas\admin\setup\umgvar\UmgVarController;
 use Limbas\admin\templates\TemplateController;
 use Limbas\admin\tools\datasync\DataSyncController;
 use Limbas\extra\diagram\LmbChart;
 use Limbas\extra\mail\MailController;
+use Limbas\extra\mail\MailSignatureController;
+use Symfony\Component\HttpFoundation\Request;
 
 require_once(COREPATH . 'lib/db/db_'.$DBA['DB'].'_admin.lib');
 require_once(COREPATH . 'extra/lmbObject/log/LimbasLogger.php');
@@ -166,18 +169,17 @@ function dyns_formTabFieldList($para){
 	$bzm = 1;
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){
 
-		$parentrel2 = $gfield[$gtabid]["md5tab"][$key];
 		$parentrelpath2 = $gtabid.",".$gfield[$gtabid]["verkntabid"][$key].",".$key;
 		
 		if($bzm >= lmb_count($gfield[$gtabid]["sort"])){$outliner = "joinbottom";}else{$outliner = "join";}
 
 		if($gfield[$gtabid]["field_type"][$key] >= 100){$bzm++;continue;}
-		
+
 		if($gfield[$gtabid]["field_type"][$key] == 11 AND $gfield[$gtabid]["verkntabid"][$key]){
-		
+
             // 1:1 relation list
 			foreach ($gtab["raverkn"][$gtab["verkn"][$gfield[$gtabid]["verkntabid"][$key]]] as $keyskn => $valueskn){
-			
+
 				$globid = rand(1,10000);
 				
 				echo "<TR><TD>\n";
@@ -262,7 +264,7 @@ function dyns_edit_relationparams($par){
         if($relparams) {
             $params = lmb_eval($relparams . ";");
 
-            $evalparams = array('showfields','edit','width','order');
+            $evalparams = array('showfields','edit','width','order','names');
             foreach ($evalparams as $key => $value) {
                 if ($params[$value]) {
                     $params[$value] = var_export($params[$value],1);
@@ -301,7 +303,7 @@ function dyns_edit_relationparams($par){
 
         $params = array_filter($params);
 
-        $evalparams = array('showfields','edit','width','order');
+        $evalparams = array('showfields','edit','width','order','names');
         foreach ($evalparams as $key => $value) {
             if ($params[$value]) {
                 $params[$value] = lmb_eval('return ' . $params[$value] . ";");
@@ -340,7 +342,7 @@ function dyns_edit_relationparams($par){
     ${'validity_'.$params['validity']} = 'selected';
     ${'view_mode_'.$params['view_mode']} = 'selected';
 
-    $show_inframe_mods = array('div','iframe','same','tab');
+    $show_inframe_mods = array('window','div','iframe','same','tab');
     if($params['show_inframe'] AND !in_array($params['show_inframe'],$show_inframe_mods)){$show_inframe_tag = 'selected';}else{$params['show_inframe'] = null;}
     if($params['show_inframe'] OR $show_inframe_tag){$inframe_tag_display = '';}else{$inframe_tag_display = 'none';}
 
@@ -392,6 +394,7 @@ function dyns_edit_relationparams($par){
     <tr><td><i>{$lang[3041]}</i></td><td><input type=\"text\" name=\"relation_params[readonly]\" value=\"".htmlentities($params['edit'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
     <tr><td><i>{$lang[3040]}</i></td><td><input type=\"text\" name=\"relation_params[width]\" value=\"".htmlentities($params['width'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
     <tr><td><i>{$lang[3042]}</i></td><td><input type=\"text\" name=\"relation_params[order]\" value=\"".htmlentities($params['order'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[924]} (array(fieldId => 'Name', fieldId => langId))</i></td><td><input type=\"text\" name=\"relation_params[names]\" value=\"".htmlentities($params['names'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
     <tr><td><i>{$lang[3070]}</i></td><td><input type=\"checkbox\" name=\"relation_params[applyfilter]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $applyfilter></td></tr>
     <tr><td><i>{$lang[3029]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_menu]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_menu></td></tr>
     <tr><td><i>{$lang[3018]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_add]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_add></td></tr>
@@ -401,6 +404,8 @@ function dyns_edit_relationparams($par){
     <tr><td><i>{$lang[3022]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_search]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_search></td></tr>
     <tr><td><i>{$lang[3023]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_copy]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_copy></td></tr>
     <tr><td><i>{$lang[3024]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_delete]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_delete></td></tr>
+    <tr><td><i>{$lang[3195]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_trash]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_trash></td></tr>
+    <tr><td><i>{$lang[3196]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_archive]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_archive></td></tr>
     <tr><td><i>{$lang[3025]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_sort]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_sort></td></tr>
     <tr><td><i>{$lang[3026]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_link]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_link></td></tr>
     <tr><td><i>{$lang[3027]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_openlist]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_openlist></td></tr>
@@ -414,7 +419,6 @@ function dyns_edit_relationparams($par){
     <tr><td><i>{$lang[3034]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_calendar]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_calendar></td></tr>
     <tr><td><i>{$lang[3035]}</i></td><td><input type=\"checkbox\" name=\"relation_params[pagination]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $pagination></td></tr>
     <tr><td><i>{$lang[3036]}</i></td><td><input type=\"checkbox\" name=\"relation_params[indicator]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $indicator></td></tr>
-    <tr><td><i>{$lang[3037]}</i></td><td><input type=\"checkbox\" name=\"relation_params[show_relationpath]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $show_relationpath></td></tr>
     </table>
     ";
 
@@ -537,7 +541,8 @@ function dyns_editTable($par){
 	global $gfield;
 	global $gtrigger;
 	global $db;
-	
+
+    $active_tab = $par["active_tab"];
 	$tabgroup = $par["tabgroup"];
 	$tabid = $par["tabid"];
 	$act = $par["act"];
@@ -608,6 +613,13 @@ function dyns_menuEditor($par){
     require_once(COREPATH . 'admin/setup/menueditor.dao');
     
     $linkid = $par['linkid'];
+    
+    if($par['act'] === 'searchMenu') {
+        lmb_custmenu_updateShowMenuSearch(intval($linkid), boolval($par['show']));
+        echo json_encode(['success' => true]);
+        return;
+    }
+    
     $custmenu = lmb_custmenuGet($linkid);
 
     if ($par['detail']) {
@@ -749,12 +761,32 @@ function dyns_syncValidate($par){
     }
 }
 
+function dyns_manageTinyMceConfigs($params): void
+{
+    global $alert;
+    $dynsController = new TinyMceController();
+    $request = Request::createFromGlobals();
+    $result = $dynsController->handleRequest($request);
+    $alert = null;
+    echo json_encode($result);
+}
 
 function dyns_manageMailAccounts($params): void
 {
     global $alert;
     $dynsController = new MailController(true);
-    $result = $dynsController->handleRequest($params);
+    $request = Request::createFromGlobals();
+    $result = $dynsController->handleRequest($request);
+    $alert = null;
+    echo json_encode($result);
+}
+
+function dyns_manageMailSignatures($params): void
+{
+    global $alert;
+    $dynsController = new MailSignatureController(true);
+    $request = Request::createFromGlobals();
+    $result = $dynsController->handleRequest($request);
     $alert = null;
     echo json_encode($result);
 }

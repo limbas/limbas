@@ -18,7 +18,7 @@ if($GLOBALS["gLmbExt"]["ext_gtab_change.inc"]){
 }
 
 /* --- Menü --------------------------------------- */
-function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=null){
+function print_menue($gtabid,&$gresult,$verkn_relationpath,$readonly=0,$showheader=null){
     require COREPATH . 'gtab/html/forms/parts/menu.php';
 }
 
@@ -143,9 +143,6 @@ function show_validity_line($gtabid,$ID,$VPID){
     return $output;
 }
 
-
-
-
 # --------------- Formularansicht --------------------------------------------
 function form_view($gtabid,$ID,&$gresult,$gformid,$readonly=0){
 	global $gformlist;
@@ -159,22 +156,6 @@ function form_view($gtabid,$ID,&$gresult,$gformid,$readonly=0){
 	$GLOBALS["filter"]["groupheader"][$gtabid] = 1;
 	formListElements($action,$gtabid,$ID,$gresult,$gformid,null,null,$readonly);
 	$GLOBALS["filter"]["groupheader"][$gtabid] = $groupheader;
-}
-
-# --------------- Verknüpfungspfad --------------------------------------------
-function print_verknaddfrom($verkn_addfrom,$gtabid,$style=null){
-	global $gtab;
-	global $farbschema;
-	$addfrom = explode(";",$verkn_addfrom);
-	echo "<div style=\"".$style."\">";
-	foreach($addfrom as $key => $value){
-		if($value){
-		$tab = explode(",",$value);
-		echo "<div style=\"cursor:pointer;float:left;padding:2px\" OnClick=\"jump_to_addfrom('$key');\">".$gtab['desc'][$tab[0]]."</div><div style=\"float:left;padding:2px\"><i class=\"lmb-icon lmb-long-arrow-right-alt\"></i></div>";
-		}
-	}
-	echo "<div style=\"float:left;padding:2px\">".$gtab['desc'][$gtabid]."</div>";
-    echo '</div>';
 }
 
 # --------------- Verknüpfungsreiter --------------------------------------------
@@ -308,20 +289,21 @@ function defaultViewElements($gtabid,$ID,&$gresult,$action='gtab_change',$readon
 }
 
 
-# ------------ Fenster schließen & Verknüpfung aktualisieren -------------
-if($wind_force_close){
+# ------------ close window with "save and close" button -------------
+if($detail_saveclose){
 
 	echo "<script>
 	$(function() {
 	";
 
+    // close relation window
 	if($verknpf==1 AND $verkn_tabid AND $verkn_fieldid AND $verkn_ID){
         $vfid = 'null';
         if(is_numeric($verkn_formid)){
             $vfid = $verkn_formid;
         }
 		echo "
-            // inner frame
+            // modal
             if(parent.document.getElementById('lmb_gtabDetailFrame')){
                 parent.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',null,$vfid);
                 parent.$('#lmb_gtabDetailFrame').dialog('close');
@@ -330,22 +312,27 @@ if($wind_force_close){
                 opener.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',null,$vfid);
                 window.close();
             }";
-	}else if($is_new_win) {
-	    // when opening dialog in new window
-	    echo "
-	        if (opener && opener.lmb_onCloseWindow) {
-	            opener.lmb_onCloseWindow();
-	        }
-	        window.close();";
     }else{
-	   // calendar/explorer iframe window
+	   // window / calendar / explorer close iframe window
 	   echo "
             if($('#lmb_eventDetailFrame', window.parent.document).hasClass('ui-dialog-content')){
                 parent.lmb_closeIframeDialog();
+                return;
             }
-            if($('#LmEx_DetailFrame', window.parent.document).hasClass('ui-dialog-content')) {
+            else if($('#LmEx_DetailFrame', window.parent.document).hasClass('ui-dialog-content')) {
                 parent.LmEx_closeIframeDialog();
-            }";
+                return;
+            }
+            // modal
+            else if(parent.document.getElementById('lmb_gtabDetailFrame')){
+                parent.$('#lmb_gtabDetailFrame').dialog('close');
+            }    
+            // new win
+            else if(opener){
+                window.close();
+            }"
+
+       ;
 	}
 	echo "
 	});

@@ -27,8 +27,7 @@ abstract class FiletypeExporter
      * export should only write the table to php://output, headers get set by TableExport class
      * @param array $gresult
      * @param int $gtabid
-     * @param bool $onlyGetVisibleRows
      * @return void
      */
-    public abstract function export(array $gresult, int $gtabid, bool $onlyGetVisibleRows): void;
+    public abstract function export(array $gresult, int $gtabid): void;
 }

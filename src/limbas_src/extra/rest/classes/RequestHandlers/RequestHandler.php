@@ -127,7 +127,7 @@ abstract class RequestHandler {
         }
 
         # check privilege
-        if (!array_key_exists($fieldID, $gfield[$gtabid]['sort'])) {
+        if (!array_key_exists($fieldID, $gfield[$gtabid]['id'])) {
             throw new RestException('No privilege for field ' . $identifier, 403);
         }
 
@@ -203,6 +203,16 @@ abstract class RequestHandler {
     }
 
 
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
+    public function getResponseCode(): int
+    {
+        return $this->status;
+    }
+    
 
     public function sendHeader(): void
     {

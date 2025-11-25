@@ -61,7 +61,7 @@ $gview = lmb_getQuestValue($viewid);
 <br>
 <div class="alert alert-info" role="alert">
   <p><i class="lmb-icon lmb-info-circle-alt2"></i>
-  Parameterized views are executed as a query.<br>
+  Parameterized views are executed as queries and are not stored in the database.<br>
   Parameters must be defined globally.<br>
   Functions must be available in "ext_gtab.inc" extensions
   </p>

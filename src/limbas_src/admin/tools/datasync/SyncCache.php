@@ -10,7 +10,7 @@
 namespace Limbas\admin\tools\datasync;
 
 use DateTime;
-use Limbas\extra\template\TemplateTable;
+use Limbas\admin\tools\datasync\Enums\DataSyncType;
 use Limbas\lib\db\Database;
 use Limbas\lib\LimbasModel;
 
@@ -31,6 +31,8 @@ class SyncCache extends LimbasModel
      * @param int|null $fieldId
      * @param DateTime|null $createDate
      * @param string|null $processKey
+     * @param string|null $error
+     * @param int|null $tryCount
      */
     public function __construct(
         public int          $id,
@@ -42,6 +44,8 @@ class SyncCache extends LimbasModel
         public ?int         $fieldId = null,
         public ?DateTime    $createDate = null,
         public ?string      $processKey = null,
+        public ?string      $error = null,
+        public ?int         $tryCount = null,
     )
     {
         //
@@ -83,7 +87,9 @@ class SyncCache extends LimbasModel
                 lmbdb_result($rs, 'SLAVE_DATID') ?: null,
                 lmbdb_result($rs, 'FIELDID') ?: null,
                 new DateTime(lmbdb_result($rs, 'ERSTDATUM')) ?: null,
-                intval(lmbdb_result($rs, 'PROCESS_KEY')) ?: null
+                intval(lmbdb_result($rs, 'PROCESS_KEY')) ?: null,
+                lmbdb_result($rs, 'ERROR') ?: null,
+                intval(lmbdb_result($rs, 'TRY_COUNT')) ?: null
             );
 
         }
@@ -99,7 +105,7 @@ class SyncCache extends LimbasModel
     {
         return Database::count(self::$tableName, $where);
     }
-    
+
 
     public function save(): bool
     {

@@ -45,16 +45,16 @@ function lmbTemplateGetSelectedId(id) {
 
 /* region template list and initial loading*/
 
-function lmbShowTemplateModal(gtabid, type) {
+function lmbShowTemplateModal(gtabid, id, type, firstCall = false, appendData = {}) {
     limbasBackToReportList();
     
     let $templateSelect = $('#lmbTemplateSelect');
     if(gtabid !== 0) {
         $templateSelect.data('gtabid',gtabid);
     }
-    $templateSelect.data('type',type)
+    $templateSelect.data('type',type);
     
-    lmbLoadTemplateList('',1).then(function (data) {
+    lmbLoadTemplateList('',1, id, firstCall, appendData).then(function (data) {
         
         if(data.skipResolve) {
             lmbTemplateResolvedAction(type,data.params);
@@ -92,16 +92,12 @@ function lmbHideTemplateModal() {
 }
 
 function showReportModal() {
-    lmbShowTemplateModal(0, 'report');
+    lmbShowTemplateModal(0, 0, 'report');
 }
 
-function showMailModal() {
-
-    //let url = $('#mail-send-link').val();
-
-    //showFullPageModal('E-Mail verfassen','<iframe src="'+url+'" class="w-100 h-100"></iframe>','fullscreen');
-
-    lmbShowTemplateModal(0, 'mail');
+function showMailModal(firstCall = false) {
+    
+    lmbShowTemplateModal(0, 0, 'mail', firstCall);
 
 }
 
@@ -111,7 +107,7 @@ function limbasBackToReportList() {
     $('#lmbTemplateSelect-single').hide();
 }
 
-function lmbLoadTemplateList(searchValue,page, id = 0) {
+function lmbLoadTemplateList(searchValue,page, id = 0, firstCall = false, appendData = {}) {
 
     let $templateSelect = $('#lmbTemplateSelect');
     
@@ -143,7 +139,9 @@ function lmbLoadTemplateList(searchValue,page, id = 0) {
                 search: searchValue,
                 page: page,
                 perPage: 10,
-                type: type
+                first: firstCall ? 1 : 0,
+                type: type,
+                appendData: appendData
             },
             success: function(data) {
                 

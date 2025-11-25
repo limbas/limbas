@@ -7,7 +7,13 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+# include extensions
+global $gLmbExt;
+if($gLmbExt["ext_type.inc"]){
+	foreach ($gLmbExt["ext_type.inc"] as $key => $value){
+		require_once($value);
+	}
+}
 
 function gftype_date($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
 

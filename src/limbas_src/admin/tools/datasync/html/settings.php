@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\admin\tools\datasync\Enums\ConflictMode;
+
 
 ?>
 
@@ -567,6 +569,9 @@
                                                 <input id="checkToggle[<?=$tabid?>][2]" type="checkbox" <?=$checkedSlaveStr?> onclick="toggleAllTemplateChecks(<?=$tabid?>, 2)">
                                             </div>
                                         </td>
+                                        <td>
+                                            Conflict Mode
+                                        </td>
                                     </tr>
 
                                     <tbody id="table_<?=$tabid?>" class="border-0" style="display:<?=$display?>">
@@ -586,6 +591,12 @@
                                             <td><?=$lmfieldtype["name"][$gfield[$tabid]["data_type"][$fkey]]?></td>
                                             <td class="text-center"><input TYPE="checkbox" NAME="templ_conf[<?=$tabid?>][<?=$fkey?>][1]" onclick="save_rules('<?=$tabid?>','<?=$fkey?>',1)" VALUE="1" <?=($result_conf[$template][$tabid][$fkey]['master']) ? 'checked' : '' ?>></td>
                                             <td class="text-center"><input TYPE="checkbox" NAME="templ_conf[<?=$tabid?>][<?=$fkey?>][2]" onclick="save_rules('<?=$tabid?>','<?=$fkey?>',2)" VALUE="1" <?=($result_conf[$template][$tabid][$fkey]['slave']) ? 'checked' : '' ?>></td>
+                                            <td><select class="form-select form-select-sm" name="templ_conf[<?=$tabid?>][<?=$fkey?>][4]" onchange="save_rules('<?=$tabid?>','<?=$fkey?>',4)" autocomplete="off">
+                                                    <option value="-1">-</option>
+                                                    <?php foreach (ConflictMode::cases() as $conflictMode): ?>
+                                                        <option value="<?=e($conflictMode->value)?>" <?=$result_conf[$template][$tabid][$fkey]['conflict'] === $conflictMode ? 'selected' : ''?>><?=e($conflictMode->text())?></option>
+                                                    <?php endforeach; ?>
+                                                </select></td>
                                         </tr>
 
 
@@ -622,9 +633,7 @@
 
                                 foreach($result_template['name'] as $tkey => $tval):
 
-                                    $SELCTED = array();
-                                    $SELCTED[$result_template['mode'][$tkey]] = "SELECTED";
-
+                                    $selectedMode = ConflictMode::tryFrom(intval($result_template['mode'][$tkey]));
                                     ?>
 
 
@@ -633,10 +642,9 @@
                                         <td style="width:20px"><i class="lmb-icon lmb-trash" onclick="document.form1.drop_template.value=<?=$tkey?>;document.form1.submit();" style="cursor:pointer"></i></td>
                                         <td><?=$tval?></td>
                                         <td><select class="form-select form-select-sm" name="template_mode[<?=$tkey?>]" onchange="document.form1.setting_template.value=<?=$tkey?>;document.form1.submit();">
-                                                <option value="0" <?=$SELCTED[0]?>>master
-                                                <option value="1" <?=$SELCTED[1]?>>slave
-                                                <option value="2" <?=$SELCTED[2]?>>date
-                                                <option value="3" <?=$SELCTED[3]?>>manuel
+                                                <?php foreach (ConflictMode::cases() as $conflictMode): ?>
+                                                    <option value="<?=e($conflictMode->value)?>>" <?=$selectedMode === $conflictMode ? 'selected' : '' ?>><?=e($conflictMode->text())?></option>
+                                                <?php endforeach; ?>
                                             </select></td>
                                     </tr>
 

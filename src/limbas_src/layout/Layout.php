@@ -42,7 +42,7 @@ class Layout
                 }
             }
         }
-        self::$layoutCache = $layouts;
+        self::$layoutCache = array_unique($layouts);
         return $layouts;
     }
     

@@ -129,35 +129,11 @@ class ReportPreview
         global $gprinter;
         global $lang;
 
-        $html = '';
 
-        if ($LINK[304] and $gprinter) {
-            $html .= '';
-            
-            
-            $html .= '<div class="btn-group ms-2 me-2">
-  <button type="button" id="report_Print" class="btn btn-outline-dark"  data-report-action="print" data-text="' . $lang[391] . '">' . $lang[391] . '</button>
-  <div class="dropdown">
-  <button type="button" class="btn btn-outline-dark" data-bs-toggle="dropdown"><i class="fa fa-cog"></i></button>
-        <div class="dropdown-menu p-2 bg-contrast">';
-
-            ob_start();
-            include(COREPATH . 'extra/printer/html/options.php');
-            $html .= ob_get_clean();
-            
-            $html .= '
-            </div> 
-  </div>
-</div>';
-
-            $html .= '<button type="button" id="btn-report-archive-print" class="btn btn-outline-dark me-4"  data-report-action="archivePrint" data-text="' . $lang[1787] . ' &amp; ' . $lang[391] . '">' . $lang[1787] . ' &amp; ' . $lang[391] . '</button>';
-            
-        }
-
-        $html .= '<button type="button" id="btn-report-archive" class="btn btn-outline-dark me-4"  data-report-action="archive" data-text="' . $lang[1787] . '">' . $lang[1787] . '</button>';
-
-        $html .= '<a type="button" class="btn btn-outline-dark me-2 link-open-report" href="#">' . $lang[2321] . '</a>';
-
+        ob_start();
+        include(COREPATH . 'extra/report/preview/actions.php');
+        $html = ob_get_clean();
+        
         if (function_exists('lmbGetReportActions')) {
             lmbGetReportActions($tabId, $reportId, $html);
         }

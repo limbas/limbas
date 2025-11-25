@@ -11,7 +11,7 @@ namespace Limbas\extra\template\base\HtmlParts;
 
 use Limbas\extra\template\base\TemplateConfig;
 use Limbas\extra\template\base\TemplateElement;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
 
 /**
  * Class FunctionPlaceholder
@@ -75,7 +75,7 @@ class FunctionPlaceholder extends AbstractHtmlPart {
         # function call failed?
         $success = $this->tryFunctionCall(true);
         if (!$success) {
-            lmb_log::error("Function {$this->functionName} could not be called!", 'Not all function placeholders could be resolved!');
+            Log::limbasError("Function {$this->functionName} could not be called!", 'Not all function placeholders could be resolved!');
             return array('');
         }
 
@@ -235,7 +235,7 @@ class FunctionPlaceholder extends AbstractHtmlPart {
         # check if function exists
         $fname = TemplateConfig::$instance->getFunctionPrefix() . $this->functionName;
         if (!function_exists($fname)) {
-            lmb_log::error("Function {$fname} does not exist!", 'Not all function placeholders could be resolved!');
+            Log::limbasError("Function {$fname} does not exist!", 'Not all function placeholders could be resolved!');
 
             $this->functionCalled = true;
             $this->functionResult = '';

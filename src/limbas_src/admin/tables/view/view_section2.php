@@ -6,6 +6,11 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+global $DBA;
+
+use Limbas\lib\db\functions\Dbf;
+
 if ($showsystabs) {
     if ($showsystabs == 2) {
         $showsystabs = "FALSE";
@@ -27,7 +32,7 @@ if ($showsystabs) {
      style="height:300px;position:absolute;overflow:auto;z-index:999;border:1px solid black;padding:4px;visibility:hidden;background-color:<?= $farbschema["WEB11"] ?>">
     <table>
         <?php
-        $odbc_table = dbf_20(array($DBA["DBSCHEMA"], null, "'TABLE','VIEW','MATVIEW'"));
+        $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"], null, "'TABLE','VIEW','MATVIEW'");
         foreach ($odbc_table["table_name"] as $tkey => $tvalue) {
             if (!$gview["showsystabs"]) {
                 if (lmb_substr($odbc_table["table_name"][$tkey], 0, 4) == "lmb_" or lmb_substr($odbc_table["table_name"][$tkey], 0, 5) == "ldms_") {

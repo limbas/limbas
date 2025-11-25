@@ -21,7 +21,7 @@ if($LINK[142]){
 	$melements["link"] = "main.php?&action=explorer";
 	$melements["target"] = "main";
 	$melements["preview"] = "Explorer";
-	$melements["gicon"] = "lmb-icon-32 lmb-file-manager";
+	$melements["gicon"] = "lmb-icon lmb-file-manager";
 	$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 	$menu[0][] = $melements;
 }
@@ -43,9 +43,9 @@ if($LINK[169]){
 			$melements["preview"] = "Calendar";
 			
 			if($gtab["params1"][$key]){
-				$melements["gicon"] = "lmb-icon-32 lmb-gantt";
+				$melements["gicon"] = "fa-solid fa-calendar-week";
 			}else{
-				$melements["gicon"] = "lmb-icon-32 lmb-calendar";
+				$melements["gicon"] = "lmb-icon lmb-calendar";
 			}
 			$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 			$menu[0][] = $melements;
@@ -72,7 +72,7 @@ if($LINK[35]){
 			$melements["link"] = "main.php?&action=messages&quickview=1&gtabid=$value";
 			$melements["target"] = "main";
 			$melements["preview"] = "Message";
-			$melements["gicon"] = "lmb-icon-32 lmb-email";
+			$melements["gicon"] = "lmb-icon lmb-email";
 			$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 			$menu[0][] = $melements;
 
@@ -94,7 +94,7 @@ if($LINK[40]){
 	$melements["target"] = "main";
 	$melements["preview"] = "Reminder";
 	$melements["params"] = "category=0";
-	$melements["gicon"] = "lmb-icon-32 lmb-reminder";
+	$melements["gicon"] = "lmb-icon lmb-reminder";
 	$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 	$menu[0][] = $melements;
 
@@ -121,7 +121,7 @@ foreach ($greminder as $tabid => $reminder){
         $melements["target"] = "main";
         $melements["preview"] = "Reminder";
         $melements["params"] = "category=$rid";
-        $melements["gicon"] = "lmb-icon-cus lmb-icon-32 lmb-time-akq";
+        $melements["gicon"] = "lmb-icon-cus lmb-time-akq";
         $melements["autorefresh"] = ($greminder[$tabid]["refreshtime"][$rid] ? $greminder[$tabid]["refreshtime"][$rid] : $umgvar['multiframe_refresh']);
         $menu[0][] = $melements;
 
@@ -147,7 +147,7 @@ if($LINK[169]){
 			$melements["link"] = "main.php?&action=kanban&gtabid=$value";
 			$melements["target"] = "main";
 			$melements["preview"] = "Kanban";
-			$melements["gicon"] = "lmb-icon-32 lmb-columns";
+			$melements["gicon"] = "lmb-icon lmb-columns";
             #$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 			$menu[0][] = $melements;
 

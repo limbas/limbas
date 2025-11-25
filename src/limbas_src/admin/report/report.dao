@@ -64,6 +64,7 @@ Stylebeschreibung:
 */
 
 /* --- Styletypen --------------------------------------------- */
+global $styletyp;
 $styletyp = explode(";", "font-family:;font-style:;font-variant:;font-size:;font-weight:;word-spacing:;letter-spacing:;text-decoration:;text-transform:;color:;text-shadow:;line-height:;text-align:;border:;border-style:;border-color:;border-width:;border-left:;border-right:;border-top:;border-bottom:;background-color:;padding:;vertical-align:;opacity:");
 
 

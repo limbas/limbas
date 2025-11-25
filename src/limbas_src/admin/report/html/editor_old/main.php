@@ -624,12 +624,6 @@ function print_tab($report,$key){
 
                     $style = "style=\"" . set_style_report($st) . ";\"";
 
-					/*
-                    if($tab_cell_id == 219){
-                        error_log($style);
-                    }
-					*/
-
                     echo "<td id=\"div" . $tab_cell_id . "\" $CLSP class=\"defaultcellborder $class\" $style $valign $align $onMousedown>";
 
                     // --- Inhalt Zelle ---------------------------------------------

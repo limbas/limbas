@@ -7,6 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\extra\printer\PrinterOptions;
 use Limbas\extra\report\Report;
 use Limbas\extra\report\ReportOutput;
 
@@ -34,7 +35,7 @@ function limbasGenerateReport($report_id, $gtabid, $ID, $report_output, $report_
     trigger_error('Method ' . __METHOD__ . ' is deprecated. Use Report->generateReport instead.', E_USER_DEPRECATED);
     $report = Report::create(intval($gtabid), intval($report_id));
     $reportOutput = ReportOutput::tryFrom($report_output) ?? ReportOutput::TEMP;
-    return $report->generateReport(intval($report_id), $gtabid, $ID, $reportOutput, $report_rename, $use_record, intval($report_printer), $resolvedTemplateGroups, $resolvedDynamicData, $relation);
+    return $report->generateReport(intval($report_id), $gtabid, $ID, $reportOutput, $report_rename, $use_record, $resolvedTemplateGroups, $resolvedDynamicData, $relation,new PrinterOptions(intval($report_printer)));
 }
 
 /**
@@ -60,5 +61,5 @@ function limbasGenerateReportPdf($report_medium, $report_id,$gtabid,$ID,$report_
     trigger_error('Method ' . __METHOD__ . ' is deprecated. Use Report->createReport instead.', E_USER_DEPRECATED);
     $report = Report::create(intval($gtabid), intval($report_id));
     $reportOutput = ReportOutput::tryFrom($report_output) ?? ReportOutput::TEMP;
-    return $report->createReport( intval($report_id),$gtabid,$ID,$reportOutput,$report_rename,$gsr,$filter,$use_record,$verkn,intval($report_printer));
+    return $report->createReport( intval($report_id),$gtabid,$ID,$reportOutput,$report_rename,$gsr,$filter,$use_record,$verkn,new PrinterOptions(intval($report_printer)));
 }

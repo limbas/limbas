@@ -8,11 +8,12 @@
  */
 namespace Limbas\admin\tools\update;
 
-require_once(COREPATH . 'lib/db/db_wrapper.lib');
-
+use Limbas\lib\auth\Session;
 use Limbas\lib\db\Database;
+use Limbas\lib\globals\Lang;
 use ReflectionClass;
 use ReflectionException;
+use Symfony\Component\HttpFoundation\Request;
 use Throwable;
 
 abstract class Update
@@ -87,8 +88,26 @@ abstract class Update
         #lmb_EndTransaction($success,'none');
         
         $this->applyPatch($this->patches[$patchNr]['desc'], $success, $this->patches[$patchNr]['error']);
+
+        if($success) {
+            $this->resetSession();
+        }
         
         return $success;
+    }
+    
+    private function resetSession(): void
+    {
+        $systemInformation = Updater::getSystemInfo(true);
+        $updateNecessary = $systemInformation['updateNecessary'];
+        $completed = $systemInformation['completed'];
+
+        if($updateNecessary || !$completed['current']) {
+            return;
+        }
+        
+        $request = Request::createFromGlobals();
+        Session::load($request,true);
     }
 
     /**
@@ -319,6 +338,15 @@ abstract class Update
         if ($alreadyApplied) {
             return true;
         }
+        
+        if(in_array('LMB_LANG', $tables)) {
+            Lang::reSeedLanguage();
+        }
+        
+        // table import replaced by new language import
+        $tables = array_filter($tables, function ($table) {
+            return $table !== 'LMB_LANG';
+        });
         
         $tables = array_map(function($value) {
             return lmb_strtoupper($value . '.tar.gz');

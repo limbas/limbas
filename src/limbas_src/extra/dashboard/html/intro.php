@@ -11,7 +11,7 @@
 <div class="container-fluid p-3">
     <div class="row">
         <div class="col-md-9 col-xxl-6">
-            <?php require(COREPATH . 'extra/dashboard/widgets/html/lmbinfo.php') ?>
+            <?php require(COREPATH . 'extra/dashboard/html/lmbinfo.php') ?>
         </div>
     </div>
 </div>

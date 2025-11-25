@@ -6,6 +6,9 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+use Limbas\lib\db\functions\dbf;
+
 define('LMB_DBFUNC_OFFSET', 1);
 
 class LMBStatement extends PDOStatement {
@@ -198,10 +201,10 @@ function lmbdb_columns($pdo, $qualifier = null, $schema = null, $table_name = nu
             $where[] = "table_schema = '$schema'";
         }
         if ($table_name) {
-            $where[] = "table_name = '$table_name'";
+            $where[] = "table_name = '".Dbf::handleCaseSensitive($table_name)."'";
         }
         if ($column_name) {
-            $where[] = "column_name LIKE '$column_name'";
+            $where[] = "column_name LIKE '".Dbf::handleCaseSensitive($column_name)."'";
         }
 
         $query_string = "SELECT 
@@ -275,10 +278,10 @@ function lmbdb_psqlMatColumns($pdo, $qualifier = null, $schema = null, $table_na
             $where[] = "NSP.NSPNAME = '$schema'";
         }
         if ($table_name) {
-            $where[] = "MV.RELNAME = '$table_name'";
+            $where[] = "MV.RELNAME = '".Dbf::handleCaseSensitive($table_name)."'";
         }
         if ($column_name) {
-            $where[] = "ATT.ATTNAME LIKE '$column_name'";
+            $where[] = "ATT.ATTNAME LIKE '".Dbf::handleCaseSensitive($column_name)."'";
         }
 
         $query_string = "SELECT
@@ -438,7 +441,7 @@ function lmbdb_exec($pdo, $query_string, $flags = null) {
             $pdo->exec('ROLLBACK TO SAVEPOINT LEVEL_1');
         }
 
-        #lmb_log::error('SQL error on execute for query ' . $query_string , null, $gtabid, null, $dataid);
+        #Log::limbasError('SQL error on execute for query ' . $query_string , null, $gtabid, null, $dataid);
         error_log('Error: ' . lmbdb_errormsg($pdo) . ' for query ' . $query_string);
         return false;
     }
@@ -483,7 +486,7 @@ function lmbdb_fetch_object(&$stmt, $rownumber = null) {
  */
 function lmbdb_fetch_row(&$stmt, $row_number = null) {
     #if ($row_number !== null) {
-        #lmb_log::error('odbc_fetch_row: Cursor not supported!', null, null, null, null);
+        #Log::limbasError('odbc_fetch_row: Cursor not supported!', null, null, null, null);
         #error_log('Pdo: odbc_fetch_row: Cursor not supported!');
     #}
 

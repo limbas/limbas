@@ -10,10 +10,12 @@
 namespace Limbas\extra\mail;
 
 use Limbas\admin\mailTemplates\MailTemplate;
+use Limbas\Controllers\LimbasController;
 use Limbas\extra\mail\attachments\DmsMailAttachment;
 use Limbas\extra\mail\attachments\FileMailAttachment;
-use Limbas\lib\LimbasController;
 use Symfony\Component\HttpFoundation\Request;
+
+require_once(COREPATH . 'extra/explorer/filestructure.lib');
 
 class MailController extends LimbasController
 {
@@ -41,10 +43,10 @@ class MailController extends LimbasController
     }
 
     /**
-     * @param array $request
+     * @param Request $request
      * @return array
      */
-    private function saveMailAccount(array $request): array
+    private function saveMailAccount(Request $request): array
     {
         global $LINK, $LINK_ID, $session, $umgvar, $lmmultitenants, $userdat;
 
@@ -52,14 +54,14 @@ class MailController extends LimbasController
             return ['success' => false];
         }
 
-        $id = intval($request['id'] ?? 0);
-        $userId = intval($request['user'] ?? 0);
+        $id = intval($request->get('id') ?? 0);
+        $userId = intval($request->get('user') ?? 0);
 
         $default = false;
         $tenantId = null;
         if (empty($userId)) {
-            $tenantId = intval($request['tenant'] ?? 0);
-            $default = boolval($request['default']);
+            $tenantId = intval($request->get('tenant') ?? 0);
+            $default = boolval($request->get('default'));
         }
 
         $multiTenantEnabled = false;
@@ -84,25 +86,27 @@ class MailController extends LimbasController
 
 
         $mailAccount = new MailAccount(
-            $request['name'],
-            $request['email'],
-            intval($request['type']),
-            $request['imap_host'],
-            intval($request['imap_port']),
-            $request['imap_user'],
-            $request['imap_password'],
-            $request['imap_path'],
-            $request['smtp_host'],
-            intval($request['smtp_port']),
-            $request['smtp_user'],
-            $request['smtp_password'],
+            $request->get('name'),
+            $request->get('email'),
+            intval($request->get('type')),
+            $request->get('imap_host'),
+            intval($request->get('imap_port')),
+            $request->get('imap_user'),
+            $request->get('imap_password'),
+            $request->get('imap_path'),
+            $request->get('smtp_host'),
+            intval($request->get('smtp_port')),
+            $request->get('smtp_user'),
+            $request->get('smtp_password'),
             $userId,
             $tenantId,
             $id,
             $default,
-            boolval($request['status']),
-            boolval($request['hidden']),
-            intval($request['mail_table']),
+            boolval($request->get('status')),
+            boolval($request->get('hidden')),
+            boolval($request->get('selected')),
+            intval($request->get('mail_table')),
+            intval($request->get('mail_signature')),
         );
 
         $success = $mailAccount->save();
@@ -120,10 +124,10 @@ class MailController extends LimbasController
 
 
     /**
-     * @param array $request
+     * @param Request $request
      * @return array
      */
-    private function deleteMailAccount(array $request): array
+    private function deleteMailAccount(Request $request): array
     {
         global $LINK, $LINK_ID, $session;
 
@@ -131,10 +135,10 @@ class MailController extends LimbasController
             return ['success' => false];
         }
 
-        $mailAccount = MailAccount::get(intval($request['id']));
+        $mailAccount = MailAccount::get(intval($request->get('id')));
 
         $success = false;
-        if ($LINK[$LINK_ID['setup_mails']] || $mailAccount->userId !== intval($session['user_id'])) {
+        if ($LINK[$LINK_ID['setup_mails']] || $mailAccount->userId === intval($session['user_id'])) {
             $success = $mailAccount->delete();
         }
         return compact('success');
@@ -209,6 +213,12 @@ class MailController extends LimbasController
         $id = $request->get('id',[]);
 
 
+        $mailSignature = null;
+        if(intval($request->get('signature')) > 0) {
+            $mailSignature = MailSignature::get(intval($request->get('signature')));
+        }
+        
+
         $lmbMail = new LmbMail();
         
         if(is_array($id)) {
@@ -228,7 +238,7 @@ class MailController extends LimbasController
             $resolvedTemplateGroups = json_decode($request->get('resolvedTemplateGroups',''), true) ?? [];
             $resolvedDynamicData = json_decode($request->get('resolvedDynamicData',''), true) ?? [];
             
-            $lmbMail->sendMailToRecords($mailAccount, intval($request->get('gtabid')),$id, $mailTemplate,$request->get('subject'), $attachments, $cc, $bcc,$resolvedTemplateGroups,$resolvedDynamicData);
+            $lmbMail->sendMailToRecords($mailAccount, intval($request->get('gtabid')),$id, $mailTemplate,$request->get('subject'), $attachments, $cc, $bcc,$resolvedTemplateGroups,$resolvedDynamicData, mailSignature: $mailSignature);
             
             $success = true;
         }
@@ -236,7 +246,7 @@ class MailController extends LimbasController
             $success = false;
         }
         else {
-            $success = $lmbMail->sendMailToRecord($mailAccount, intval($request->get('gtabid')),intval($request->get('id')),$receivers, $request->get('subject'), $request->get('message'), $attachments, $cc, $bcc);
+            $success = $lmbMail->sendMailToRecord($mailAccount, intval($request->get('gtabid')),intval($request->get('id')),$receivers, $request->get('subject'), $request->get('message'), $attachments, $cc, $bcc, mailSignature: $mailSignature);
         }
         
 

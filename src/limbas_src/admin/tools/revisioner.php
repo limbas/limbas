@@ -7,13 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\lib\db\functions\Dbf;
 
-?>
-
-
-
-
-<?php
 
 $result_revisioner = array();
 
@@ -105,11 +100,11 @@ function lmb_create_revision($last, $revision, $desc)
     }
 
     $exptables = array_merge($exptables, array(
-        dbf_4('lmb_trigger'),
-        dbf_4('lmb_form_list'),
-        dbf_4('lmb_forms'),
-        dbf_4('lmb_report_list'),
-        dbf_4('lmb_reports')
+        Dbf::handleCaseSensitive('lmb_trigger'),
+        Dbf::handleCaseSensitive('lmb_form_list'),
+        Dbf::handleCaseSensitive('lmb_forms'),
+        Dbf::handleCaseSensitive('lmb_report_list'),
+        Dbf::handleCaseSensitive('lmb_reports')
     ));
 
     lmbExport_ToSystem($exptables, null, null, null, true);

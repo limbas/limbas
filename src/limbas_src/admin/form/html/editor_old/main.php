@@ -236,22 +236,6 @@ $opt['desc'] = $opt['val'];?>
 $opt['val'] = array(0,1,2,3);
 $opt['desc'] = array("",$lang[2303],$lang[2692],$lang[2321]);?>
 <TR id="menu_dbdat_inptext_inparea_inpselect_inpcheck_" STYLE="display:none"><TD><?php pop_select("fill_style('35','',this.value);",$opt,"",1,"input_readonly",$lang[2457],50);?></TD></TR>
-
-<?php
-$opt = null;
-$opt['val'][] = '';$opt['desc'][] = '';
-foreach($gformlist as $key0 => $value0){
-	$opt['val'][] = '';
-	$opt['desc'][] = "---".$gtab["desc"][$key0]."---";
-	foreach($value0["id"] as $key => $value){
-		if($value0["typ"][$key] == 1){
-		$opt['val'][] = $value;
-		$opt['desc'][] = $value0["name"][$key];
-		}
-	}
-}
-?>
-<TR id="menu_dbdat_" STYLE="display:none"><TD><?php pop_select("fill_style('43','input_formid',this.value);",$opt,"",1,"input_formid",$lang[1179],50);?></TD></TR>
 <TR id="menu_inptext_dbdat_" STYLE="display:none"><TD><?php pop_input2("fill_style('36','maxlength',this.value);","input_maxlenght","","",$lang[2458],65,'oninput')?></TD></TR>
 <?php $opt['val'] = array("1","2");
 $opt['desc'] = array($lang[1962],$lang[1963]);?>
@@ -773,6 +757,7 @@ function printFormularElement($form_ID,$elementType,$printParams,$closediv=null,
 		$params = "$params,'PARAMETERS','".htmljs($printParams["PARAMETERS"])."'";
 		$params = "$params,'PICSTYLE','".$printParams["PIC_STYLE"]."'";
 		$params = "$params,'PICSIZE','".$printParams["PIC_SIZE"]."'";
+        $params = "$params,'UFORM_TYP','".$printParams["UFORM_TYP"]."'";
 	}
 	else{
 		$params = $params . ",'PARAMETERS','".htmljs($printParams["PARAMETERS"])."'";
@@ -1017,6 +1002,7 @@ function formElementParams (&$form,$key){
 	$printParams["TABLE_NAME"] = $gtab['desc'][$printParams["TAB_ID"]];
 	$printParams["FIELD_NAME"] = $gfield[$printParams["TAB_ID"]]['spelling'][$printParams["FIELD_ID"]];
 	$printParams["FIELD_TYPE"] = $gfield[$printParams["TAB_ID"]]['field_type'][$printParams["FIELD_ID"]];
+    $printParams["UFORM_TYP"] = $form["uform_typ"][$key];
 
 	return $printParams;
 }

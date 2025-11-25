@@ -157,7 +157,7 @@ $(function() {
 
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
 
-<nav class="navbar navbar-expand navbar-light bg-nav p-0 lmbGtabmenu lmbGtabmenu-list">
+<nav class="navbar navbar-expand center-navigation bg-nav p-0 lmbGtabmenu lmbGtabmenu-list">
 <ul class="navbar-nav ms-auto">
     <?php if($level OR $level == '0'){ ?>
     <li class="nav-item nav-link lmb-folder-up">
@@ -214,8 +214,8 @@ echo '<div class="container-fluid border p-0 mb-1 mt-3 bg-secondary-subtle">
 <table class="table w-100 table-striped-columns table-hover border" id="filetab">
 <?php
 
-explSearchBootstrap($LID,$fid,$ffilter);
-explHeaderBootstrap($LID,0,$ffilter);
+explSearch($LID,$fid,$ffilter);
+explHeader($LID,0,$ffilter);
 explFolders($LID,$fid,0,$level,$ffilter);
 explFiles($LID,$fid,$level,$ffile,$ffilter);
 explFooter($LID,$fid,$ffile,$ffilter);

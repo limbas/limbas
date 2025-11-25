@@ -55,7 +55,7 @@ class Reminder extends LimbasModel
         return self::all($whereArgs, $category, $tableId, $dataId, $valid);
     }
 
-    public static function all(array $where = [], ?int $category = null, ?int $tableId = null, ?int $dataId = null, bool $valid = false): array
+    public static function all(array $where = [], ?int $category = null, ?int $tableId = null, ?int $dataId = null, bool $valid = false, ?int $userId = null): array
     {
         $db = Database::get();
         global $gtab;
@@ -69,7 +69,7 @@ class Reminder extends LimbasModel
             }
         }
 
-        $whereFields = array_merge($whereFields, self::getReminderWhereFilter($category, $tableId, $dataId, $valid));
+        $whereFields = array_merge($whereFields, self::getReminderWhereFilter($category, $tableId, $dataId, $valid, $userId));
         $whereFields = implode(' AND ', $whereFields);
         if($whereFields){
             $whereFields = 'WHERE '.$whereFields;
@@ -287,7 +287,7 @@ class Reminder extends LimbasModel
             $gresult = get_gresult($this->tableId, 1, null, null, null, $onlyfield, $this->dataId);
             if ($ffieldid) {
                 $fname = "cftyp_" . $gfieldTable["funcid"][$ffieldid];
-                $fielddesc = $fname(0, $ffieldid, $this->tableId, 3, $gresult, 0);
+                $this->content = $fname(0, $ffieldid, $this->tableId, 3, $gresult, 0);
             }
 
             // multitenant
@@ -465,12 +465,89 @@ class Reminder extends LimbasModel
          HTML;
     }
 
-    public static function getReminderWhereFilter(?int $category = null, ?int $tableId = null, ?int $dataId = null, ?bool $valid = false): array
+    public static function sendAllCronMails(): void {
+        global $userdat;
+
+        $lmbMail = new LmbMail();
+        $userIds = $userdat['userid'];
+
+        foreach ($userIds as $userId) {
+            if ($mail = Reminder::getCronMail($userId)) {
+                $lmbMail->sendFromDefault(...$mail);
+            }
+        }
+    }
+
+    private static function getCronMail($userId): array {
+        global $userdat;
+
+        $reminders = Reminder::all(valid: true, userId: $userId);
+        $reminderLines = implode("", array_map(fn(Reminder $reminder) => $reminder->getCronMailLine(), $reminders));
+        $reminderCount = count($reminders);
+
+        if ($reminderCount < 1) {
+            return [];
+        }
+
+        $reminderTitle = $reminderCount > 1 ? "open Reminders" : "an open Reminder";
+
+        $to = $userdat['email'][$userId];
+
+        if (!$to) {
+            return [];
+        }
+
+        $subject = "You have $reminderTitle";
+        $message = <<<HTML
+        Hello {$userdat['bezeichnung'][$userId]}<br><br>
+        You have $reminderTitle:<br><br>
+        $reminderLines
+        <br>
+        -------------------------------------------------------------------------------------<br>
+        This is an automatically generated email, please do not reply!<br>
+        -------------------------------------------------------------------------------------<br>
+        HTML;
+
+        return [
+            'to' => $to,
+            'subject' => $subject,
+            'message' => $message,
+        ];
+    }
+
+    private function getCronMailLine(): string
+    {
+        global $userdat;
+        global $gtab;
+        global $umgvar;
+
+        $fromName = $this->fromUser ? "{$userdat['vorname'][$this->fromUser]} {$userdat['vorname'][$this->fromUser]}" : "Someone";
+        $deadline = $this->preparedDeadline();
+        $description = $this->description ? strip_tags($this->description) : '<i>Without description</i>';
+        $tableId = $this->tableId;
+        $content = $this->content ? " content: $this->content" : '';
+        $table = $gtab['desc'][$tableId];
+
+        $description = preg_replace('/\s+/', ' ', $description);
+
+        if ($url = $umgvar['url']) {
+            $description = "<a TARGET=\"main\" HREF=\"$url/?action=gtab_change&gtabid=$tableId&ID=$this->dataId&form_id=$this->formId&wfl_id=$this->workflowInstance\" style=\"color:green\">$description</a>";
+        }
+
+        return <<<HTML
+            From $fromName at $deadline in table $table$content: $description<br>
+        HTML . "\n";
+    }
+
+    public static function getReminderWhereFilter(?int $category = null, ?int $tableId = null, ?int $dataId = null, ?bool $valid = false, ?int $userId = null): array
     {
         global $session;
         global $lmmultitenants;
         global $greminder;
         global $gtab;
+        global $userdat;
+
+        [$userId, $subGroups, $useMultitenant] = $userId ? [$userId, $userdat['subgroup'][$userId], false] : [$session['user_id'], $session["subgroup"], true];
 
         if ($valid === null) {
             $valid = false;
@@ -487,7 +564,7 @@ class Reminder extends LimbasModel
 
         // multitenat
         $sessionMultitenantId = $lmmultitenants['mid'][$session['mid']];
-        if ($sessionMultitenantId) {
+        if ($sessionMultitenantId && $useMultitenant) {
             // table based
             if ($rgtabid) {
                 if ($gtab["multitenant"][$rgtabid]) {
@@ -503,10 +580,10 @@ class Reminder extends LimbasModel
 
         // group based
         if ($greminder[$rgtabid]["groupbased"][$category]) {
-            $where[] = "(LMB_REMINDER_GROUP.GROUP_ID IN (" . implode(",", $session["subgroup"]) . ") OR LMB_REMINDER_GROUP.USER_ID = " . $session["user_id"] . ")";
+            $where[] = "(LMB_REMINDER_GROUP.GROUP_ID IN (" . implode(",", $subGroups) . ") OR LMB_REMINDER_GROUP.USER_ID = $userId)";
             // user based
         } else {
-            $where[] = "LMB_REMINDER_GROUP.USER_ID = " . $session["user_id"];
+            $where[] = "LMB_REMINDER_GROUP.USER_ID = $userId";
         }
 
         // is valid

@@ -9,8 +9,10 @@
 
 use Limbas\lib\auth\LmbSession;
 use Limbas\lib\auth\Session;
+use Limbas\lib\db\Database;
+use Limbas\lib\globals\Lang;
 
-    global $db;
+global $db;
     global $action;
     global $DBA;
     global $auth_group;
@@ -120,6 +122,7 @@ use Limbas\lib\auth\Session;
 	$session["lockbackend"] = lmbdb_result($rs2,"LOCKBACKEND");
 	$session["superadmin"] =  lmbdb_result($rs2,"SUPERADMIN");
 	$session["gc_maxlifetime"] = lmbdb_result($rs2,"GC_MAXLIFETIME");
+    $session["printer"] = lmbdb_result($rs2,"PRINTER");
 	$session["multiframe"] = $umgvar['multiframe'];
 	if($multitenant_ = lmbdb_result($rs2,"MULTITENANT")){
 	    $multitenant_ = explode(',',$multitenant_);
@@ -160,6 +163,8 @@ use Limbas\lib\auth\Session;
             $umgvar['multi_language_desc'][lmbdb_result($rs3,'LANGUAGE_ID')] = lmbdb_result($rs3,'LANGUAGE');
         }
     }
+    
+    $session['settings'] = lmbLoadGroupSettings(intval($session['group_id']));
 
     /* --- set main css ------------------- */
     LmbSession::loadCss();
@@ -228,91 +233,7 @@ use Limbas\lib\auth\Session;
 		$session["filestruct"]["root"] = lmbdb_result($rs3,"ID");
 	}
 
-	/* --- Sprachtabelle system auslesen (default) ------------------- */
-	if($session["language"] != $umgvar["default_language"]){
-		$sqlquery3 = "SELECT ELEMENT_ID,WERT,JS FROM LMB_LANG WHERE LANGUAGE_ID = ".$umgvar["default_language"];
-		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-		if(!$rs3) {$commit = 1;}
-		while(lmbdb_fetch_row($rs3)) {
-            $debug_lang = '';
-			if($session["group_id"] == 1 AND $umgvar["debug_lang"])
-            {
-                $debug_lang = "(".lmbdb_result($rs3,"ELEMENT_ID").")";
-            }
-			$lvalue = lmbdb_result($rs3,"WERT");
-			if(lmbdb_result($rs3,"JS")){
-				$lvalue = str_replace("\r\n","\\n",$lvalue);
-				$lvalue = str_replace("\n","\\n",$lvalue);
-				$lvalue = str_replace("\t","\\t",$lvalue);
-				$lvalue = str_replace("'","\\'",$lvalue);
-			}else{
-				$lvalue = str_replace("\n","<br>",$lvalue);
-				$lvalue = str_replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",$lvalue);
-			}
-			$lang[lmbdb_result($rs3,"ELEMENT_ID")] = $debug_lang.$lvalue;
-		}
-	}
-
-	/* --- Sprachtabelle system auslesen ------------------- */
-	$sqlquery3 = "SELECT ELEMENT_ID,WERT,JS FROM LMB_LANG WHERE LANGUAGE_ID = ".$session['language'];
-	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-	if(!$rs3) {$commit = 1;}
-	while(lmbdb_fetch_row($rs3)) {
-        $debug_lang = '';
-		if($session["group_id"] == 1 AND $umgvar["debug_lang"])
-        {
-            $debug_lang = "(".lmbdb_result($rs3,"ELEMENT_ID").")";
-        }
-		if($lvalue = lmbdb_result($rs3,"WERT")){
-			if(lmbdb_result($rs3,"JS")){
-				$lvalue = str_replace("\r\n","\\n",$lvalue);
-				$lvalue = str_replace("\n","\\n",$lvalue);
-				$lvalue = str_replace("\t","\\t",$lvalue);
-				$lvalue = str_replace("'","\\'",$lvalue);
-			}else{
-				$lvalue = str_replace("\n","<br>",$lvalue);
-				$lvalue = str_replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",$lvalue);
-			}
-			$lang[lmbdb_result($rs3,"ELEMENT_ID")] = $debug_lang.$lvalue;
-		}
-	}
-
-	/* --- Sprachtabelle local default language auslesen ------------------- */
-	if($session["language"] != $umgvar["default_language"]){
-		$sqlquery3 = "SELECT ELEMENT_ID,WERT,OVERRIDE FROM LMB_LANG_DEPEND WHERE LANGUAGE_ID = ".$umgvar["default_language"];
-		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-		if(!$rs3) {$commit = 1;}
-		while(lmbdb_fetch_row($rs3)) {
-            $lid = lmbdb_result($rs3,"ELEMENT_ID");
-			$wert = trim(lmbdb_result($rs3,"WERT"));
-            $override = trim(lmbdb_result($rs3,"OVERRIDE"));
-			if($wert){
-                $debug_lang = '';
-				if($session["group_id"] == 1 AND $umgvar["debug_lang"]) {$debug_lang = "(".$lid.")";}
-				$lang[$lid] = $debug_lang.str_replace(chr(10),"",$wert);
-                if($override){
-                    $lang[$override] = $lang[$lid];
-                }
-			}
-		}
-	}
-
-	/* --- Sprachtabelle local user language auslesen ------------------- */
-	$sqlquery3 = "SELECT ELEMENT_ID,WERT,OVERRIDE FROM LMB_LANG_DEPEND WHERE LANGUAGE_ID = ".$session["language"];
-	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-	if(!$rs3) {$commit = 1;}
-	while(lmbdb_fetch_row($rs3)) {
-        $lid = lmbdb_result($rs3,"ELEMENT_ID");
-		$wert = trim(lmbdb_result($rs3,"WERT"));
-        $override = trim(lmbdb_result($rs3,"OVERRIDE"));
-		if($wert){
-			if($session["group_id"] == 1 AND $umgvar["debug_lang"]){$debug_lang = "(".$lid.")";}
-			$lang[$lid] = $debug_lang.str_replace(chr(10),"",$wert);
-            if($override){
-                $lang[$override] = $lang[$lid];
-            }
-		}
-	}
+	Lang::load();
 
 	/* --- Prüfung ob gesperrt --------------------------------- */
 	if(($umgvar["lock"] OR lmbdb_result($rs2,"LMLOCK")) AND !$session["superadmin"]){
@@ -344,7 +265,7 @@ use Limbas\lib\auth\Session;
     #$sqlquery3 = 'SELECT LMB_CUSTVAR_DEPEND.CKEY, LMB_CUSTVAR_DEPEND.CVALUE FROM LMB_CUSTVAR_DEPEND LEFT JOIN LMB_CUSTVAR ON LMB_CUSTVAR_DEPEND.CKEY = LMB_CUSTVAR.CKEY WHERE LMB_CUSTVAR.OVERRIDABLE = '.LMB_DBDEF_TRUE.' AND LMB_CUSTVAR.ACTIVE = '.LMB_DBDEF_TRUE.' AND LMB_CUSTVAR_DEPEND.ACTIVE = '.LMB_DBDEF_TRUE.' '.$sqlmt.' OR LMB_CUSTVAR.ID IS NULL';
     $sqlquery3 = 'SELECT LMB_CUSTVAR_DEPEND.CKEY, LMB_CUSTVAR_DEPEND.CVALUE 
     FROM LMB_CUSTVAR_DEPEND LEFT JOIN LMB_CUSTVAR ON LMB_CUSTVAR_DEPEND.CKEY = LMB_CUSTVAR.CKEY AND LMB_CUSTVAR.ACTIVE = TRUE AND LMB_CUSTVAR.OVERRIDABLE = FALSE
-    WHERE LMB_CUSTVAR_DEPEND.ACTIVE = '.LMB_DBDEF_TRUE.' AND LMB_CUSTVAR.ID IS NULL '.$sqlmt;
+    WHERE LMB_CUSTVAR_DEPEND.ACTIVE = '.LMB_DBDEF_TRUE.' AND LMB_CUSTVAR_DEPEND.LMB_STATUS = 0 AND LMB_CUSTVAR.ID IS NULL '.$sqlmt;
     $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
     if(!$rs3) {$commit = 1;}
     while(lmbdb_fetch_row($rs3)) {
@@ -417,17 +338,32 @@ use Limbas\lib\auth\Session;
         WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION.ID = LMB_RULES_ACTION.LINK_ID ORDER BY LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT";
 	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	 */
-	$sqlquery3 = "SELECT DISTINCT LMB_ACTION.HELP_URL,LMB_ACTION.TARGET,LMB_ACTION.EXTENSION,LMB_ACTION.SORT,LMB_ACTION.SUBGROUP,LMB_ACTION.MAINGROUP,LMB_ACTION.LINK_NAME,LMB_ACTION.LINK_URL,LMB_ACTION.BESCHREIBUNG,LMB_ACTION.ID,LMB_ACTION.ICON_URL,LMB_ACTION.ACTION FROM LMB_RULES_ACTION,LMB_ACTION
+
+    $sqlquery3 = "SELECT DISTINCT LMB_ACTION.HELP_URL,LMB_ACTION.TARGET,LMB_ACTION.EXTENSION,LMB_ACTION.SORT,LMB_ACTION.SUBGROUP,LMB_ACTION.MAINGROUP,LMB_ACTION.LINK_NAME,LMB_ACTION.LINK_URL,LMB_ACTION.BESCHREIBUNG,LMB_ACTION.ID,LMB_ACTION.ICON_URL,LMB_ACTION.ACTION, LMB_ACTION.SHOW_MENU_SEARCH FROM LMB_RULES_ACTION,LMB_ACTION
+        WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION.ID = LMB_RULES_ACTION.LINK_ID
+        UNION
+        SELECT DISTINCT LMB_ACTION_DEPEND.HELP_URL,LMB_ACTION_DEPEND.TARGET,LMB_ACTION_DEPEND.EXTENSION,LMB_ACTION_DEPEND.SORT,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.LINK_NAME,LMB_ACTION_DEPEND.LINK_URL,LMB_ACTION_DEPEND.BESCHREIBUNG,LMB_ACTION_DEPEND.ID,LMB_ACTION_DEPEND.ICON_URL,LMB_ACTION_DEPEND.ACTION, LMB_ACTION_DEPEND.SHOW_MENU_SEARCH FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND
+        WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION_DEPEND.ID = LMB_RULES_ACTION.LINK_ID
+        ORDER BY 6,5,4
+        ";
+    $rs3 = lmbdb_exec($db,$sqlquery3);
+    if($rs3 === false) {
+        // in case new columns are missing => run the essentiell query
+        $sqlquery3 = "SELECT DISTINCT LMB_ACTION.HELP_URL,LMB_ACTION.TARGET,LMB_ACTION.EXTENSION,LMB_ACTION.SORT,LMB_ACTION.SUBGROUP,LMB_ACTION.MAINGROUP,LMB_ACTION.LINK_NAME,LMB_ACTION.LINK_URL,LMB_ACTION.BESCHREIBUNG,LMB_ACTION.ID,LMB_ACTION.ICON_URL,LMB_ACTION.ACTION FROM LMB_RULES_ACTION,LMB_ACTION
         WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION.ID = LMB_RULES_ACTION.LINK_ID
         UNION
         SELECT DISTINCT LMB_ACTION_DEPEND.HELP_URL,LMB_ACTION_DEPEND.TARGET,LMB_ACTION_DEPEND.EXTENSION,LMB_ACTION_DEPEND.SORT,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.LINK_NAME,LMB_ACTION_DEPEND.LINK_URL,LMB_ACTION_DEPEND.BESCHREIBUNG,LMB_ACTION_DEPEND.ID,LMB_ACTION_DEPEND.ICON_URL,LMB_ACTION_DEPEND.ACTION FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND
         WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION_DEPEND.ID = LMB_RULES_ACTION.LINK_ID
         ORDER BY 6,5,4
         ";
-	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+        $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+    }
+
+    
 	if(!$rs3) {$commit = 1;}
 	while(lmbdb_fetch_row($rs3)) {
 		$link_id = lmbdb_result($rs3,"ID");
+        $link_action = lmbdb_result($rs3,"ACTION");
 		$LINK[$link_id] = 1;
 		$LINK["name"][$link_id] = lmbdb_result($rs3,"LINK_NAME");
 		$LINK["desc"][$link_id] = lmbdb_result($rs3,"BESCHREIBUNG");
@@ -435,16 +371,19 @@ use Limbas\lib\auth\Session;
 		$LINK["link_url"][$link_id] = lmbdb_result($rs3,"LINK_URL");
 		$LINK["typ"][$link_id] = lmbdb_result($rs3,"MAINGROUP");
 		$LINK["subgroup"][$link_id] = lmbdb_result($rs3,"SUBGROUP");
+        $LINK["menu_search"][$link_id] = lmbdb_result($rs3,'SHOW_MENU_SEARCH') ?? true;
+
 		$help_url = lmbdb_result($rs3,"HELP_URL");
 		if($help_url AND $umgvar["helplink"]){$LINK["help_url"][$link_id] = trim($umgvar["helplink"],"/")."/".$help_url;}
 		$extens = lmbdb_result($rs3,"EXTENSION");
 		if($extens){$LINK["extension"][$link_id] = $extens;}
 		$target = lmbdb_result($rs3,"TARGET");
 		if($target){$LINK["target"][$link_id] = $target;}
-		$tmp = lmbdb_result($rs3,"ACTION");
-		if($tmp){
-			$LINK_ID[$tmp] = $link_id;
-			$LINK[$tmp] = 1;
+
+		if($link_action){
+            #$LINK["action"][$link_id] = $link_action;
+			$LINK_ID[$link_action] = $link_id;
+			$LINK[$link_action] = 1;
 			$LINK_ACTION[$link_id] = lmbdb_result($rs3,"ACTION");
 		}
 	}
@@ -654,3 +593,15 @@ use Limbas\lib\auth\Session;
 	
 
 unset($commit);
+
+
+function lmbLoadGroupSettings(int $groupId): array
+{
+    $rs = Database::select('LMB_RULES_SETTINGS',where:['GROUP_ID'=>$groupId]);
+    
+    $settings = [];
+    while($data = lmbdb_fetch_object($rs)) {
+        $settings[$data->KEY] = $data->VALUE;
+    }
+    return $settings;
+}

@@ -147,8 +147,10 @@ function limbasSubheaderSelection(el,gtabid,fieldid,typ,formid,ID,form_subel,aja
 
 // change value of grouping-fields
 function limbasGroupingFieldSelection(el,fid,grel) {
+	const $el = $(el);
+
 	// for each tab body
-	$(el).parent('tr').parent('tbody').parent('table').next('.lmbGtabTabBody').children('span').each(function() {
+	$el.parent('tr').parent('tbody').parent('table').next('.lmbGtabTabBody').children('span').each(function() {
 		const id = $(this).attr('id');
 		// this is tab being activated?
 		if (id === 'LmbGroupingPart_' + fid + '_' + grel) {
@@ -166,6 +168,9 @@ function limbasGroupingFieldSelection(el,fid,grel) {
 	});
 
 	limbasSetLayoutClassTabs(el,'lmbGtabTabInactive','lmbGtabTabActive');
+
+	$el.parent().find('button').removeClass('active');
+	$el.find('button').addClass('active');
 }
 
 // Ajax update locking of datasets
@@ -242,10 +247,6 @@ function lmb_syncTable(id){
 
 // ---- File-Aktivierung -----
 function lmb_activate_file(evt,id,filename,lid,norm){
-
-	if(evt.ctrlKey && evt.shiftKey && norm == 'd'){
-		LmEx_file_detail(id);
-	}
 
 	var prev_id = LmEx_edit_id;
 	var filestatus = "filestatus_"+norm+"_"+lid+"_"+id;
@@ -389,52 +390,26 @@ function confirm_form(id,ajax,wclose) {
 
 		// ---- Elternelement von neuen Verkn. Datensatz ----------
         /*
-		if(document.form1.verkn_addfrom.value && (document.form1.action.value == 'gtab_change' || document.form1.action.value == 'gtab_deterg')){
+		if(document.form1.verkn_relationpath.value && (document.form1.action.value == 'gtab_change' || document.form1.action.value == 'gtab_deterg')){
 			var addfrom = new Array();
 			var arrel = new Array();
-			addfrom = document.form1.verkn_addfrom.value.split(";");
+			addfrom = document.form1.verkn_relationpath.value.split(";");
 			arrel = addfrom[addfrom.length-1].split(",");
 			document.form1.gtabid.value = arrel[0];
 			document.form1.ID.value = arrel[1];
 			document.form1.form_id.value = arrel[2];
 			addfrom.pop();
 			document.form1.verknpf.value = "";
-			document.form1.verkn_addfrom.value = addfrom.join(";");
+			document.form1.verkn_relationpath.value = addfrom.join(";");
 		}
         */
 
-		if(wclose){document.form1.wind_force_close.value = 1;}
+        // close window with "save and close" button
+		if(wclose){document.form1.detail_saveclose.value = 1;}
 		document.getElementsByName("form"+id)[0].submit();
 	}
 }
 
-
-
-//----------------- springe zu Elternelement von neuen Verkn. Datensatz -------------------
-function jump_to_addfrom(KEY) {
-	if(document.form1.verkn_addfrom){
-		var addfrom = new Array();
-		var new_addfrom = new Array();
-		addfrom = document.form1.verkn_addfrom.value.split(";");
-		for(var i=0; i<=KEY; i++){
-			new_addfrom[i] = addfrom[i];
-		}
-		document.form1.verkn_addfrom.value = new_addfrom.join(";");
-
-        var addfrom = new Array();
-        var arrel = new Array();
-        addfrom = document.form1.verkn_addfrom.value.split(";");
-        arrel = addfrom[addfrom.length-1].split(",");
-        document.form1.gtabid.value = arrel[0];
-        document.form1.ID.value = arrel[1];
-        document.form1.form_id.value = arrel[2];
-        addfrom.pop();
-        document.form1.verknpf.value = "";
-        document.form1.verkn_addfrom.value = addfrom.join(";");
-
-		send_form(1);
-	}
-}
 
 //---------- Returns confirmation question if the dataset is empty, used in onbeforeunload event ------------
 function check_new() {
@@ -537,7 +512,8 @@ function gtabSetTablePosition(reset,scrolltoY){
 	}
 
 	// show save&close button for open in iframe
-	if((jsvar['verknpf'] > 0 || !parent.main) && parent.window.location.href.indexOf("redirect") < 1) {
+	// if((jsvar['verknpf'] > 0 || !parent.main) && parent.window.location.href.indexOf("redirect") < 1) {
+    if((jsvar['detail_isopenas'] == 'iframe' || jsvar['detail_isopenas'] == 'div') && parent.window.location.href.indexOf("redirect") < 1) {
 		$("#lmbSbmClose_" + jsvar['gtabid'] + "_" + jsvar['ID']).show();
 	}
 	

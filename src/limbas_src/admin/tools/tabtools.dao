@@ -8,7 +8,7 @@
  */
 
 
-
+use Limbas\lib\db\functions\Dbf;
 
 if (!$sqlexecnum) {
     $sqlexecnum = 100;
@@ -17,7 +17,7 @@ if (!$sqlexecnum) {
 }
 
 if ($empty AND $table) {
-    $sqlquery = "DELETE FROM ".dbf_4($table);
+    $sqlquery = "DELETE FROM ".Dbf::handleCaseSensitive($table);
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if ($rs) {
         $resultMsg = $lang[1069];
@@ -25,7 +25,7 @@ if ($empty AND $table) {
         $resultMsg = $lang[1070];
     }
 } elseif ($delete AND $delete == 'table' AND $table) {
-    $sqlquery0 = dbq_12(array($DBA['DBSCHEMA'], $table));
+    $sqlquery0 = Dbf::getExistingViewsSql($DBA['DBSCHEMA'], $table);
     $rs = lmbdb_exec($db, $sqlquery0) or errorhandle(lmbdb_errormsg($db), $sqlquery0, $action, __FILE__, __LINE__);
     if (!$rs) {
         $commit = 1;

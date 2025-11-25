@@ -522,11 +522,11 @@ function mysql_dbq_9($p){
  * rename column 
  *
  * @param array $p [0]=schema, [1]=tablename, [2]=old columnname, [3]=new columnname
- * @return sql string
+ * @return string sql
  */
 function mysql_dbq_7($db,$p){
 	
-	$col = dbf_5(array($p[0],$p[1],$p[2]));
+	$col = mysql_dbf_5($db, array($p[0],$p[1],$p[2]));
 	if($col["scale"][0]){
 		$ct = $col["datatype"][0].'('.$col["length"][0].','.$col["scale"][0].')';
 	}elseif($col["length"][0]){
@@ -571,21 +571,21 @@ function mysql_dbq_22($p){
 function mysql_dbq_16($db,$p=null){
 	
 	# limbas relation procedure
-	if($p[1]){dbq_21($p);}
+	if($p[1]){mysql_dbq_21($db, $p);}
 	
 	# sequences workaround for mysql
-	if(!dbf_20(array($GLOBALS['DBA']['DBSCHEMA'],'LMB_SEQUENCES',"'TABLE'"))){
+	if(!mysql_dbf_20($db, array($GLOBALS['DBA']['DBSCHEMA'],'LMB_SEQUENCES',"'TABLE'"))){
 	$sqlquery = "CREATE TABLE LMB_SEQUENCES ( SEQUENCE_NAME VARCHAR(50) COLLATE UTF8_BIN NOT NULL, CURRENT_VALUE BIGINT(20) NOT NULL DEFAULT '0', INCREMENT INT(11) NOT NULL DEFAULT '1', PRIMARY KEY (SEQUENCE_NAME) );";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
 	    if(!$rs){$commit = 1;}
 	}
 	
-	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_nextval');
+	mysql_dbq_21($db, array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_nextval');
 	$sqlquery = "CREATE FUNCTION `SEQ_NEXTVAL`(SEQNAME VARCHAR(100)) RETURNS INT(11) BEGIN UPDATE LMB_SEQUENCES SET CURRENT_VALUE=(@RET:=CURRENT_VALUE)+INCREMENT WHERE SEQUENCE_NAME=SEQNAME;RETURN @RET; END;";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
 	
-	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_set');
+	mysql_dbq_21($db, array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_set');
 	$sqlquery = "CREATE FUNCTION SEQ_SET(SEQNAME VARCHAR(100), CVAL INT(11), INC INT(11)) RETURNS INT(11) BEGIN REPLACE INTO LMB_SEQUENCES(SEQUENCE_NAME, CURRENT_VALUE, INCREMENT) VALUES(SEQNAME, CVAL, INC); RETURN CVAL; END;";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
     if(!$rs){$commit = 1;}

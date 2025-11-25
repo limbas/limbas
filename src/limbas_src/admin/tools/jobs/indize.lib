@@ -8,7 +8,7 @@
  */
 
 
-
+use Limbas\lib\db\functions\Dbf;
 
 require_once(COREPATH . 'admin/tools/jobs_ext.lib');
 $starttime = check_timeout($umgvar["indize_timeout"]);
@@ -668,8 +668,8 @@ function refresh_job($handle,$subdir){
 function addColumnIfNotExists($tableName, $fieldName, $fieldType) {
     global $action, $db;
 
-    if (!dbf_5(array($GLOBALS['DBA']['DBSCHEMA'], $tableName, $fieldName))) {
-        $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $tableName, $fieldName, $fieldType, ''));
+    if (!Dbf::getColumns($GLOBALS['DBA']['DBSCHEMA'], $tableName ?? '', $fieldName)) {
+        $sqlquery = Dbf::addColumnSql($tableName ?? '', $fieldName ?? '', $fieldType ?? '', '');
         lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     }
 }
@@ -709,8 +709,8 @@ function postgresAddFtsFields($fieldName, $fieldType) {
 function dropColumnIfExists($tableName, $fieldName) {
     global $action, $db;
 
-    if (dbf_5(array($GLOBALS['DBA']['DBSCHEMA'], $tableName, $fieldName))) {
-        $sqlquery = dbq_22(array($tableName, $fieldName));
+    if (Dbf::getColumns($GLOBALS['DBA']['DBSCHEMA'], $tableName ?? '', $fieldName)) {
+        $sqlquery = Dbf::dropColumnSql($tableName, $fieldName);
         lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     }
 }

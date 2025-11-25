@@ -141,7 +141,10 @@ function lmb_syncToClient($params){
         $logentry[] = print_r($response['log'],1);
 
         // save output log
-        file_put_contents($umgvar['path'] . "/USER/" . $session["user_id"] . "/temp/syncexp_$syncID.html", implode("<br>",$logentry).'<br><br>'.$lmblogger);
+        file_put_contents(USERPATH . $session["user_id"] . "/temp/syncexp_$syncID.html", implode("<br>",$logentry).'<br><br>'.$lmblogger);
+        $path = lmb_getDownloadHash(USERPATH . $session["user_id"] . '/temp',"syncexp_$syncID.html",'text/html','i');
+        $response['notice'] = 'show log';
+        $response['url'] = $path;
         echo json_encode($response);
     }
 

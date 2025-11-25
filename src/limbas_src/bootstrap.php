@@ -17,6 +17,8 @@ const LEGACYPATH = COREPATH . 'vlegacy/';
 
 define("DEPENDENTPATH", realpath(COREPATH . '../dependent/').'/');
 
+const RESOURCEPATH = COREPATH . 'resources/';
+
 const ASSETSPATH = PUBLICPATH . 'assets/';
 
 const LOCALASSETSPATH = PUBLICPATH . 'localassets/';

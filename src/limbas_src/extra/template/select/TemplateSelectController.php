@@ -9,7 +9,7 @@
 
 namespace Limbas\extra\template\select;
 
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 
 class TemplateSelectController extends LimbasController
 {
@@ -37,8 +37,10 @@ class TemplateSelectController extends LimbasController
         }
         $id = intval($id);
         
+        $appendData = $request['appendData'] ?? [];
+        
         $templateSelector = TemplateSelector::getTemplateSelectorByType($type);
-        return $templateSelector->getElementListRendered(intval($request['gtabid']), $request['search'] ?? '', intval($request['page']), intval($request['perPage']), $id);
+        return $templateSelector->getElementListRendered(intval($request['gtabid']), $request['search'] ?? '', intval($request['page']), intval($request['perPage']), $id, boolval($request['first'] ?? false), is_array($appendData) ? $appendData : []);
     }
 
     private function resolve(array $request): array

@@ -97,7 +97,16 @@ abstract class Auth
     {
         header_remove();
         Session::destroy();
-        static::beforeDeny($blocked);
+
+        if(defined('IS_REST')) {
+            header('HTTP/1.1 401 Unauthorized');
+            header('Access-Control-Allow-Origin: *');
+            header('Content-type: application/json; charset=utf-8');
+            echo json_encode(['errors' => [401=>'Unauthorized']]);
+        }
+        else {
+            static::beforeDeny($blocked);   
+        }
         die();
     }
 

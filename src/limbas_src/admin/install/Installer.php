@@ -11,6 +11,7 @@ namespace Limbas\admin\install;
 use DirectoryIterator;
 use FilesystemIterator;
 use Limbas\lib\db\Database;
+use Limbas\lib\db\functions\Dbf;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Symfony\Component\HttpFoundation\Request;
@@ -167,12 +168,12 @@ class Installer
         // php-ini - mbstring
         if (function_exists('mb_strlen')) {
             if (ini_get('mbstring.func_overload') > 0) {
-                $messages[] = new InstallMessage('mbstring',InstallMessage::OK, lang('...mbstring present, but func_overload > 0 (must be set to 0)'));
+                $messages[] = new InstallMessage('mbstring',InstallMessage::OK, iLang('...mbstring present, but func_overload > 0 (must be set to 0)'));
             } else {
                 $messages[] = new InstallMessage('mbstring',InstallMessage::OK);
             }
         } else {
-            $messages[] = new InstallMessage( 'mbstring', InstallMessage::ERROR, lang('mbstring extension must be enabled to use utf8'));
+            $messages[] = new InstallMessage( 'mbstring', InstallMessage::ERROR, iLang('mbstring extension must be enabled to use utf8'));
         }
         
        
@@ -180,7 +181,7 @@ class Installer
         if (ini_get('file_uploads')) {
             $messages[] = new InstallMessage('file_uploads',InstallMessage::OK);
         } else {
-            $messages[] = new InstallMessage('file_uploads',InstallMessage::OKWARN, lang('...must be enabled to activate file uploads'));
+            $messages[] = new InstallMessage('file_uploads',InstallMessage::OKWARN, iLang('...must be enabled to activate file uploads'));
         }
         
         // php-ini - upload_max_filesize
@@ -222,23 +223,23 @@ class Installer
         if ($dateTimezone) {
             $messages[] = new InstallMessage('date.timezone',InstallMessage::OK, $dateTimezone);
         } else {
-            $messages[] = new InstallMessage('date.timezone',InstallMessage::ERROR, lang('Must be set! (e.g. Europe/Berlin)'));
+            $messages[] = new InstallMessage('date.timezone',InstallMessage::ERROR, iLang('Must be set! (e.g. Europe/Berlin)'));
         }
 
 
         // php-ini - display_errors
         if (ini_get('display_errors')) {
-            $messages[] = new InstallMessage('display_errors',InstallMessage::OKWARN, lang('yes'));
+            $messages[] = new InstallMessage('display_errors',InstallMessage::OKWARN, iLang('yes'));
         } else {
-            $messages[] = new InstallMessage('display_errors',InstallMessage::OK, lang('no'));
+            $messages[] = new InstallMessage('display_errors',InstallMessage::OK, iLang('no'));
         }
 
         // php-ini - log_errors
         $logErrors = ini_get('log_errors');
         if ($logErrors) {
-            $messages[] = new InstallMessage('log_errors',InstallMessage::OK, lang('yes'));
+            $messages[] = new InstallMessage('log_errors',InstallMessage::OK, iLang('yes'));
         } else {
-            $messages[] = new InstallMessage('log_errors',InstallMessage::OKWARN, lang('no'));
+            $messages[] = new InstallMessage('log_errors',InstallMessage::OKWARN, iLang('no'));
         }
         
         return $messages;
@@ -254,10 +255,10 @@ class Installer
         if (file_exists(DEPENDENTPATH . 'inc/include_db.lib')) {
             if (is_writable(DEPENDENTPATH . 'inc/include_db.lib')) {
                 if($afterInstallation) {
-                    $messages[] = new InstallMessage('inc/include_db',InstallMessage::OKWARN, lang('... you should set readonly!'));
+                    $messages[] = new InstallMessage('inc/include_db',InstallMessage::OKWARN, iLang('... you should set readonly!'));
                 }
                 else {
-                    $messages[] = new InstallMessage('inc/include_db',InstallMessage::OKWARN, lang('... you should set readonly after installation!'));
+                    $messages[] = new InstallMessage('inc/include_db',InstallMessage::OKWARN, iLang('... you should set readonly after installation!'));
                 }
             }
             else {
@@ -273,10 +274,10 @@ class Installer
             if (is_resource($handle)) {
                 fclose($handle);
                 unlink(DEPENDENTPATH . 'inc/include_db.lib');
-                $messages[] = new InstallMessage('inc/include_db',InstallMessage::OK, lang('file can be created'));
+                $messages[] = new InstallMessage('inc/include_db',InstallMessage::OK, iLang('file can be created'));
                 
             } else {
-                $messages[] = new InstallMessage('inc/include_db',InstallMessage::ERROR, lang('file does not exist .. try to create FAILED'));
+                $messages[] = new InstallMessage('inc/include_db',InstallMessage::ERROR, iLang('file does not exist .. try to create FAILED'));
             }
         }
         
@@ -285,31 +286,31 @@ class Installer
         if (is_writable(BACKUPPATH)) {
             $messages[] = new InstallMessage('BACKUP',InstallMessage::OK);
         } else {
-            $messages[] = new InstallMessage('BACKUP',InstallMessage::ERROR, lang('apache needs recursive write permissions'));
+            $messages[] = new InstallMessage('BACKUP',InstallMessage::ERROR, iLang('apache needs recursive write permissions'));
         }
 
         if (is_writable(TEMPPATH)) {
             $messages[] = new InstallMessage('TEMP',InstallMessage::OK);
         } else {
-            $messages[] = new InstallMessage('TEMP',InstallMessage::ERROR, lang('apache needs recursive write permissions'));
+            $messages[] = new InstallMessage('TEMP',InstallMessage::ERROR, iLang('apache needs recursive write permissions'));
         }
 
         if (is_writable(UPLOADPATH)) {
             $messages[] = new InstallMessage('UPLOAD',InstallMessage::OK);
         } else {
-            $messages[] = new InstallMessage('UPLOAD',InstallMessage::ERROR, lang('apache needs recursive write permissions'));
+            $messages[] = new InstallMessage('UPLOAD',InstallMessage::ERROR, iLang('apache needs recursive write permissions'));
         }
 
         if (is_writable(USERPATH)) {
             $messages[] = new InstallMessage('USER',InstallMessage::OK);
         } else {
-            $messages[] = new InstallMessage('USER',InstallMessage::ERROR, lang('apache needs recursive write permissions'));
+            $messages[] = new InstallMessage('USER',InstallMessage::ERROR, iLang('apache needs recursive write permissions'));
         }
 
         if (is_writable(EXTENSIONSPATH)) {
             $messages[] = new InstallMessage('EXTENSIONS',InstallMessage::OK);
         } else {
-            $messages[] = new InstallMessage('EXTENSIONS',InstallMessage::ERROR, lang('apache needs recursive write permissions'));
+            $messages[] = new InstallMessage('EXTENSIONS',InstallMessage::ERROR, iLang('apache needs recursive write permissions'));
         }
         
         
@@ -324,7 +325,7 @@ class Installer
         if (is_writable($adminPath)) {
             $messages[] = new InstallMessage('USER/1/temp',InstallMessage::OK);
         } else {
-            $messages[] = new InstallMessage('USER/1/temp',InstallMessage::ERROR, lang('apache needs recursive write permissions'));
+            $messages[] = new InstallMessage('USER/1/temp',InstallMessage::ERROR, iLang('apache needs recursive write permissions'));
         }
         
         
@@ -348,7 +349,7 @@ class Installer
             $messages[] = new InstallMessage('dependent/.*',InstallMessage::OK);
         } else {
             $paths = implode('', array_map(fn($p) => '<li>' . $p . '</li>', $failedPaths));
-            $messages[] = new InstallMessage('dependent/.*',InstallMessage::OKWARN, lang('apache might need recursive write permissions') . $paths);
+            $messages[] = new InstallMessage('dependent/.*',InstallMessage::OKWARN, iLang('apache might need recursive write permissions') . $paths);
         }
         
         return $messages;
@@ -375,12 +376,12 @@ class Installer
         $pdoPgSqlLoaded = extension_loaded('pdo_pgsql');
 
         if ($odbcLoaded) {
-            $messages[] = new InstallMessage('ODBC',InstallMessage::OK, '<br>' . lang('You can use ODBC for database connection. Available databases are:') . '<br>' . implode(', ', $vendorNames));
+            $messages[] = new InstallMessage('ODBC',InstallMessage::OK, '<br>' . iLang('You can use ODBC for database connection. Available databases are:') . '<br>' . implode(', ', $vendorNames));
         }
         
         
         if($pdoLoaded && ($pdoMySqlLoaded || $pdoPgSqlLoaded)) {
-            $messages[] = new InstallMessage('PDO',InstallMessage::OK, lang('You can use PDO for database connection.<br>PDO support is only for <b>mysql</b> or <b>PostgreSQL</b>. For other databases use ODBC') );
+            $messages[] = new InstallMessage('PDO',InstallMessage::OK, iLang('You can use PDO for database connection.<br>PDO support is only for <b>mysql</b> or <b>PostgreSQL</b>. For other databases use ODBC') );
             if($pdoMySqlLoaded) {
                 $messages[] = new InstallMessage('pdo_mysql',InstallMessage::OK);
             }
@@ -393,7 +394,7 @@ class Installer
         }
         
         if(!$odbcLoaded && !$pdoLoaded) {
-            $messages[] = new InstallMessage('Database Connector',InstallMessage::ERROR, lang('PDO or ODBC are required to connect to the database!'));
+            $messages[] = new InstallMessage('Database Connector',InstallMessage::ERROR, iLang('PDO or ODBC are required to connect to the database!'));
         }        
         
 
@@ -642,7 +643,7 @@ class Installer
                 $rs = lmbdb_exec($db, $sql);
                 
                 if ($rs && lmbdb_result($rs, 'CSENSITIV') == 1) {
-                    $messages[] = new InstallMessage('Lower case table names',InstallMessage::ERROR, lang('configure mysql without lower_case_table_names = 1 in /etc/my.cnf'));
+                    $messages[] = new InstallMessage('Lower case table names',InstallMessage::ERROR, iLang('configure mysql without lower_case_table_names = 1 in /etc/my.cnf'));
                 } else {
                     $messages[] = new InstallMessage('Lower case table names',InstallMessage::OK);
                 }
@@ -682,11 +683,11 @@ class Installer
             lmb_StartTransaction(1);
             
             $sqlTest = [
-                'CREATE' => 'CREATE TABLE ' . dbf_4('LIMBASTEST') . ' (ID ' . LMB_DBTYPE_INTEGER . ',ERSTDATUM ' . LMB_DBTYPE_TIMESTAMP . ' DEFAULT ' . LMB_DBDEF_TIMESTAMP . ',TXT ' . LMB_DBTYPE_VARCHAR . '(6))',
+                'CREATE' => 'CREATE TABLE ' . Dbf::handleCaseSensitive('LIMBASTEST') . ' (ID ' . LMB_DBTYPE_INTEGER . ',ERSTDATUM ' . LMB_DBTYPE_TIMESTAMP . ' DEFAULT ' . LMB_DBDEF_TIMESTAMP . ',TXT ' . LMB_DBTYPE_VARCHAR . '(6))',
                 'INSERT' => 'INSERT INTO LIMBASTEST (ID,TXT)  VALUES (1,\'a1ä2Ü3\')',
                 'SELECT' => 'SELECT * FROM LIMBASTEST',
                 'DELETE' => 'DELETE FROM LIMBASTEST',
-                'DROP' => 'DROP TABLE ' . dbf_4('LIMBASTEST')
+                'DROP' => 'DROP TABLE ' . Dbf::handleCaseSensitive('LIMBASTEST')
             ];
             
             
@@ -728,7 +729,7 @@ class Installer
             lmbdb_close($db);            
             
         } catch (Throwable $t) {
-            $messages[] = new InstallMessage('Error',InstallMessage::ERROR, lang('Error during database check') . ': ' . $t->getMessage());
+            $messages[] = new InstallMessage('Error',InstallMessage::ERROR, iLang('Error during database check') . ': ' . $t->getMessage());
         }
 
         return $messages;

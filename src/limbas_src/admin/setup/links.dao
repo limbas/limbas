@@ -50,7 +50,7 @@ if ($change) {
             $linkurl = preg_replace("/ {2,}/", " ", parse_db_string($link_url[$key], 240));
             $linkiconurl = preg_replace("/ {2,}/", " ", parse_db_string($link_iconurl[$key], 128));
             $linkhelpurl = preg_replace("/ {2,}/", " ", parse_db_string($link_helpurl[$key], 60));
-            $linkext = preg_replace("/ {2,}/", " ", parse_db_string($link_ext[$key], 50));
+            $linkext = preg_replace("/ {2,}/", " ", parse_db_string($link_ext[$key], 250));
             $linksubgroup = preg_replace("/ {2,}/", " ", parse_db_int($link_subgroup[$key], 5));
             $linksort = preg_replace("/ {2,}/", " ", parse_db_int($link_sort[$key], 5));
 

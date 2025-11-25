@@ -9,6 +9,7 @@
 
 
 use Limbas\extra\mail\MailAccount;
+use Limbas\extra\mail\MailSignature;
 use Limbas\extra\mail\MailTable;
 
 $adminMails = true;
@@ -17,3 +18,5 @@ $mailTables = [];
 if($adminMails) {
     $mailTables = MailTable::all();
 }
+
+$mailSignatures = MailSignature::all();

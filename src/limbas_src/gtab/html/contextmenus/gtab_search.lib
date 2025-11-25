@@ -70,6 +70,8 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         $searchvalue = 'boolean';
     } elseif (($gfield[$gtabid]['field_type'][$fieldid] == 4 || $gfield[$gtabid]['field_type'][$fieldid] == 19) && $gfield[$gtabid]['artleiste'][$fieldid] && $gsrresParent["andor"][$filterIndex] <= 2) {
         $searchvalue = 'select';
+    } elseif ($gfield[$gtabid]["field_type"][$fieldid] == 11 && $gfield[$gtabid]["artleiste"][$fieldid]) {
+        $searchvalue = 'relation';
     } elseif ($gfield[$gtabid]["parse_type"][$fieldid] == 4) {
         $searchvalue = 'date';
     } else {
@@ -276,6 +278,22 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
             }
             echo "<option value=\"" . str_replace("\"", "", lmbdb_result($rs, "WERT")) . "\" $selected>" . lmbdb_result($rs, "WERT");
 
+        }
+        echo "</select>";
+
+    # ------- relation as select-------
+    } elseif ($searchvalue == 'relation') {
+
+        $rgresult = array();
+        $onlyfield = array();
+        $rgtabid = $gfield[$gtabid]['verkntabid'][$fieldid];
+        $rfieldid = $gfield[$gtabid]['verknfieldid'][$fieldid];
+        $onlyfield[$rgtabid][] = $rfieldid;
+
+        $rgresult = get_gresult($rgtabid,1,null,null,null,$onlyfield);
+        echo "<select class=\"form-select form-select-sm w-100 align-middle\" id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\"><option>";
+        foreach($rgresult[$rgtabid][$rfieldid] as $relkey => $ralval){
+            echo "<option value=\"#ID#" . $rgresult[$rgtabid]['id'][$relkey] . "\" ".($rgresult[$rgtabid]['id'][$relkey] == substr($gsrres,4) ? 'selected' : '').">" . $ralval;
         }
         echo "</select>";
 

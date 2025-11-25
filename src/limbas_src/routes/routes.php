@@ -10,8 +10,10 @@
 $adminRoutes = include __DIR__ . '/admin.php';
 $generalRoutes = include __DIR__ . '/general.php';
 $legacyRoutes = include __DIR__ . '/legacy.php';
+$installRoutes = include __DIR__ . '/install.php';
 
 $adminRoutes->addCollection($generalRoutes);
 $adminRoutes->addCollection($legacyRoutes);
+$adminRoutes->addCollection($installRoutes);
 
 return $adminRoutes;

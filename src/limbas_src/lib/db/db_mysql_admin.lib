@@ -11,89 +11,61 @@
 
 ############# Domain Tables ########################
 
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Log;
+
 $DBA["DOMAINTABLE"] = array("STATISTICS","KEY_COLUMN_USAGE","TABLES","COLUMNS","TRIGGERS","VIEWS");
 $DBA["DOMAINSCHEMA"] = array("INFORMATION_SCHEMA","INFORMATION_SCHEMA","INFORMATION_SCHEMA","INFORMATION_SCHEMA","INFORMATION_SCHEMA","INFORMATION_SCHEMA");
 
-# db version
+/**
+ * db version
+ *
+ * @param $DBA
+ * @return array
+ *
+ * @deprecated Use Dbf::version instead.
+ */
 function dbf_version($DBA=null){
-	global $db;
-
-	// version
-	$sql = "SELECT @@VERSION as VERSION";
-	$rs = lmbdb_exec($db,$sql) or errorhandle(lmbdb_errormsg($db),$sql,"get DB Version",$FILE,$LINE);
-	$version = lmbdb_result($rs,"version");
-	$version_[] = $version;
-	$version_[] = substr($version, 0, strpos($version,'.'));
-
-	// encoding
-    if($DBA) {
-        $sql = "SELECT DEFAULT_CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE UPPER(SCHEMA_NAME) = \"".strtoupper($DBA["DBNAME"])."\"";
-        $rs = lmbdb_exec($db, $sql) or errorhandle(lmbdb_errormsg($db), $sql, "get DB Version", $FILE, $LINE);
-        $version_[] = lmbdb_result($rs, "default_character_set_name");
-
-        $sql = "SHOW VARIABLES WHERE VARIABLE_NAME = 'default_storage_engine'";
-        $rs = lmbdb_exec($db, $sql) or errorhandle(lmbdb_errormsg($db), $sql, "get DB Version", $FILE, $LINE);
-        $version_[] = lmbdb_result($rs, "Value");
-    }
-
-	return $version_;
-
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::version instead.');
+	return Dbf::version($DBA);
 }
 
 ############# indexes ########################
 
-/** existing indexes
- * 
+/**
+ * existing indexes
  *
- * @param array $p [0]=schema, [1]=tablename, [2]=indexname, [3]=no primary
- * @return sql string
+ * @param array $p [0]=schema, [1]=tablename, [2]=indexname, [3]=no primary, [4]=fieldname
+ * @return string sql
+ * @deprecated Use Dbf::getIndicesSql instead.
  */
 function dbq_2($p){
-	$sql = "SELECT CARDINALITY AS INDEX_USED, 
-			TABLE_NAME TABLENAME,
-			CASE NON_UNIQUE WHEN 0 THEN 1 WHEN 1 THEN 0 END AS IS_UNIQUE,
-			COLUMN_NAME COLUMNNAME,
-			INDEX_NAME INDEXNAME,
-			IFNULL(cardinality,0),
-			INDEX_TYPE TYPE
-			FROM
-			INFORMATION_SCHEMA.STATISTICS
-			WHERE 
-				INDEX_SCHEMA = '".$p[0]."'";
-	
-	if($p[1]){
-		$sql .= " AND UPPER(TABLE_NAME) = '".lmb_strtoupper($p[1])."'";
-	}
-	if($p[2]){
-		$sql .= " AND UPPER(COLUMN_NAME) = '".lmb_strtoupper($p[2])."'";
-	}
-	if($p[3]){
-		$sql .= "AND NOT INDEX_NAME = 'SYSPRIMARYKEYINDEX' AND NOT INDEX_NAME = 'PRIMARY'";
-	}
-	
-	$sql .= " ORDER BY TABLE_NAME, INDEX_NAME";
-	
-	return $sql;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getIndicesSql instead.');
+	return Dbf::getIndicesSql($p[0], $p[2] ?? null, $p[1] ?? null, $p[4] ?? null, $p[3] ?? false);
 }
 
 /**
  * create index
  *
- * @param array $p [0]=schema, [1]=indexname, [2]=tablename, [3]=fieldname
- * @return sql string
+ * @param array $p [0]=schema, [1]=indexname, [2]=tablename, [3]=fieldname, [4]=unique
+ * @return string sql
+ * @deprecated Use Dbf::createIndexSql instead.
  */
 function dbq_4($p){
-	return "CREATE INDEX ".$p[1]." ON ".dbf_4($p[2])."(".$p[3].")";
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::createIndexSql instead.');
+	return Dbf::createIndexSql($p[1],$p[2],$p[3],$p[4] ?? false);
 }
 
 /**
  * drop index
  *
- * @param array $p [0]=schema, [1]=indexname , [2]=tablename
- * @return sql string
+ * @param array $p [0]=schema, [1]=indexname, [2]=tablename
+ * @return string sql
+ * @deprecated Use Dbf::dropIndexSql instead.
  */
 function dbq_5($p){
-	return 'DROP INDEX '.$p[1].' ON '.$p[2];
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropIndexSql instead.');
+	return Dbf::dropIndexSql($p[1], $p[2] ?? '');
 }
 
 
@@ -103,63 +75,23 @@ function dbq_5($p){
  * get primary keys
  *
  * @param array $p [0]=schema, [1]=table, [2]=column
- * @return sql string
+ * @deprecated Use Dbf::dropIndexSql instead.
  */
 function dbq_23($p=null){
-	global $db;
-	
-	$sql = "SELECT
-	    CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME
-	FROM 
-		INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-	WHERE 
-		CONSTRAINT_SCHEMA = '".dbf_4($p[0])."'
-		AND CONSTRAINT_NAME = 'PRIMARY'" ;
-	
-	if($p[1]){$sql .= " AND TABLE_NAME = '".dbf_4($p[1])."'";}
-	if($p[2]){$sql .= " AND COLUMN_NAME = '".dbf_4($p[2])."'";}
-
-	$rs = lmbdb_exec($db,$sql) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(lmbdb_fetch_row($rs)){
-		$contraint["TABLE_NAME"][] = lmbdb_result($rs,"TABLE_NAME");
-		$contraint["COLUMN_NAME"][] = lmbdb_result($rs,"COLUMN_NAME");
-		$contraint["PK_NAME"][] = lmbdb_result($rs,"CONSTRAINT_NAME");
-	}
-	return  $contraint;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getPrimaryKeys instead.');
+	return Dbf::getPrimaryKeys($p[0], $p[1], $p[2]);
 }
 
 /**
  * get UNIQUE contraints
  *
- * @param array $p [0]=schema, [1]=table, [2]=dbname
- * @return sql string
+ * @param array $p [0]=schema, [1]=table, [2]=column
+ * @return array
+ * @deprecated Use Dbf::dropIndexSql instead.
  */
 function dbq_26($p=null){
-	global $db;
-	
-	$sql = "SELECT
-	    KEY_COLUMN_USAGE.CONSTRAINT_NAME, KEY_COLUMN_USAGE.TABLE_NAME, KEY_COLUMN_USAGE.COLUMN_NAME, 
-	    KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME AS FOREIGN_TABLE_NAME,
-	    KEY_COLUMN_USAGE.REFERENCED_COLUMN_NAME AS FOREIGN_COLUMN_NAME
-	FROM 
-		INFORMATION_SCHEMA.KEY_COLUMN_USAGE, INFORMATION_SCHEMA.TABLE_CONSTRAINTS
-	WHERE 
-		KEY_COLUMN_USAGE.CONSTRAINT_SCHEMA = '".dbf_4($p[0])."'
-		AND KEY_COLUMN_USAGE.CONSTRAINT_NAME = TABLE_CONSTRAINTS.CONSTRAINT_NAME
-		AND TABLE_CONSTRAINTS.CONSTRAINT_TYPE = 'UNIQUE'
-		" ;
-	
-	if($p[1]){$sql .= " AND TABLE_NAME = '".dbf_4($p[1])."'";}
-	if($p[2]){$sql .= " AND COLUMN_NAME = '".dbf_4($p[2])."'";}
-	
-	$rs = lmbdb_exec($db,$sql) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(lmbdb_fetch_row($rs)){
-		$contraint["TABLE_NAME"][] = lmbdb_result($rs,"TABLE_NAME");
-		$contraint["COLUMN_NAME"][] = lmbdb_result($rs,"COLUMN_NAME");
-		$contraint["PK_NAME"][] = lmbdb_result($rs,"CONSTRAINT_NAME");
-	}
-	return  $contraint;
-	
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getUniqueConstraints instead.');
+	return Dbf::getUniqueConstraints($p[0], $p[1], $p[2]);
 }
 
 
@@ -167,11 +99,12 @@ function dbq_26($p=null){
  * create primary key
  *
  * @param array $p [0]=table, [1]=field
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::createPrimaryKeySql instead.
  */
-
 function dbq_17($p){
-	return "ALTER TABLE ".dbf_4($p[0])." ADD PRIMARY KEY (".$p[1].")";
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::createPrimaryKeySql instead.');
+	return Dbf::createPrimaryKeySql($p[1], $p[2]);
 }
 
 
@@ -179,20 +112,24 @@ function dbq_17($p){
  * create constraint
  *
  * @param array $p [0]=table, [1]=field
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::createConstraintSql instead.
  */
 function dbq_24($p){
-	return "ALTER TABLE ".dbf_4($p[0])." ADD CONSTRAINT ".$p[2]." UNIQUE (".$p[1].")";
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::createConstraintSql instead.');
+	return Dbf::createConstraintSql($p[0], $p[1], $p[2]);
 }
- 
+
 /**
  * drop primary key
  *
  * @param array $p [0]=table
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::dropPrimaryKeySql instead.
  */
 function dbq_18($p){
-	return "ALTER TABLE ".dbf_4($p[0])." DROP PRIMARY KEY";
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropPrimaryKeySql instead.');
+	return Dbf::dropPrimaryKeySql($p[0]);
 }
 
 
@@ -202,30 +139,12 @@ function dbq_18($p){
  * get details for foreign keys for specific table or keyname
  *
  * @param array $p [0]=schema, [1]=tablename, [2]=keyname
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::getForeignKeySql instead.
  */
 function dbq_3($p){
-	$sql = "SELECT INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME TABLENAME,
-				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.COLUMN_NAME COLUMNNAME,
-				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME REFTABLENAME,
-				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_COLUMN_NAME REFCOLUMNNAME,
-				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME FKEYNAME,
-				INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.DELETE_RULE RULE
-			FROM 
-				INFORMATION_SCHEMA.KEY_COLUMN_USAGE,
-				 INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
-			WHERE 
-				INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
-				AND INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_SCHEMA = '".$p[0]."'";
-	
-	if($p[1]){
-		$sql .= " AND UPPER(INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME) = '".lmb_strtoupper($p[1])."'";
-	}
-	if($p[2]){
-		$sql .= " AND UPPER(INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME) LIKE '".lmb_strtoupper($p[2])."'";
-	}
-	
-	return $sql;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getForeignKeySql instead.');
+	return Dbf::getForeignKeySql($p[0], $p[1], $p[2] ?? null);
 }
 
 
@@ -233,22 +152,25 @@ function dbq_3($p){
  * add foreign key
  *
  * @param array $p [0]=parent-tablename, [1]=parent-fieldname, [2]=child-tablename, [3]=child-fieldname, [4]=keyname
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::addForeignKeySql instead.
  */
 function dbq_11($p){
-    if(!$p[5]) {
-        $p[5] = "RESTRICT";
-    }
-
-	return "ALTER TABLE ".dbf_4($p[0])." 
-		ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") 
-		REFERENCES ".dbf_4($p[2])."(".$p[3].") 
-		ON DELETE ".$p[5];
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::addForeignKeySql instead.');
+	return Dbf::addForeignKeySql($p[0], $p[1], $p[2], $p[3], $p[4], $p[5]);
 }
 
 
+/**
+ * drop foreign key
+ *
+ * @param array $p [0]=tablename, [1]=keyname
+ * @return string sql
+ * @deprecated Use Dbf::dropForeignKeySql instead.
+ */
 function dbq_6($p){
-	return " ALTER TABLE ".$p[0]." DROP FOREIGN KEY ".$p[1];
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropForeignKeySql instead.');
+	return Dbf::dropForeignKeySql($p[0], $p[1]);
 }
 
 
@@ -260,92 +182,60 @@ function dbq_6($p){
  *
  * @param array $p [0]=schema, [1]=triggername
  * @return array
+ * @deprecated Use Dbf::getTriggerInformation instead.
  */
 function dbf_3($p){
-	global $db;	
-
-	$sql = "SELECT * FROM INFORMATION_SCHEMA.TRIGGERS";
-	if($p[1]){
-		$sql .= " WHERE LOWER(TRIGGER_NAME) LIKE '".lmb_strtolower($p[1])."'";
-	}
-	
-	$rs = lmbdb_exec($db,$sql);
-	while(lmbdb_fetch_row($rs)){
-		$res["triggername"][] = lmbdb_result($rs,"TRIGGER_NAME");
-		$res["definition"][] = lmbdb_result($rs,"ACTION_STATEMENT");
-		$res["tablename"][] = lmbdb_result($rs,"EVENT_OBJECT_TABLE");
-		$res["event"][] = lmbdb_result($rs,"EVENT_MANIPULATION");
-		$res["action"][] = lmbdb_result($rs,"ACTION_TIMING");
-	}
-	
-	return $res;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getTriggerInformation instead.');
+	return Dbf::getTriggerInformation($p[0] ?? '', $p[1] ?? null);
 }
 
 
 /**
  * drop database trigger
  *
- * @param array $p [0]=schema, [1]=triggername
- * @return sql string
+ * @param array $p [0]=triggername, [1]=tablename
+ * @return string sql
+ * @deprecated Use Dbf::dropTriggerSql instead.
  */
 function dbq_10($p){
-	return "DROP TRIGGER IF EXISTS ".$p[0];
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropTriggerSql instead.');
+	return Dbf::dropTriggerSql($p[1], $p[0]);
 }
 
 /**
  * create trigger
  *
- * @param array $p [0]=schema, [1]=triggername, [2]=tablename, [3]=action, [4]=value
- * @return sql string
+ * @param array $p [0]=schema, [1]=triggername, [2]=tablename, [3]=action, [4]=value, [5]=position
+ * @return string sql
+ * @deprecated Use Dbf::createTriggerSql instead.
  */
 function dbq_13($p){
-	$sql = "CREATE TRIGGER ".$p[1]." AFTER ".$p[3]." ON ".$p[0].".".$p[2]. " FOR EACH ROW BEGIN ".$p[4]." END;";
-	return $sql;
+	//TODO: Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::createTriggerSql instead.');
+	return Dbf::createTriggerSql($p[0], $p[1], $p[2], $p[3], $p[4], $p[5]);
 }
 
 /**
  * limbas specific trigger function for limbas relation schema
  *
- * @param array $p [0]=schema, [1]=tablename, [2]=fieldname, [3]=action, [4]=r-tablename, [5]=r-fieldname
- * @return sql string
+ * @param array $p [0]=schema, [1]=triggername, [2]=tablename, [3]=action, [4]=value
+ * @return string sql
+ * @deprecated Use Dbf::relationTriggerFunctionSql instead.
  */
 function dbq_14($p){
-	global $DBA;
-
-	if($p[4] == "+"){
-	    $t = 'NEW';
-    }else{
-	    $t = 'OLD';
-    }
-
-	# vorward relation
-    if($p[7] == 2) { // ignore archive
-        $out = "UPDATE ".$p[2]." SET ".$p[3]." = (SELECT COUNT(*) FROM ".$p[1].",".$p[5]." WHERE ".$p[1].".ID = $t.ID AND ".$p[5].".ID = ".$p[1].".VERKN_ID AND ".$p[5].".DEL = FALSE) WHERE ID = $t.ID;";
-    }else{
-        $out = "UPDATE " . $p[2] . " SET " . $p[3] . " = (SELECT COUNT(*) FROM " . $p[1] . " WHERE ID = $t.ID) WHERE ID = $t.ID;";
-    }
-
-	# backward relation
-	if($p[6]){
-        if($p[7] == 2) { // ignore archive
-            $out .= "\nUPDATE " . $p[5] . " SET " . $p[6] . " = (SELECT COUNT(*) FROM " . $p[1] . "," . $p[2] . " WHERE " . $p[1] . ".VERKN_ID = $t.VERKN_ID AND " . $p[2] . ".ID = " . $p[1] . ".ID AND " . $p[2] . ".DEl = FALSE) WHERE ID = $t.VERKN_ID;";
-        }else{
-            $out .= "\nUPDATE " . $p[5] . " SET " . $p[6] . " = (SELECT COUNT(*) FROM " . $p[1] . " WHERE VERKN_ID = $t.VERKN_ID) WHERE ID = $t.VERKN_ID;";
-        }
-	}
-
-	return $out;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::relationTriggerFunctionSql instead.');
+	return Dbf::relationTriggerFunctionSql($p[0],$p[1], $p[2], $p[3], $p[4], $p[5], $p[6], intval($p[7]));
 }
 
 /**
- * limbas specific trigger function for lastmodified  // not implemented
+ * limbas specific trigger function for lastmodified // not implemented
  *
  * @param array $p [0]=schema, [2]=tableid
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::lastModifiedTriggerFunctionSql instead.
  */
 function dbq_27($p){
-	return ;
-	#return "lmb_lastmodified('".$p[1]."');";
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::lastModifiedTriggerFunctionSql instead.');
+	return Dbf::lastModifiedTriggerFunctionSql($p[1]);
 }
 
 ############# view ########################
@@ -353,63 +243,49 @@ function dbq_27($p){
 /**
  * get view definition
  *
- * @param array $p [0]=schema [1]=viewname
- * @return sql string
+ * @param array $p [1]=viewname
+ * @return string sql
+ * @deprecated Use Dbf::getViewDefinitionSql instead.
  */
 function dbq_8($p){
-	return "SELECT TABLE_NAME VIEWNAME, VIEW_DEFINITION DEFINITION 
-			FROM 
-				INFORMATION_SCHEMA.VIEWS
-			WHERE 
-				TABLE_SCHEMA = '".$p[0]."'
-				AND TABLE_NAME = '".dbf_4($p[1])."'";
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getViewDefinitionSql instead.');
+	return Dbf::getViewDefinitionSql($p[0], $p[1]);
 }
 
 /**
  * existing views
  *
  * @param array $p [0]=schema, [1]=viewname
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::getExistingViewsSql instead.
  */
 function dbq_12($p){
-	$qu = "SELECT TABLE_NAME VIEWNAME, VIEW_DEFINITION DEFINITION
-		FROM 
-			INFORMATION_SCHEMA.VIEWS
-		WHERE 
-			TABLE_SCHEMA = '".$p[0]."'";
-	if($p[1]){
-		$qu .= " AND LOWER(TABLE_NAME) = '".lmb_strtolower($p[1])."'";
-	}
-	return $qu;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getExistingViewsSql instead.');
+	return Dbf::getExistingViewsSql($p[0], $p[1] ?? null);
 }
 
 /**
  * create view
  *
  * @param array $p [0]=view name, [1]=definition
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::createViewSql instead.
  */
 function dbq_19($p){
-	if(lmb_stripos($p[1],"CREATE VIEW") !== false){
-		$qu = $p[1];
-	}else{
-		$qu = "CREATE OR REPLACE VIEW ".dbf_4($p[0])." AS (".rtrim(trim($p[1]),";").")";
-	}
-	
-	return $qu;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::createViewSql instead.');
+	return Dbf::createViewSql($p[0], $p[1]);
 }
 
-/*
+/**
  * drop view
  *
  * @param array $p [0]=view name
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::dropViewSql instead.
  */
 function dbq_20($p){
-
-	$qu = "DROP VIEW ".$p[0];
-
-	return $qu;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropViewSql instead.');
+	return Dbf::dropViewSql($p[0]);
 }
 
 
@@ -418,59 +294,37 @@ function dbq_20($p){
 /**
  * rename table
  *
- * @param array $p [0]=old tablename, [0]=new tablename
- * @return sql string
+ * @param array $p [0]=old tablename, [1]=new tablename
+ * @return string sql
+ * @deprecated Use Dbf::renameTableSql instead.
  */
-
 function dbf_17($p){
-	return "RENAME TABLE ".dbf_4($p[0])." TO ".dbf_4($p[1]);
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::renameTableSql instead.');
+	return Dbf::renameTableSql($p[0], $p[1]);
 }
 
 /**
  * list of tables / views
  *
  * @param array $p [0]=schema, [1]=name, [2]=typ
- * @return sql string
+ * @return array
+ * @deprecated Use Dbf::getTableList instead.
  */
 function dbf_20($p){
-	global $db;
-	
-	
-	$name = '%';
-	$type = "'TABLE','VIEW'";
-	
-	if($p[1]){$name = dbf_4($p[1]);}
-	if($p[2]){$type = $p[2];}
-	
-	$rs = lmbdb_tables($db,null,null,$name,$type);
-	
-	while(lmbdb_fetch_row($rs)){
-		$odbc_table["table_name"][] = lmbdb_result($rs,"TABLE_NAME");
-		if(stripos(lmbdb_result($rs,"TABLE_TYPE"),'TABLE') !== false){
-		    $odbc_table["table_type"][] = 'TABLE';
-        }else{
-		    $odbc_table["table_type"][] = lmbdb_result($rs,"TABLE_TYPE");
-        }
-	}
-	
-	if($odbc_table){
-		return $odbc_table;
-	}else{
-		return false;
-	}
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getTableList instead.');
+	return Dbf::getTableList($p[0], $p[1], $p[2]);
 }
 
 /**
  * drop table
  *
  * @param array $p [0]=table name
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::dropTableSql instead.
  */
 function dbq_28($p){
-
-	$qu = "DROP TABLE ".dbf_4($p[0]);
-
-	return $qu;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropTableSql instead.');
+	return Dbf::dropTableSql($p[0]);
 }
 
 
@@ -480,55 +334,33 @@ function dbq_28($p){
  * get all sequences
  *
  * @param array $p [0]=schema
+ * @deprecated Use Dbf::getSequences instead.
  */
 function dbf_26($p){
-	global $db;
-
-    $sequ = array();
-	$rs = lmbdb_exec($db,"SELECT SEQUENCE_NAME FROM LMB_SEQUENCES ORDER BY SEQUENCE_NAME");
-	while(lmbdb_fetch_row($rs)) {
-        $name = lmbdb_result($rs, "SEQUENCE_NAME");
-        $name_ = explode('_',$name);
-        if(!$p[1]){$p[1] = 'lmb';}
-        if(strtolower($name_[0]) == strtolower($p[1])) {
-            $sequ[] = lmbdb_result($rs, "SEQUENCE_NAME");
-        }
-    }
-
-    return $sequ;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getSequences instead.');
+	return Dbf::getSequences($p[0], $p[1]);
 }
 
 /**
  * create sequence
  *
  * @param array $p [0]=schema, [1]=name, [2]=start
+ * @deprecated Use Dbf::createSequence instead.
  */
 function dbf_21($p){
-	global $db;
-
-	dbf_22($p);
-
-	if(!$p[2]){$p[2] = 1;}
-	if($rs = lmbdb_exec($db,"SELECT SEQ_SET('".dbf_4($p[1])."', ".$p[2].", 1);")){
-		return true;
-	}else{
-		return false;
-	}
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::createSequence instead.');
+	return Dbf::createSequence($p[1], $p[2]);
 }
 
 /**
  * drop sequence
  *
  * @param array $p [0]=schema, [1]=name
+ * @deprecated Use Dbf::dropSequence instead.
  */
 function dbf_22($p){
-	global $db;
-
-	if($rs = lmbdb_exec($db,"DELETE FROM LMB_SEQUENCES WHERE SEQUENCE_NAME = '".$p[1]."'")){
-		return true;
-	}else{
-		return false;
-	}
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropSequence instead.');
+	return Dbf::dropSequence($p[1]);
 }
 
 
@@ -538,110 +370,62 @@ function dbf_22($p){
 /**
  * list of columns
  *
- * @param array $p [0]=schema, [1]=tablename, [2]=columnname
- * @return sql string
+ * @param array $p [0]=schema, [1]=tablename, [2]=fieldname, [3]=return $rs, [4]=get matview
+ * @return string sql
+ * @deprecated Use Dbf::getColumns instead.
  */
 function dbf_5($p,$mode=null){
-	global $db;
-
-	$sql = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_DEFAULT, COLUMN_KEY, IFNULL(NUMERIC_PRECISION, CHARACTER_MAXIMUM_LENGTH) AS 'PRECISION', NUMERIC_SCALE AS 'SCALE', DATA_TYPE AS TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".$p[0]."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($p[1])."'";
-	if($p[2]){
-		$sql .= " AND LOWER(COLUMN_NAME) = '".lmb_strtolower($p[2])."'";
-	}
-	$rs = lmbdb_exec($db,$sql);
-
-	if($p[3]){return $rs;}
-
-	$rs = lmbdb_exec($db,$sql);
-	while(lmbdb_fetch_row($rs)) {
-		$col["tablename"][] = lmbdb_result($rs, "TABLE_NAME");
-		$col["columnname"][] = lmbdb_result($rs, "COLUMN_NAME");
-		$col["columnname_lower"][] = dbf_4(trim(lmbdb_result($rs, "COLUMN_NAME")));
-		$col["datatype"][] = lmbdb_result($rs, "TYPE_NAME");
-		$col["length"][] = lmbdb_result($rs, "PRECISION");
-		$col["default"][] = lmbdb_result($rs, "COLUMN_DEFAULT");
-		$col["scale"][] = trim(lmbdb_result($rs, "SCALE"));
-		if(lmbdb_result($rs, "COLUMN_KEY") == 'PRI'){$col["mode"][] = 'PRIMARY KEY';}
-		elseif(lmbdb_result($rs, "COLUMN_KEY") == 'UNI'){$col["mode"][] = 'UNIQUE';}
-		else{$col["mode"][] = '';}
-	}
-	
-	if($col){
-		return $col;
-	}else{
-		return false;
-	}
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getColumns instead.');
+	return Dbf::getColumns($p[0], $p[1], $p[2], $p[3], $p[4], $mode);
 }
 
 /**
  * modify column default
  *
  * @param array $p [0]=schema, [1]=tablename, [2]=columnname, [3]=value
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::setColumnDefaultSql instead.
  */
 function dbq_9($p){
-	
-	$col = dbf_5(array($p[0],$p[1],$p[2]));
-	if($col["scale"][0]){
-		$ct = $col["datatype"][0].'('.$col["length"][0].','.$col["scale"][0].')';
-	}elseif($col["length"][0]){
-		$ct = $col["datatype"][0].'('.$col["length"][0].')';
-	}else{
-		$ct = $col["datatype"][0];
-	}
-	
-	return "ALTER TABLE ".dbf_4($p[1])." CHANGE COLUMN ".dbf_4($p[2])." ".dbf_4($p[2])." $ct DEFAULT ".$p[3];
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::setColumnDefaultSql instead.');
+	return Dbf::setColumnDefaultSql($p[0], $p[1], $p[2], $p[3]);
 }
 
 
 /**
- * rename column 
+ * rename column
  *
  * @param array $p [0]=schema, [1]=tablename, [2]=old columnname, [3]=new columnname
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::renameColumnSql instead.
  */
 function dbq_7($p){
-	global $db;
-	
-	$col = dbf_5(array($p[0],$p[1],$p[2]));
-	if($col["scale"][0]){
-		$ct = $col["datatype"][0].'('.$col["length"][0].','.$col["scale"][0].')';
-	}elseif($col["length"][0]){
-		$ct = $col["datatype"][0].'('.$col["length"][0].')';
-	}else{
-		$ct = $col["datatype"][0];
-	}
-	
-	return "ALTER TABLE ".dbf_4($p[1])." CHANGE COLUMN ".dbf_4($p[2])." ".dbf_4($p[3])." $ct";
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::renameColumnSql instead.');
+	return Dbf::renameColumnSql($p[0], $p[1], $p[2], $p[3]);
 }
 
 /**
  * modify column type
  *
  * @param array $p [0]=schema, [1]=tablename, [2]=columnname, [3]=value
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::modifyColumnTypeSql instead.
  */
 function dbq_15($p){
-	return "ALTER TABLE ".dbf_4($p[1])." MODIFY ".dbf_4($p[2])." ".dbf_4($p[3]);
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::modifyColumnTypeSql instead.');
+	return Dbf::modifyColumnTypeSql($p[1], $p[2], $p[3]);
 }
 
 /**
  * drop column
  *
- * @param array $p [0]=schema, [1]=tablename, [2]=columnname
- * @return sql string
+ * @param array $p [0]=tablename, [1]=columnname
+ * @return string sql
+ * @deprecated Use Dbf::dropColumnSql instead.
  */
 function dbq_22($p){
-
-    if(is_array($p[1])){
-        foreach($p[1] as $key => $field){
-            $qu[] = LMB_DBFUNC_DROP_COLUMN_FIRST.' '.dbf_4($field);
-        }
-    }else{
-        $qu[] = LMB_DBFUNC_DROP_COLUMN_FIRST.' '.dbf_4($p[1]);
-    }
-
-	return 'ALTER TABLE '.dbf_4($p[0]).' '.implode(',',$qu);
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropColumnSql instead.');
+	return Dbf::dropColumnSql($p[0], $p[1]);
 }
 
 
@@ -649,23 +433,12 @@ function dbq_22($p){
  * add column
  *
  * @param array $p [0]=schema,[1]=tablename, [2]=columnname, [3]=fieldtype, [4]=default
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::addColumnSql instead.
  */
 function dbq_29($p){
-
-    if(is_array($p[2])){
-        foreach($p[2] as $key => $field){
-            $qu = LMB_DBFUNC_ADD_COLUMN_FIRST.' '.dbf_4($field).' '.$p[3][$key];
-            if($p[4][$key]){$qu .= ' DEFAULT '.$p[4][$key];}
-            $adf[] = $qu;
-        }
-    }else{
-        $qu = LMB_DBFUNC_ADD_COLUMN_FIRST.' '.dbf_4($p[2]).' '.$p[3];
-        if($p[4]){$qu .= ' DEFAULT '.$p[4];}
-        $adf[] = $qu;
-    }
-
-	return "ALTER TABLE ".dbf_4($p[1])." ".implode(',',$adf);
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::addColumnSql instead.');
+	return Dbf::addColumnSql($p[1], $p[2], $p[3], $p[4]);
 }
 
 
@@ -673,42 +446,15 @@ function dbq_29($p){
 
 
 /**
- * limbas based lmb_vkn procedure 
+ * limbas based lmb_vkn procedure
  *
  * @param
- * @return sql string
+ * @return string sql
+ * @deprecated Use Dbf::createLimbasVknFunction instead.
  */
 function dbq_16($p=null){
-	global $db;
-	# sequences workaround for mysql
-	if(!dbf_20(array($GLOBALS['DBA']['DBSCHEMA'],'LMB_SEQUENCES',"'TABLE'"))){
-	    $sqlquery = "CREATE TABLE LMB_SEQUENCES ( SEQUENCE_NAME VARCHAR(50) COLLATE UTF8_BIN NOT NULL, CURRENT_VALUE BIGINT(20) NOT NULL DEFAULT '0', INCREMENT INT(11) NOT NULL DEFAULT '1', PRIMARY KEY (SEQUENCE_NAME) );";
-	    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create TABLE lmb_sequences",__FILE__,__LINE__);
-		if(!$rs){$commit = 1;}
-	}
-
-    // seq_nextval
-	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_nextval');
-	$sqlquery = "CREATE FUNCTION `SEQ_NEXTVAL`(SEQNAME VARCHAR(100)) RETURNS INT(11) BEGIN UPDATE LMB_SEQUENCES SET CURRENT_VALUE=(@RET:=CURRENT_VALUE)+INCREMENT WHERE SEQUENCE_NAME=SEQNAME;RETURN @RET; END;";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure seq_nextval",__FILE__,__LINE__);
-	if(!$rs){$commit = 1;}
-
-    // seq_set
-	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_set');
-	$sqlquery = "CREATE FUNCTION SEQ_SET(SEQNAME VARCHAR(100), CVAL INT(11), INC INT(11)) RETURNS INT(11) BEGIN REPLACE INTO LMB_SEQUENCES(SEQUENCE_NAME, CURRENT_VALUE, INCREMENT) VALUES(SEQNAME, CVAL, INC); RETURN CVAL; END;";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure seq_set",__FILE__,__LINE__);
-	if(!$rs){$commit = 1;}
-
-    // lmb_try_query // todo
-    $sqlquery = "";
-
-    // lmb_lastmodified // todo
-    $sqlquery = "";
-
-
-	if($commit){return false;}
-	return true;
-
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::createLimbasVknFunction instead.');
+	return Dbf::createLimbasVknFunction($p[0] ?? '', $p[1] ?? false);
 }
 
 
@@ -716,27 +462,24 @@ function dbq_16($p=null){
  * drop limbas based lmb_vkn procedure
  *
  * @param
- * @return bool
+ *
+ * @deprecated Use Dbf::dropLimbasVknFunction instead.
  */
-function dbq_21($p,$t=null,$n=null){
-	global $db;
-
-	if($t AND $n) {
-        $sqlquery = "DROP $t " . $p[0] . "." . $n;
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"drop procedure $n",__FILE__,__LINE__);
-
-    }
+function dbq_21($p = [], $t = null, $n = null){
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::dropLimbasVknFunction instead.');
+	Dbf::dropLimbasVknFunction($p[0], $t, $n);
 }
 
 /**
  * pretty print table size
- * CURRENTLY ONLY SUPPORTED IN POSTGRESQL
  *
  * @param array $p [0]=schema, [1]=tablename
  * @return array table size, order size
+ * @deprecated Use Dbf::prettyPrintTableSize instead.
  */
 function dbq_30(array $p): array{
-	return ["", ""];
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::prettyPrintTableSize instead.');
+	return Dbf::prettyPrintTableSize($p[0], $p[1]);
 }
 
 
@@ -745,40 +488,40 @@ function dbq_30(array $p): array{
 
 
 # -------- create Medium --------
+/**
+ * @param $path
+ * @param $typ
+ * @return bool
+ * @deprecated Use Dbf::createMedium instead.
+ */
 function create_medium($path,$typ){
-	return true;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::createMedium instead.');
+	return Dbf::createMedium($path, $typ);
 }
 
 # -------- delete medium --------
+/**
+ * @param $medium
+ * @param $typ
+ * @return bool
+ * @deprecated Use Dbf::deleteMedium instead.
+ */
 function delete_medium($medium,$typ){
-	return true;
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::deleteMedium instead.');
+	return Dbf::deleteMedium($medium, $typ);
 }
 
 # -------- start backup --------
+/**
+ * @param $medium
+ * @param $path
+ * @param $typ
+ * @return array
+ * @deprecated Use Dbf::backupData instead.
+ */
 function backup_data($medium,$path,$typ){
-	global $DBA;
-	global $db;
-
-	$sys = "mysqldump -h".$DBA["DBHOST"]." -u".$DBA["DBCUSER"]." -p".$DBA["DBCPASS"]." ".$DBA["DBCNAME"]." | gzip > ".$path["path"].".gz";
-	exec($sys,$res,$ret);
-
-	if(!$ret){
-		clearstatcache();
-		if(file_exists($path["path"].".gz")){
-			$out[7] = filesize($path["path"].".gz");
-		}
-		if($out[7] > 1000){
-			$out[0] = "OK";
-			$out[10] = $path["medname"];
-			return $out;
-		}else{
-			$out[0] = 'FALSE';
-			return $out;
-		}
-	}else{
-		$out[0] = 'FALSE';
-		return $out;
-	}
+	Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::backupData instead.');
+	return Dbf::backupData($medium,$path,$typ);
 }
 
 ?>

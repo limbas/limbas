@@ -15,1860 +15,61 @@ namespace Limbas\admin\tools\datasync;
  * On Main -> runSyncWithClientSocket -> Soap Request an Client -> 
  * On Client -> Incoming Soap Request -> startSocket -> Cron -> runSyncWithMainSocket
  * 
- * 
- * Sync Cache Types
- * 1 = delete
- * 2 = created
- * 3 = changed
- * 
  */
 
 
-use Limbas\lib\db\Database;
 use DateTime;
 use Exception;
-use LimbasLogger;
-use lmb_log;
+use Limbas\admin\tools\datasync\Data\DatasyncNewRecord;
+use Limbas\admin\tools\datasync\Data\DatasyncRecordData;
+use Limbas\admin\tools\datasync\Data\DatasyncRelation;
+use Limbas\admin\tools\datasync\Data\DatasyncTableData;
+use Limbas\admin\tools\datasync\Enums\ConflictMode;
+use Limbas\admin\tools\datasync\Enums\DatasyncError;
+use Limbas\admin\tools\datasync\Enums\DataSyncType;
+use Limbas\admin\tools\datasync\Data\DatasyncData;
+use Limbas\admin\tools\datasync\Traits\HandleData;
+use Limbas\admin\tools\datasync\Traits\HandleIds;
+use Limbas\lib\db\Database;
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Log;
 use Throwable;
 
 abstract class Datasync
 {
+    use HandleIds, HandleData;
 
     /**
      * @var bool defines if the current system is a master or client
      */
-    protected $is_main;
+    protected bool $isMain;
 
     /**
      * @var array synchronisation template
      */
-    protected $template;
+    protected array $template;
 
     /**
-     * @var int id of the current client
+     * @var ?int id of the current client
      */
-    protected $current_client;
-
-    /**
-     * @var array of exceptions to be loggend in lmb_sync_log table
-     */
-    protected $sync_exceptions;
+    protected ?int $currentClient = null;
 
     /**
      * @var int timestamp at which the sync started. Used as key of the process.
      */
-    protected $cacheTimestamp = 0;
+    protected int $cacheTimestamp = 0;
+
+    protected array $tableIndex;
 
 
     /**
-     * @param $template
+     * @param array $template
      */
-    public function __construct($template)
+    public function __construct(array $template)
     {
         $this->template = $template;
-        $this->sync_exceptions = array();
     }
 
-
-    /**
-     * Delete all handled records from sync cache
-     *
-     * @param $timestamp
-     * @return bool success
-     */
-    protected function resetCache($timestamp): bool
-    {
-        global $db;
-
-        LimbasLogger::log('Resetting cache');
-
-        if (empty($timestamp)) {
-            return true;
-        }
-
-        //don't delete exceptions
-        $con = array();
-        foreach ($this->sync_exceptions as $type => $exceptions) {
-            foreach ($exceptions as $tabid => $records) {
-                if ($tabid == 0) {
-                    continue;
-                }
-                foreach ($records as $datid => $record) {
-                    if ($datid === 'new') {
-                        continue;
-                    }
-
-                    if ($datid == 0) {
-                        $con[] = "(TABID = $tabid AND (FIELDID <= 0 OR DATID <= 0))";
-                        $this->processExceptions($tabid, $datid, reset($record));
-                        continue;
-                    }
-                    foreach ($record as $fieldid => $msg) {
-                        if(array_key_exists($fieldid, $msg) && $msg[$fieldid]['code'] === 9) {
-                            continue;
-                        }
-                        $this->processExceptions($tabid, $datid, $msg);
-                        if ($fieldid == 0) {
-                            $con[] = "(TABID = $tabid AND SLAVE_DATID = $datid)";
-                            continue;
-                        }
-                        $con[] = "(TABID = $tabid AND SLAVE_DATID = $datid AND FIELDID = $fieldid)";
-
-                    }
-                }
-            }
-        }
-        $cw = '';
-        if (lmb_count($con) > 0) {
-            $cw = 'NOT (' . implode(' OR ', $con) . ') AND';
-        }
-
-        //TODO: template in lmb_sync_cache
-        if (!$this->is_main || !empty($this->current_client)) {
-            $sql = "DELETE FROM LMB_SYNC_CACHE WHERE $cw LMB_SYNC_CACHE.PROCESS_KEY = $timestamp  " . (($this->is_main) ? " AND SLAVE_ID = {$this->current_client}" : '');
-            $rs = lmbdb_exec($db, $sql);
-            if (!$rs) {
-                LimbasLogger::error('Reset failed');
-                return false;
-            }
-        }
-
-
-        // insert client in global log
-        if ($this->is_main) {
-            $sqlquery = 'SELECT LMB_SYNC_CACHE.ID FROM LMB_SYNC_CACHE LEFT JOIN LMB_SYNC_GLOBAL ON LMB_SYNC_CACHE.ID = LMB_SYNC_GLOBAL.CACHE_ID
-    AND LMB_SYNC_GLOBAL.CLIENT_ID = ' . $this->current_client . ' WHERE LMB_SYNC_CACHE.PROCESS_KEY = ' . $timestamp . ' AND SLAVE_ID = 0 AND CACHE_ID IS NULL';
-
-            $rs = lmbdb_exec($db, $sqlquery);
-            if (!$rs) {
-                LimbasLogger::error('Reading global cache');
-                return false;
-            }
-
-            $values = [];
-            if (lmbdb_num_rows($rs) > 0) {
-                while (lmbdb_fetch_row($rs)) {
-                    $values[] = '(' . lmbdb_result($rs, 'ID') . ',' . $this->current_client . ')';
-                }
-            }
-
-            if (!empty($values)) {
-                $sql = 'INSERT INTO LMB_SYNC_GLOBAL (CACHE_ID,CLIENT_ID) VALUES ' . implode(',', $values);
-                $rs = lmbdb_exec($db, $sql);
-                if (!$rs) {
-                    LimbasLogger::error('Put into global cache failed');
-                    return false;
-                }
-            }
-        }
-
-
-        return true;
-    }
-
-    /**
-     * Process specific error codes
-     *
-     * @param $tabid
-     * @param $datid
-     * @param $error_msg
-     */
-    protected function processExceptions($tabid, $datid, $error_msg): void
-    {
-
-        if (!is_array($error_msg) || $tabid <= 0) {
-            return;
-        }
-
-        $error_msg = reset($error_msg);
-
-        //in case of slave sending a change to a record that does not exist on master -> write create entry to cache on slave so next time the missing record will be created
-        if ($datid && $error_msg['code'] == 6 && !$this->is_main) {
-            $this->putInCache($tabid, 0, $datid, 2);
-        }
-    }
-
-
-    /**
-     * Mark all records that may be synced by the current process
-     * @param $maxRecords
-     * @return void
-     */
-    private function setSyncRecords($maxRecords): void
-    {
-        $db = Database::get();
-
-        $filter = '';
-        if ($this->is_main) {
-            $filter = ' LEFT JOIN LMB_SYNC_GLOBAL ON LMB_SYNC_CACHE.ID = LMB_SYNC_GLOBAL.CACHE_ID AND LMB_SYNC_GLOBAL.CLIENT_ID = ' . $this->current_client . '
-    WHERE (SLAVE_ID = ' . $this->current_client . ' OR ( SLAVE_ID = 0 AND LMB_SYNC_GLOBAL.CACHE_ID IS NULL ))';
-        }
-
-        $limit = '';
-        if ($maxRecords !== false) {
-            $limit = 'LIMIT ' . $maxRecords;
-        }
-
-        if ($this->is_main || $maxRecords !== false) {
-            $sqlQuery = 'UPDATE LMB_SYNC_CACHE
-        SET PROCESS_KEY = ' . $this->cacheTimestamp . '
-        WHERE ID IN (
-        SELECT LMB_SYNC_CACHE.ID
-          FROM LMB_SYNC_CACHE
-          ' . $filter . '
-          ORDER BY LMB_SYNC_CACHE.TYPE ' . $limit . '
-        )';
-
-        } else {
-            // no filter and limit needed on client => update all records
-            $sqlQuery = 'UPDATE LMB_SYNC_CACHE SET PROCESS_KEY = ' . $this->cacheTimestamp;
-        }
-
-
-        lmbdb_exec($db, $sqlQuery);
-    }
-
-
-    /**
-     * Prepares an array based on lmb_sync_cache which can be applied later
-     *
-     * @param array<int> $newids
-     * @return array|false
-     */
-    protected function collectChangedData($newids = array()): bool|array
-    {
-        global $umgvar;
-        global $gtab;
-
-        $db = Database::get();
-
-        //TODO: group alle entries of the same datid into one record with array of types and array of update fields
-        //TODO: Only tables of selected sync template
-
-
-        
-
-        $maxRecords = false;
-        if (array_key_exists('sync_max_records', $umgvar)) {
-            if (!empty($umgvar['sync_max_records'])) {
-                $maxRecords = intval($umgvar['sync_max_records']);
-            }
-        }
-
-        try {
-            
-            
-            //get count of all records
-            $sqlQuery = 'SELECT COUNT(ID) AS CACHECOUNT FROM LMB_SYNC_CACHE' . ($this->is_main ? ' WHERE (SLAVE_ID = ' . $this->current_client . ' OR  SLAVE_ID = 0 )' : '');
-            $rs = lmbdb_exec($db, $sqlQuery);
-            $recordCount = 0;
-            if (lmbdb_fetch_row($rs)) {
-                $recordCount = intval(lmbdb_result($rs,'CACHECOUNT'));
-            }
-            
-
-            $this->cacheTimestamp = time();
-
-            $this->setSyncRecords($maxRecords);
-
-            //ORDER: delete (1) -> created (2) -> changed (3)
-            $sqlquery = 'SELECT MIN(ID) as ID, TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID FROM LMB_SYNC_CACHE WHERE PROCESS_KEY = ' . $this->cacheTimestamp . ' GROUP BY TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID ORDER BY TYPE';
-
-            $rs = lmbdb_exec($db, $sqlquery);
-
-            $data = array();
-            $syncFields = array();
-            $rowCount = lmbdb_num_rows($rs);
-            
-            if ($this->is_main) {
-                LimbasLogger::log('Collecting data on master [' . $rowCount . ' / ' . $recordCount . ']');
-            } else {
-                LimbasLogger::log('Collecting data on client [' . $rowCount . ' / ' . $recordCount . ']');
-            }
-            
-            if ($rowCount > 0) {
-                while (lmbdb_fetch_row($rs)) {
-                    $id = intval(lmbdb_result($rs, 'ID'));
-                    $tabid = intval(lmbdb_result($rs, 'TABID'));
-                    $fieldid = lmbdb_result($rs, 'FIELDID');
-                    $datid = lmbdb_result($rs, 'DATID');
-                    $slave_datid = lmbdb_result($rs, 'SLAVE_DATID');
-                    $type = intval(lmbdb_result($rs, 'TYPE'));
-                    $erstdatum = lmbdb_result($rs, 'ERSTDATUM');
-
-                    if ($this->template[$tabid]['global']) {
-                        $slave_datid = $datid;
-                    }
-
-
-                    // get highest timestamp
-                    $dt = new DateTime($erstdatum);
-                    $erstdatum = $dt->getTimestamp();
-
-                    // no client record id assigned and dataset deleted/created
-                    if ($this->is_main &&  empty($slave_datid) && $type !== 2 && !$this->template[$tabid]['global']) {
-                        //try to resolve the client record id
-                        $slave_datid = $this->convertID($tabid, $datid,1);
-                        
-                        
-                        if(empty($slave_datid)) {
-                            Database::update('LMB_SYNC_CACHE',['PROCESS_KEY'=>null],['ID'=>$id]);
-                            $this->setException('error', 8, 'No slavedat', $tabid, $datid, $fieldid);
-                            continue;
-                        }
-                    }
-
-                    if (!array_key_exists($tabid, $data)) {
-                        $data[$tabid] = array();
-                        //cache syncfields per table
-                        $syncFields[$tabid] = $this->getSyncFields($tabid);
-                    }
-
-                    //deleted
-                    if ($type === 1) {
-                        $data[$tabid][$slave_datid] = false;
-                        if (is_array($data[$tabid]['new']) && array_key_exists($slave_datid, $data[$tabid]['new'])) {
-                            unset($datid, $data[$tabid]['new'][$slave_datid]);
-                        }
-                    } //created & not deleted
-                    elseif ($type === 2 && $data[$tabid][$slave_datid] !== false) {
-
-                        $newTabIds = [$tabid];
-                        $isOneOneRelation = false;
-                        if(array_key_exists('raverkn', $gtab) && is_array($gtab['raverkn']) && array_key_exists($tabid,$gtab['raverkn']) && is_array($gtab['raverkn'][$tabid])){
-                            foreach($gtab['raverkn'][$tabid] as $rTabId){
-
-                                if (is_array($this->template) && !array_key_exists($rTabId, $this->template)) {
-                                    continue;
-                                }
-                                
-                                if($rTabId !== $tabid) {
-                                    $newTabIds[] = intval($rTabId);
-                                }
-                            }
-                            $isOneOneRelation = true;
-                        }
-                        
-                        // in case of 1:1 relations all related tables are send
-                        foreach($newTabIds as $newTabId) {
-
-                            if (!array_key_exists($newTabId, $data)) {
-                                $data[$newTabId] = [];
-                                //cache syncfields per table
-                                $syncFields[$newTabId] = $this->getSyncFields($newTabId);
-                            }
-                            
-                            //only take all data if fieldid = 1
-                            if ($fieldid == 1) {
-                                $newdata = $this->getData($newTabId, $datid, $syncFields[$newTabId], skipRelations: true);
-                            } else {
-                                //otherwise, take only system fields
-                                $newdata = $this->getData($newTabId, $datid, [], $erstdatum, skipRelations: true);
-                            }
-                            if ($newdata === false) {
-                                continue;
-                            }
-
-                            //always remove specific values systemdata
-                            if (array_key_exists('sys', $newdata)) {
-                                $ignore = ['VPID', 'VACT'];
-                                foreach ($ignore as $i) {
-                                    if (array_key_exists($i, $newdata['sys'])) {
-                                        unset($newdata['sys'][$i]);
-                                    }
-                                }
-                            }
-
-
-                            // add data to default update array
-                            $newdata['new'] = true;
-                            $data[$newTabId][$datid] = $newdata;
-
-                            $newid = [
-                                'ID' => $datid,
-                                'slave_datid' => 0,
-                                'relOne' => $isOneOneRelation,
-                                'relTab' => $tabid
-                            ];
-
-                            if (!$this->is_main) {
-                                $data[$newTabId]['new'][$datid] = $newid;
-                            } else {
-                                $data[$newTabId]['new'][] = $newid;
-                            }
-                        }
-                        
-                        
-                        
-
-                    } //changed & not deleted
-                    elseif ($type === 3 && $data[$tabid][$slave_datid] !== false) {
-                        if (in_array($fieldid, $syncFields[$tabid]) || $fieldid == 0) {
-                            if ($fieldid == 0) {
-                                $changedata = $this->getData($tabid, $datid, array(), $erstdatum);
-                            } else {
-                                $changedata = $this->getData($tabid, $datid, array($fieldid), $erstdatum);
-                            }
-
-                            if ($changedata === false) {
-                                continue;
-                            }
-                            if (is_array($data[$tabid][$slave_datid])) {
-                                $data[$tabid][$slave_datid] += $changedata; // array merge
-                            } else {
-                                $data[$tabid][$slave_datid] = $changedata;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return array('data' => $data, 'newids' => $newids, 'timestamp' => $this->cacheTimestamp);
-        } catch (Throwable $t) {
-            LimbasLogger::error('Data collection error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
-            return false;
-        }
-    }
-
-
-    /**
-     * Applies changes out of prepared array.
-     * On slave: ids of created records are collected and send back
-     * On master: all records get their corresponding lmb_sync_slave and lmb_sync_id
-     *
-     * @param array $syncdata
-     * @return array|false
-     */
-    protected function applyChangedData($syncdata): bool|array
-    {
-        global $db;
-        global $gfield;
-        global $gtab;
-
-        LimbasLogger::log('Applying changed data');
-
-        //get deleted records
-        $sqlquery = "SELECT TYPE, TABID, DATID, SLAVE_ID, SLAVE_DATID FROM LMB_SYNC_CACHE WHERE TYPE = 0";
-        $rs = lmbdb_exec($db, $sqlquery);
-        if (!$rs) {
-            $this->setException('error', 10, 'Fetching deleted data failed');
-        }
-
-        $deleted = array();
-        while (lmbdb_fetch_row($rs)) {
-            $tabid = lmbdb_result($rs, 'TABID');
-
-            if (!is_array($this->template) || !array_key_exists($tabid, $this->template)) {
-                continue;
-            }
-
-            //if master use slave_datid instead of datid
-            if ($this->is_main && !$this->template[$tabid]['global']) {
-                $deleted[$tabid][] = lmbdb_result($rs, 'SLAVE_DATID');
-            } else {
-                $deleted[$tabid][] = lmbdb_result($rs, 'DATID');
-            }
-        }
-
-        $newids = array();
-        $relation = array();
-        try {
-            $tabIdMatching = []; // only relevant for 1:1 relations
-            foreach ($syncdata['data'] as $tabid => $data) {
-
-                //check if table is a parameterized relation table //TODO: other way than name check
-                if (strtoupper(substr($gtab['table'][$tabid], 0, 5)) === 'VERK_') {
-                    continue;
-                }
-
-                if (!is_array($this->template) || !array_key_exists($tabid, $this->template)) {
-                    continue;
-                }
-
-                $new = null;
-                if (array_key_exists('new', $data)) {
-                    $new = $data['new'];
-                    unset($data['new']);
-                }
-
-                //new records
-                try {
-                    if (is_array($new)) {
-                        foreach ($new as $record) {
-
-                            $table = dbf_4($gtab['table'][$tabid]);
-                            $orgId = $record['ID'];
-
-                            $skipCreate = false;
-                            $createTabId = $tabid;
-                            
-                            // if record in original 1:1 table has not been created yet => create it
-                            if(!array_key_exists($record['relTab'],$tabIdMatching)) {
-                                $tabIdMatching[$record['relTab']] = [];
-                                $createTabId = $record['relTab'];
-                            }
-                                
-                            // if record in original 1:1 table has been created => use id of it and skip creation
-                            if($record['relOne'] === true && array_key_exists($orgId,$tabIdMatching[$record['relTab']])) {
-                                $id = $tabIdMatching[$record['relTab']][$orgId];
-                                $skipCreate = true;
-                            }
-
-
-                            if($skipCreate) {
-                                $newids[$tabid][$record['ID']] = array('ID' => $record['ID'], 'slave_datid' => $id);
-                                continue;
-                            }
-                            
-                            if(!$skipCreate) {
-                                if ($this->template[$createTabId]['global']) {
-                                    //check if record already exists
-                                    $id = $orgId;
-                                    $sql = "SELECT ID FROM $table WHERE ID = $id";
-                                    $rs = lmbdb_exec($db, $sql);
-                                    if (!lmbdb_result($rs, 'ID')) {
-                                        //it does not exist => force id
-                                        $id = new_data($createTabId, null, null, null, $id);
-                                    }
-                                } else {
-                                    if ($this->is_main) {
-                                        //check if record already exists
-                                        $sql = "SELECT ID FROM $table WHERE LMB_SYNC_SLAVE = {$this->current_client} AND LMB_SYNC_ID = {$orgId}";
-                                        $rs = lmbdb_exec($db, $sql);
-                                        $id = lmbdb_result($rs, 'ID');
-                                        if (empty($id)) {
-                                            $id = new_data($createTabId);
-                                        }
-                                    } else {
-                                        $id = new_data($createTabId);
-                                    }
-                                }
-
-                                $tabIdMatching[$createTabId][$orgId] = $id;
-                            }
-                            
-
-
-                            if (empty($id)) {
-                                $this->setException('error', 4, 'New data failed: ' . lmb_log::getLogMessage(true), $tabid, $orgId);
-                                continue;
-                            }
-
-                            if ($this->is_main && !$this->template[$tabid]['global']) {
-                                // assign lmb_sync_slave and lmb_sync_id
-                                if(array_key_exists('raverkn', $gtab) && is_array($gtab['raverkn']) && array_key_exists($tabid,$gtab['raverkn']) && is_array($gtab['raverkn'][$tabid])){
-                                    foreach($gtab['raverkn'][$tabid] as $rTabId) {
-                                        $rTable = dbf_4($gtab['table'][$rTabId]);
-                                        $sql = "UPDATE $rTable SET LMB_SYNC_SLAVE = {$this->current_client}, LMB_SYNC_ID = {$record['ID']} WHERE ID = $id";
-                                        $rs = lmbdb_exec($db, $sql);
-                                    }
-                                } else {
-                                    $sql = "UPDATE $table SET LMB_SYNC_SLAVE = {$this->current_client}, LMB_SYNC_ID = {$record['ID']} WHERE ID = $id";
-                                    $rs = lmbdb_exec($db, $sql);
-                                }
-                                
-                            } elseif ($this->is_main && $this->template[$tabid]['global']) {
-                                //global sync does not need SYNC_SLAVE AND SYNC_ID SET but a new entry in the cache table so it is synced to all other clients
-                                $this->putInCache($tabid, 0, $id, 2);
-                            } else {
-                                //fill match array for master system
-                                $newids[$tabid][$record['ID']] = array('ID' => $record['ID'], 'slave_datid' => $id);
-                            }
-
-                        }
-                    }
-                } catch (Throwable $t) {
-                    LimbasLogger::error('Create new records error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
-                    return false;
-                }
-
-                //update / delete records
-                foreach ($data as $id => $values) {
-                    if ($id == 0) {
-                        $this->setException('error', 6, 'Record not found', $tabid, $id);
-                        continue;
-                    }
-
-
-                    // on slave check if data belongs to new record and translate id
-                    if(!$this->is_main && is_array($values) && array_key_exists('new', $values) && array_key_exists($tabid, $newids) && array_key_exists($id,$newids[$tabid])) {
-                        $id = $newids[$tabid][$id]['slave_datid'];
-                        unset($values['new']);
-                    } elseif(!$this->is_main && is_array($values) && array_key_exists('new', $values)) {
-                        $this->setException('error', 6, 'ID resolve failed', $tabid, $id);
-                        continue;
-                    }
-                    
-
-                    $sid = $id;
-                    if ($this->is_main) {
-                        $id = $this->convertID($tabid, $id);
-                        if ($id === false) {
-                            //if not deleted anyway
-                            if ($values !== false) {
-                                $this->setException('error', 6, 'ID resolve failed', $tabid, $sid);
-                            }
-                            continue;
-                        }
-                    }
-
-                    //deleted
-                    if ($values === false) {
-                        //TODO: setting delete or hide
-                        //TODO: relation check
-
-                        try {
-                            $recordExists = $this->recordExists(intval($tabid), intval($id));
-                            $delResult = !$recordExists || del_data($tabid, $id);
-                            
-                            if (!$delResult) {
-                                //if not exists returns false 
-                                $this->setException('error', 2, 'Delete failed: ' . lmb_log::getLogMessage(true), $tabid, $sid);
-                            } elseif ($this->is_main && $this->template[$tabid]['global']) {
-                                //global sync does not need SYNC_SLAVE AND SYNC_ID SET but a new entry in the cache table, so it is synced to all other clients
-                                $this->putInCache($tabid, 0, $id, 1);
-                            }
-                        } catch (Throwable $t) {
-                            LimbasLogger::error('Delete records error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
-                            return false;
-                        }
-
-
-                    } //changed and not deleted
-                    elseif (!array_key_exists($tabid, $deleted) || !in_array($id, $deleted[$tabid])) {
-
-                        try {
-                            $update = array();
-
-                            //Update allowed
-                            if ($this->is_main) {
-                                $fids = $this->template[$tabid]['slave'];
-                            } else {
-                                $fids = $this->template[$tabid]['master'];
-                            }
-
-
-                            foreach ($values as $fieldid => $value) {
-                                if ($fieldid == 'new') {
-                                    continue;
-                                }
-                                if ($fieldid == 'sys') {
-                                    $this->handleSystemFields($tabid, $id, $value, $update);
-                                    continue;
-                                }
-
-                                if (!in_array($fieldid, $fids) || $fieldid === 'ID' || $fieldid === 'slave_datid') {
-                                    continue;
-                                }
-
-                                $special = $this->applyFieldType($tabid, $fieldid, $id, $value['value']);
-                                if ($special === true) {
-                                    if ($this->hasConflict($tabid, $id, $fieldid, $value)) {
-                                        continue;
-                                    }
-                                    $update["$tabid,$fieldid,$id"] = $value['value'] . '';
-                                } else if ($special === 'rel') {
-                                    $relation[$tabid][$id][$fieldid] = $value['value'];
-                                } else {
-                                    continue;
-                                }
-
-                                if ($this->is_main && $this->template[$tabid]['global']) {
-                                    //global sync table create cache
-                                    $this->putInCache($tabid, $fieldid, $id, 3);
-                                }
-                            }
-                            if (!empty($update) && update_data($update) !== true) {
-                                $this->setException('error', 3, 'Update failed: ' . lmb_log::getLogMessage(true), $tabid, $sid);
-                            }
-                        } catch (Throwable $t) {
-                            LimbasLogger::error('Update records error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
-                            return false;
-                        }
-
-
-                    }
-                }
-
-                unset($syncdata['data'][$tabid]);
-            }
-        } catch (Throwable $t) {
-            LimbasLogger::error('Apply error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
-            return false;
-        }
-
-        //update sync_ids of records created on slave
-        try {
-            if ($this->is_main) {
-                foreach ($syncdata['newids'] as $tabid => $tab) {
-
-                    //no need to set sync ids if table is globally synced
-                    if ($this->template[$tabid]['global']) {
-                        continue;
-                    }
-
-                    foreach ($tab as $record) {
-                        $id = $record['ID'];
-                        $sync_datid = $record['slave_datid'];
-
-                        $table = dbf_4($gtab['table'][$tabid]);
-                        //set lmb_sync_slave and lmb_sync_id
-                        $sql = "UPDATE $table SET LMB_SYNC_SLAVE = {$this->current_client}, LMB_SYNC_ID = $sync_datid WHERE ID = $id";
-                        $rs = lmbdb_exec($db, $sql);
-                        
-                        
-                        // foreach relation field => create update entry
-                        foreach($gfield[$tabid]['data_type'] as $fieldId => $dataType) {
-                            if(in_array($dataType,[24,25,27])) {
-                                $null = null;
-                                execute_sync($tabid,$fieldId,$id,$null,$sync_datid,$this->current_client,3, true);
-                            }
-                        }
-                        
-                    }
-                }
-            }
-        } catch (Throwable $t) {
-            LimbasLogger::error('Update sync ids error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
-            return false;
-        }
-
-        //set or delete relations
-        //verbose
-        try {
-            foreach ($relation as $tabid => $records) {
-                foreach ($records as $datid => $fields) {
-                    $sdatid = $datid;
-                    if ($this->is_main) {
-                        $sdatid = $this->convertID($tabid, $datid, 1);
-                    }
-
-                    foreach ($fields as $fieldid => $verknids) {
-                        if (!is_array($verknids)) {
-                            continue;
-                        }
-                        $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
-
-                        //check if relation is hierarchical and ignore it
-                        if (array_key_exists('verkntree', $gfield[$tabid]) && array_key_exists($fieldid, $gfield[$tabid]['verkntree'])) {
-                            continue;
-                        }
-
-                        $firstValueKey = array_key_first($verknids);
-                        $hasLevelIds = false;
-                        $levelIds = [];
-                        if (is_array($verknids[$firstValueKey]) && array_key_exists('LID',$verknids[$firstValueKey])) {
-                            $hasLevelIds = true;
-                            foreach ($verknids as $key => &$verknid) {
-                                if(is_array($verknid['id'])) {
-                                    $levelIds[$verknid['id']['id']] = $verknid['LID'];
-                                } else {
-                                    $levelIds[$verknid['id']] = $verknid['LID'];   
-                                }
-                                $verknid = $verknid['id'];
-                            }
-                        }
-                        if(!$this->is_main) {
-                            foreach ($verknids as $key => &$verknid) {                                
-                                if(is_array($verknid) && array_key_exists('new',$verknid)) {
-                                    
-                                    $relTabId = $gfield[$tabid]['verkntabid'][$fieldid];
-                                    
-                                    if(array_key_exists($relTabId,$newids) && array_key_exists($verknid['id'],$newids[$relTabId])) {
-                                        
-                                        $orgVerknId = $verknid['id'];                                        
-                                        $verknid = $newids[$relTabId][$verknid['id']]['slave_datid'];
-
-                                        if(array_key_exists($orgVerknId,$levelIds)) {
-                                            $levelId = $levelIds[$orgVerknId];
-                                            unset($levelIds[$orgVerknId]);
-                                            $levelIds[$verknid] = $levelId;
-                                        }
-                                    } else {
-                                        unset($verknids[$key]);
-                                    }
-                                }
-                            }
-                        }
-
-
-                        //get exsting relations
-                        $filter["relationval"][$tabid] = 1;
-                        $filter['status'][$tabid] = -1;
-                        $filter["validity"][$tabid] = 'all';
-                        $gresult = get_gresult($tabid, 1, $filter, [], null, array($tabid => array($fieldid)), $datid);
-                        $existing_rel = [];
-                        if ($gresult[$tabid]['res_count'] > 0) {
-                            $existing_rel = array_filter($gresult[$tabid][$fieldid][0]);
-                        }
-                        if (empty($existing_rel)) {
-                            $existing_rel = [];
-                        }
-                        if ($this->is_main) {
-                            $levelIdsNew = [];
-                            foreach ($verknids as $key => &$verknid) {
-                                $orgverknid = $verknid;
-
-                                $verknid = $this->convertID($verkntab, $verknid);
-                                $verknids[$key] = $verknid;
-
-                                if ($hasLevelIds && array_key_exists($orgverknid, $levelIds)) {
-                                    $levelIdsNew[$verknid] = $levelIds[$orgverknid];
-                                }
-                            }
-
-                            $levelIds = $levelIdsNew;
-                        }
-                        $verknids = array_filter($verknids);
-
-                        //search ids on both slave and master
-                        $intersect = array_intersect($verknids, $existing_rel);
-                        if (!$intersect) {
-                            $intersect = array();
-                        }
-
-                        // add ids missing on current system
-                        $verkn_add_ids = array_diff($verknids, $intersect);
-                        if (!empty($verkn_add_ids)) {
-
-
-                            $vtabid = $this->getVerknTabId($tabid, $fieldid);
-                            $vtablesynced = array_key_exists($vtabid, $gtab['datasync']) && !empty($gtab['datasync'][$vtabid]);
-                            if (
-                                //table is published and synced too => set lmb_slave_id and keyid from slave
-                                $vtablesynced
-                                //table is related to dms
-                                || $hasLevelIds
-                            ) {
-
-                                foreach ($verkn_add_ids as $keyid => $verknAddId) {
-
-                                    $params = [];
-
-                                    //if relation is parameterized and synced
-                                    if ($vtablesynced) {
-                                        $params['LMB_SYNC_SLAVE'] = $this->current_client;
-                                        $params['LMB_SYNC_ID'] = $keyid;
-                                    }
-
-                                    if ($hasLevelIds && array_key_exists($verknAddId, $levelIds)) {
-                                        $params['LID'] = $levelIds[$verknAddId];
-                                    }
-
-                                    $relation = init_relation($tabid, $fieldid, $datid, [$verknAddId], null, null, $params);
-                                    
-                                    if($relation === false) {
-                                        $errormsg = lmb_log::getLogMessage(true);
-                                        $this->setException('error', 11, 'Init relations failed (' . $verknAddId . '): ' . $errormsg, $tabid, $sdatid, $fieldid);
-                                    }
-                                    elseif (!set_relation($relation)) {
-                                        $errormsg = lmb_log::getLogMessage(true);
-                                        //workaround for existing relations
-                                        if (!(str_contains($errormsg, 'already joined') || str_contains($errormsg, 'already exists'))) {
-                                            $this->setException('error', 11, 'Add relations failed (' . $verknAddId . '): ' . $errormsg, $tabid, $sdatid, $fieldid);
-                                        }
-                                    }
-                                }
-                            } else {
-                                $relation = init_relation($tabid, $fieldid, $datid, $verkn_add_ids);
-
-                                if($relation === false) {
-                                    $errormsg = lmb_log::getLogMessage(true);
-                                    $errorRelId = $verkn_add_ids;
-                                    if(is_array($verkn_add_ids)) {
-                                        $errorRelId = implode(',', $verkn_add_ids);
-                                    }
-                                    $this->setException('error', 11, 'Init relations failed (' . $errorRelId . '): ' . $errormsg, $tabid, $sdatid, $fieldid);
-                                }
-                                elseif ($verkn_add_ids && !set_relation($relation)) {
-                                    $errormsg = lmb_log::getLogMessage(true);
-                                    $errorRelId = $verkn_add_ids;
-                                    if(is_array($verkn_add_ids)) {
-                                        $errorRelId = implode(',', $verkn_add_ids);
-                                    }
-                                    //workaround for existing relations
-                                    if (!(str_contains($errormsg, 'already joined') || str_contains($errormsg, 'already exists'))) {
-                                        $this->setException('error', 11, 'Add relations failed (' . $errorRelId . '): ' . $errormsg, $tabid, $sdatid, $fieldid);
-                                    }
-                                }
-                            }
-
-
-                        }
-
-                        // delete ids missing on partner system
-                        if ($verkn_del_ids = array_diff($existing_rel, $intersect)) {
-                            $relation = init_relation($tabid, $fieldid, $datid, null, $verkn_del_ids);
-                            if ($verkn_del_ids && !set_relation($relation)) {
-                                //TODO: $this->setException('error', 11, 'Remove relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Throwable $t) {
-            LimbasLogger::error('Create relations error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
-            return false;
-        }
-
-
-        //Update relations
-        try {
-            foreach ($syncdata['data'] as $tabid => $data) {
-
-                //TODO: no delete entry for relation tables is set!!!
-
-                //update / delete records
-                foreach ($data as $id => $values) {
-                    if ($id == 0) {
-                        $this->setException('error', 6, 'Record not found', $tabid, $id);
-                        continue;
-                    }
-
-                    $sid = $id;
-                    if ($this->is_main) {
-                        $id = $this->convertID($tabid, $id);
-                        if ($id === false) {
-                            //if not deleted anyway
-                            if ($values !== false) {
-                                $this->setException('error', 6, 'ID resolve failed', $tabid, $sid);
-                            }
-                            continue;
-                        }
-                    }
-
-                    //deleted
-                    if ($values === false) {
-                        continue;
-                    } //changed and not deleted
-                    else if (!array_key_exists($tabid, $deleted) || !in_array($id, $deleted[$tabid])) {
-                        $update = array();
-
-                        //Update allowed
-                        if ($this->is_main) {
-                            $fids = $this->template[$tabid]['master'];
-                        } else {
-                            $fids = $this->template[$tabid]['slave'];
-                        }
-
-
-                        foreach ($values as $fieldid => $value) {
-                            if ($fieldid == 'sys') {
-                                $this->handleSystemFields($tabid, $id, $value, $update);
-                                continue;
-                            }
-
-                            if (!in_array($fieldid, $fids)) {
-                                continue;
-                            }
-
-                            $special = $this->applyFieldType($tabid, $fieldid, $id, $value['value']);
-                            if ($special === true) {
-                                if ($this->hasConflict($tabid, $id, $fieldid, $value)) {
-                                    continue;
-                                }
-                                $update["$tabid,$fieldid,$id"] = $value['value'] . '';
-                            } else {
-                                continue;
-                            }
-                        }
-                        if (!empty($update) && update_data($update) !== true) {
-                            $this->setException('error', 3, 'Update failed: ' . lmb_log::getLogMessage(true), $tabid, $sid);
-                        }
-                    }
-                }
-
-            }
-        } catch (Throwable $t) {
-            LimbasLogger::error('Update relations error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
-            return false;
-        }
-
-        return $newids;
-    }
-
-
-    /**
-     * Synchronizes special system fields independent of data fields
-     *
-     * @param int $tabid
-     * @param int $id
-     * @param array $systemdata
-     */
-    protected function handleSystemFields($tabid, $id, $systemdata, &$update, $new = false)
-    {
-
-        if (array_key_exists('MID', $systemdata) && !empty($systemdata['MID'])) {
-            $update["$tabid,LMB_MID,$id"] = $systemdata['MID'];
-        }
-        if (array_key_exists('DEL', $systemdata)) {
-            $update["$tabid,DEL,$id"] = ($systemdata['DEL']) ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE;
-        }
-        if (array_key_exists('LMB_STATUS', $systemdata)) {
-            $update["$tabid,LMB_STATUS,$id"] = intval($systemdata['LMB_STATUS']);
-        }
-
-
-        if (array_key_exists('VID', $systemdata) && !empty($systemdata['VID'])) {
-            $update["$tabid,VID,$id"] = $systemdata['VID'];
-        }
-        if (array_key_exists('VDESC', $systemdata) && !empty($systemdata['VDESC'])) {
-            $update["$tabid,VDESC,$id"] = "'" . $systemdata['VDESC'] . "'";
-        }
-
-
-        if (!$new) {
-            $vpid = null;
-            if (array_key_exists('VPID', $systemdata) && !empty(trim($systemdata['VPID']))) {
-                $vpid = $systemdata['VPID'];
-                if($this->is_main) {
-                    $vpid = $this->convertID($tabid, $systemdata['VPID']);
-                }
-                if (!empty($vpid)) {
-                    $update["$tabid,VPID,$id"] = $vpid;
-                }
-            }
-            if (!empty($vpid) && array_key_exists('VACT', $systemdata)) {
-                $update["$tabid,VACT,$id"] = $systemdata['VACT'] ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE;
-
-                //set all old versions to if updating active version
-                if ($systemdata['VACT'] && $vpid !== null) {
-                    $this->setVersionsInactive($tabid, $vpid);
-                }
-            }
-        }
-
-
-        if (array_key_exists('LMB_VALIDFROM', $systemdata) && !empty($systemdata['LMB_VALIDFROM'])) {
-            $update["$tabid,LMB_VALIDFROM,$id"] = "'" . $systemdata['LMB_VALIDFROM'] . "'";
-        } elseif(array_key_exists('LMB_VALIDFROM', $systemdata)) {
-            $update["$tabid,LMB_VALIDFROM,$id"] = LMB_DBDEF_NULL;
-        }
-        if (array_key_exists('LMB_VALIDTO', $systemdata) && !empty($systemdata['LMB_VALIDTO'])) {
-            $update["$tabid,LMB_VALIDTO,$id"] = "'" . $systemdata['LMB_VALIDTO'] . "'";
-        } elseif(array_key_exists('LMB_VALIDTO', $systemdata)) {
-            $update["$tabid,LMB_VALIDTO,$id"] = LMB_DBDEF_NULL;
-        }
-
-        if (array_key_exists('LID', $systemdata) && !empty($systemdata['LID'])) {
-            $update["$tabid,LID,$id"] = $systemdata['LID'];
-        }
-
-    }
-
-
-    /**
-     * Converts master ID from / to slave ID for defined slave
-     *
-     * @param int $tabid
-     * @param int $cid
-     * @param int $dir 0 = slave ID to master ID; 1 = master ID to slave ID
-     * @return int|false converted id or false if not found
-     */
-    protected function convertID($tabid, $cid, $dir = 0): bool|int
-    {
-        global $db;
-        global $gtab;
-
-        //if table is global keep same ids on main and client and don't convert
-        if ($this->template[$tabid]['global']) {
-            return intval($cid);
-        }
-
-
-        $table = dbf_4($gtab['table'][$tabid]);
-        $keyfield = $gtab['keyfield'][$tabid];
-
-
-        if ($cid === 'new') {
-            //LimbasLogger::warning('Unexpected "new" as ID. Table: ' . $table);
-            return false;
-        }
-
-        if ($dir == 1) {
-            //master ID to slave ID
-            $sql = "SELECT LMB_SYNC_ID AS CID FROM $table WHERE LMB_SYNC_SLAVE = {$this->current_client} AND $keyfield = $cid";
-        } else {
-            //slave ID to master ID
-            $sql = "SELECT $keyfield AS CID FROM $table WHERE LMB_SYNC_SLAVE = {$this->current_client} AND LMB_SYNC_ID = $cid";
-        }
-        $rs = lmbdb_exec($db, $sql);
-
-        if (lmbdb_fetch_row($rs)) {
-            return intval(lmbdb_result($rs, 'CID'));
-        }
-        return false;
-    }
-
-
-    /**
-     * Returns the real key id of a relation table
-     *
-     * @param int $tabid
-     * @param     $id
-     * @param     $verkn_id
-     *
-     * @return int|false converted id or false if not found
-     */
-    protected function getRelKeyID($tabid, $id, $verkn_id): bool|int
-    {
-        global $db;
-        global $gtab;
-
-        $table = dbf_4($gtab['table'][$tabid]);
-        $keyfield = $gtab['keyfield'][$tabid];
-        $sql = "SELECT $keyfield AS CID FROM $table WHERE ID = $id AND VERKN_ID = $verkn_id";
-        $rs = lmbdb_exec($db, $sql);
-
-        if (lmbdb_fetch_row($rs)) {
-            return lmbdb_result($rs, 'CID');
-        }
-        return false;
-    }
-
-    /**
-     * Set all old versions to inactive
-     *
-     * @param int $tabid
-     * @param     $id
-     *
-     * @return void converted id or false if not found
-     */
-    protected function setVersionsInactive($tabid, $id)
-    {
-        global $db;
-        global $gtab;
-
-        $table = dbf_4($gtab['table'][$tabid]);
-        $sql = "UPDATE $table SET VACT = " . LMB_DBDEF_FALSE . " WHERE VPID = $id";
-        $rs = lmbdb_exec($db, $sql);
-    }
-
-    /**
-     * Collects all relevant fields of a table for synchronization
-     *
-     * @param int $tabid
-     * @return array
-     * @throws Exception
-     */
-    protected function getSyncFields($tabid): array
-    {
-        if (!array_key_exists($tabid, $this->template)) {
-            throw new Exception("Tabid $tabid not in sync template {$this->template}!");
-        }
-
-        if (is_array($this->template[$tabid])) {
-            if ($this->is_main) {
-                return $this->template[$tabid]['master'];
-            } else {
-                return $this->template[$tabid]['slave'];
-            }
-        }
-
-        return array();
-    }
-
-
-    /**
-     * Retrieves all needed data of one record
-     *
-     * @param int $tabid
-     * @param int $id
-     * @param array $field_ids
-     * @param int $timestamp
-     * @return array | false
-     */
-    protected function getData($tabid, $id, $field_ids, $timestamp = null, bool $skipRelations = false): bool|array
-    {
-        global $gfield;
-
-        //$gsr[$tabid]['ID'] = $id;
-        $filter['relationval'][$tabid] = 1;
-        $filter['getlongval'][$tabid] = 1;
-        $filter['status'][$tabid] = -1;
-        $filter["validity"][$tabid] = 'all';
-
-        //TODO: filter for lmb_sync_slave?
-        if ($field_ids === 'all') {
-            $gresult = get_gresult($tabid, 1, $filter, null, null, null, $id);
-        } else {
-            $gresult = get_gresult($tabid, 1, $filter, null, null, array($tabid => $field_ids), $id);
-
-            // ensure that all field ids are present
-            foreach ($field_ids as $field_id) {
-                //TODO: Log field not in template
-                if (in_array($field_id, $gfield[$tabid]['field_id']) && !array_key_exists($field_id, $gresult[$tabid])) {
-                    $gresult[$tabid][$field_id] = array();
-                }
-            }
-        }
-
-        if ($gresult[$tabid]['res_count'] <= 0) {
-            $this->setException('error', 9, 'No record data', $tabid, $id);
-            return false;
-        }
-
-        $data = array();
-        foreach ($gresult[$tabid] as $fieldid => $value) {
-            if (is_numeric($fieldid)) {
-                if ($this->prepareFieldType($tabid, $fieldid, $value[0], $gresult, $id, $skipRelations)) {
-                    $data[$fieldid] = array('value' => $value[0], 'time' => $timestamp);
-                }
-            } else {
-                //get all limbas system fields
-                if (!isset($data['sys'])) {
-                    $data['sys'] = array();
-                }
-
-                // convert id on master to slave id before send
-                if ($this->is_main && $fieldid === 'VPID' && !empty(trim($value[0]))) {
-                    $value[0] = $this->convertID($tabid, $value[0], 1);
-                }
-
-                $data['sys'][$fieldid] = $value[0];
-            }
-        }
-        return $data;
-    }
-
-
-    /**
-     * Checks if a special field type is allowed for synchronization and prepare its data
-     *
-     * @param int $tabid
-     * @param int $fieldid
-     * @param mixed $value
-     * @param array $gresult
-     * @param $id
-     * @param bool $skipRelations
-     * @return bool
-     */
-    protected function prepareFieldType($tabid, $fieldid, &$value, $gresult, $id, bool $skipRelations = false): bool
-    {
-        global $gtab;
-        global $gfield;
-
-        if (!is_array($gfield[$tabid])) {
-            return false;
-        }
-
-        if (array_key_exists('sys', $gfield[$tabid]) && is_array($gfield[$tabid]['sys']) && array_key_exists($fieldid, $gfield[$tabid]['sys']) && $gfield[$tabid]['sys'][$fieldid]) {
-            return false;
-        }
-
-        switch ($gfield[$tabid]['data_type'][$fieldid]) {
-            //Validity
-            case 53:
-            case 54:
-                //Multitenant
-            case 52:
-                //sync slave
-            case 51:
-                //version comment
-            case 43:
-                //erst / edit user / date
-            case 34:
-            case 35:
-            case 36:
-            case 37:
-                //ID field
-            case 22:
-                //Upload
-            case 13:
-            case 48:
-                //TODO: PHP-Argument
-                //SQL-Argument
-            case 47:
-                return false; // ignore
-            //Relation: only valid if both, table and linked table, are synchronized
-            case 27:
-            case 24:
-                //special case: LEVEL ID of DMS
-
-                //if relation table is parameterized
-                $vtabid = $this->getVerknTabId($tabid, $fieldid);
-
-                $levelIds = false;
-                if ($vtabid === null) {
-                    $levelIds = $this->getVerknLevelIds($tabid, $fieldid, $value);
-                }
-            // break is intentionally missing
-            // 1:n direct
-            case 25:
-                //Backward relation
-            case 23:
-                if ($skipRelations) {
-                    return false;
-                }
-                $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
-
-                //if relation table is synchronized
-                if (is_array($this->template) && !array_key_exists($verkntab, $this->template)) {
-                    return false;
-                }
-
-                //if parameterized
-                if (!empty($vtabid) && $gtab['datasync'][$vtabid]) {
-                    $matched_values = [];
-                    foreach ($value as $verknid) {
-                        $realID = $this->getRelKeyID($vtabid, $id, $verknid);
-                        if ($realID) {
-                            $matched_values[$realID] = $verknid;
-                        }
-                    }
-                    $value = $matched_values;
-                }
-
-                if ($this->is_main) {
-                    foreach ($value as $key => &$verknid) {
-                        if(empty($verknid)) {
-                            unset($value[$key]);
-                            continue;
-                        }
-                        $orgVerknId = $verknid;
-                        $verknid = $this->convertID($verkntab, $verknid, 1);
-                        // related entry is new and doesn't have a client id yet
-                        if(empty($verknid)) {
-                            $verknid = ['id'=>$orgVerknId,'new'=>true];
-                        }
-                    }
-                }
-
-                if ($levelIds !== false && is_array($levelIds)) {
-                    foreach ($value as &$verknid) {
-                        $levelId = null;
-                        if(is_array($verknid)) {
-                            $orgVerknId = $verknid['id'];
-                        } else {
-                            $orgVerknId = $verknid;
-                        }
-                        if (array_key_exists($orgVerknId, $levelIds)) {
-                            $levelId = $levelIds[$orgVerknId];
-                        }
-                        $verknid = ['LID' => $levelId, 'id' => $verknid];
-                    }
-                }
-
-
-                break;
-            //Currency
-            case 30:
-                if (is_array($value)) {
-                    $value = $value['V'] . ' ' . $value['C'];
-                }
-                break;
-            //Auswahl (checkbox), Auswahl (multiselect), Auswahl (ajax), Attribute
-            case 18:
-            case 31:
-            case 32:
-            case 46:
-                if ($value > 0) {
-                    $func = 'cftyp_' . $gfield[$tabid]['funcid'][$fieldid];
-                    $values = $func(0, $fieldid, $tabid, 5, $gresult);
-                    if (!is_array($values)) {
-                        $values = array();
-                    }
-                    $value = array();
-
-                    //Attribut Werte
-                    if ($gfield[$tabid]['data_type'][$fieldid] == 46) {
-                        $value['values'] = [];
-                    }
-
-                    foreach ($values as $wid => $text) {
-                        if (is_numeric($wid)) {
-                            $value[] = $wid;
-                            if ($gfield[$tabid]['data_type'][$fieldid] == 46) {
-                                $value['values'][$wid] = $this->getAttributeValue($tabid, $fieldid, $id, $wid);
-                            }
-                        }
-                    }
-
-
-                } else {
-                    $value = null;
-                }
-                break;
-            // user group list
-            case 38:
-                $func = 'cftyp_' . $gfield[$tabid]['funcid'][$fieldid];
-                $values = $func(0, $fieldid, $tabid, 6, $gresult);
-                if (is_array($values)) {
-                    $value = [];
-                    foreach ($values as $ugValue) {
-                        $value[] = $ugValue['id'] . '_' . lmb_substr($ugValue['typ'], 0, 1);
-                    }
-                }
-                break;
-        }
-
-        return true;
-    }
-
-
-    /**
-     * Applies data of special fields
-     *
-     * @param int $tabid
-     * @param int $fieldid
-     * @param int $ID
-     * @param mixed $value
-     * @return bool|string
-     * @throws Exception
-     */
-    protected function applyFieldType($tabid, $fieldid, $ID, &$value): bool|string
-    {
-        global $gfield;
-
-        if (!is_array($gfield[$tabid])) {
-            return false;
-        }
-
-        if (array_key_exists('sys', $gfield[$tabid]) && is_array($gfield[$tabid]['sys']) && array_key_exists($fieldid, $gfield[$tabid]['sys']) && $gfield[$tabid]['sys'][$fieldid]) {
-            return false;
-        }
-
-        if (array_key_exists('argument', $gfield[$tabid]) && array_key_exists($fieldid, $gfield[$tabid]['argument'])) {
-            return false;
-        }
-
-        $filter = [];
-        $filter['relationval'][$tabid] = 1;
-        $filter['status'][$tabid] = -1;
-        $filter['validity'][$tabid] = 'all';
-
-
-        switch ($gfield[$tabid]['data_type'][$fieldid]) {
-            //Validity
-            case 53:
-            case 54:
-                //Multitenant
-            case 52:
-                //sync slave
-            case 51:
-                //version comment
-            case 43:
-                //erst / edit user / date
-            case 34:
-            case 35:
-            case 36:
-            case 37:
-                //ID field
-            case 22:
-                //Upload
-            case 13:
-            case 48:
-                //TODO: PHP-Argument
-                //SQL-Argument
-            case 47:
-                return false; // ignore
-            //Relation: only valid if both, table and linked table, are synchronized
-            case 27:
-            case 24:
-            case 25:
-                //Backward relation
-            case 23:
-                $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
-                if (!array_key_exists($verkntab, $this->template)) {
-                    return false;
-                }
-                return 'rel';
-            //Currency
-            case 30:
-                if (is_array($value)) {
-                    $value = $value['V'] . ' ' . $value['C'];
-                }
-                break;
-            //Auswahl (checkbox), Auswahl (multiselect), Auswahl (ajax)
-            case 18:
-            case 31:
-            case 32:
-            case 46:
-                if (is_array($value)) {
-                    if ($this->hasConflict($tabid, $ID, $fieldid, $value)) {
-                        return true;
-                    }
-
-                    $wvalues = [];
-                    if (array_key_exists('values', $value)) {
-                        $wvalues = $value['values'];
-                        unset($value['values']);
-                    }
-
-
-                    //compare existing values only if attribute or ajax; others are already handled by uftyp
-                    if ($gfield[$tabid]['data_type'][$fieldid] == 32 || $gfield[$tabid]['data_type'][$fieldid] == 46) {
-
-                        $gresult = get_gresult($tabid, 1, $filter, [], null, array($tabid => array($fieldid)), $ID);
-
-                        $fvalue = null;
-                        if ($gresult[$tabid]['res_count'] > 0) {
-                            $existing = array();
-                            $this->prepareFieldType($tabid, $fieldid, $existing, $gresult, $ID);
-                            if (array_key_exists('values', $existing)) {
-                                unset($existing['values']);
-                            }
-
-                            $fvalue = [];
-                            $removes = array_diff($existing, $value);
-                            foreach ($removes as $rv) {
-                                $fvalue[] = 'd' . $rv;
-                            }
-
-                            $adds = array_diff($value, $existing);
-                            foreach ($adds as $av) {
-                                $fvalue[] = 'a' . $av;
-                            }
-
-                        }
-
-                        $value = $fvalue;
-
-                    }
-
-                    if ($gfield[$tabid]['data_type'][$fieldid] == 32) {
-                        //$value = ';' . implode(';', $value);
-                    }
-
-
-                    uftyp_23($tabid, $fieldid, $ID, $value);
-
-
-                    if (!empty($wvalues)) {
-                        foreach ($wvalues as $wid => $val) {
-                            $this->setAttributeValue($tabid, $fieldid, $ID, $wid, $val);
-                        }
-                    }
-
-
-                }
-                return false;
-            // user group list
-            case 38:
-
-                // get existing values
-                $func = 'cftyp_' . $gfield[$tabid]['funcid'][$fieldid];
-                $gresult = get_gresult($tabid, 1, $filter, [], null, array($tabid => array($fieldid)), $ID);
-                $existing = $func(0, $fieldid, $tabid, 6, $gresult);
-
-                $existingValues = [];
-                if (is_array($existing)) {
-                    foreach ($existing as $ugValue) {
-                        $existingValues[] = $ugValue['id'] . '_' . lmb_substr($ugValue['typ'], 0, 1);
-                    }
-                }
-
-                if (!is_array($value)) {
-                    $value = [];
-                }
-
-
-                $diff = array_merge(array_diff($existingValues, $value), array_diff($value, $existingValues));
-                if (!empty($diff)) {
-                    $updateFunc = 'uftyp_' . $gfield[$tabid]['funcid'][$fieldid];
-                    foreach ($diff as $ug) {
-                        $updateFunc($tabid, $fieldid, $ID, $ug);
-                    }
-                }
-
-                return false;
-        }
-
-        return true;
-    }
-
-
-    /**
-     * Collects values of attribute field type
-     *
-     * @param $tabid
-     * @param $fieldid
-     * @param $datid
-     * @param $wid
-     * @return string
-     */
-    protected function getAttributeValue($tabid, $fieldid, $datid, $wid): string
-    {
-        global $db;
-
-        $sqlquery1 = "SELECT VALUE_STRING,VALUE_NUM,VALUE_DATE FROM LMB_ATTRIBUTE_D WHERE LMB_ATTRIBUTE_D.W_ID = $wid AND LMB_ATTRIBUTE_D.TAB_ID = $tabid AND LMB_ATTRIBUTE_D.FIELD_ID = $fieldid AND LMB_ATTRIBUTE_D.DAT_ID = $datid";
-
-
-        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
-
-        while (lmbdb_fetch_row($rs1)) {
-
-            $string_value = lmbdb_result($rs1, 'VALUE_STRING');
-            $num_value = lmbdb_result($rs1, 'VALUE_NUM');
-            $date_value = lmbdb_result($rs1, 'VALUE_DATE');
-
-            if (!empty($string_value)) {
-                return 's' . $string_value;
-            } elseif (!empty($date_value)) {
-                return 'd' . $date_value;
-            } elseif (!empty($num_value) || $num_value === 0 || $num_value === '0') {
-                return 'n' . $num_value;
-            }
-        }
-
-        return '';
-    }
-
-
-    /**
-     * Sets the values of attribute field type
-     *
-     * @param $tabid
-     * @param $fieldid
-     * @param $datid
-     * @param $wid
-     * @param $value
-     * @return void
-     */
-    protected function setAttributeValue($tabid, $fieldid, $datid, $wid, $value)
-    {
-        global $db;
-
-        if (empty($value)) {
-            $sqlquery1 = "UPDATE LMB_ATTRIBUTE_D SET VALUE_STRING = '', VALUE_DATE = " . LMB_DBDEF_NULL . ", VALUE_NUM = " . LMB_DBDEF_NULL . "  WHERE LMB_ATTRIBUTE_D.W_ID = $wid AND LMB_ATTRIBUTE_D.TAB_ID = $tabid AND LMB_ATTRIBUTE_D.FIELD_ID = $fieldid AND LMB_ATTRIBUTE_D.DAT_ID = $datid";
-            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
-            return;
-        }
-
-        $type = $value[0];
-        $value = substr($value, 1);
-
-        $update_field = '';
-        switch ($type) {
-            case 's':
-                $update_field = 'VALUE_STRING';
-                $value = "'$value'";
-                break;
-            case 'd':
-                $update_field = 'VALUE_DATE';
-                $value = "'$value'";
-                break;
-            case 'n':
-                $update_field = 'VALUE_NUM';
-                break;
-        }
-
-        if (empty($update_field)) {
-            return;
-        }
-
-
-        $sqlquery1 = "UPDATE LMB_ATTRIBUTE_D SET $update_field = $value WHERE LMB_ATTRIBUTE_D.W_ID = $wid AND LMB_ATTRIBUTE_D.TAB_ID = $tabid AND LMB_ATTRIBUTE_D.FIELD_ID = $fieldid AND LMB_ATTRIBUTE_D.DAT_ID = $datid";
-        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
-    }
-
-
-    /**
-     * Get the corresponding folder level id of a relation
-     *
-     * @param $tabid
-     * @param $fieldid
-     * @param $value
-     * @return array|false
-     */
-    protected function getVerknLevelIds($tabid, $fieldid, &$value): bool|array
-    {
-        global $db,
-               $gtab,
-               $gfield;
-
-        if (empty($value)) {
-            return false;
-        }
-
-        $md5_tab = $gfield[$tabid]['md5tab'][$fieldid];
-
-        $ldmsTabId = (int)$gtab['argresult_id']['LDMS_FILES'];
-        $verknTabId = null;
-        if (array_key_exists($fieldid, $gfield[$tabid]['verkntabid'])) {
-            $verknTabId = (int)$gfield[$tabid]['verkntabid'][$fieldid];
-        }
-
-        if ($verknTabId === $ldmsTabId) {
-
-            $sql = 'SELECT LID, VERKN_ID FROM ' . $md5_tab . ' WHERE VERKN_ID IN (' . implode(',', $value) . ')';
-
-            $rs = lmbdb_exec($db, $sql);
-
-            $levelIds = [];
-            while (lmbdb_fetch_row($rs)) {
-                $levelIds[lmbdb_result($rs, 'VERKN_ID')] = lmbdb_result($rs, 'LID');
-            }
-            if (empty($levelIds)) {
-                return false;
-            }
-            return $levelIds;
-        }
-
-        return false;
-    }
-
-    /**
-     * Gets the id of the related table of a relation field if it is parameterized
-     *
-     * @param $tabid
-     * @param $fieldid
-     * @return mixed|null
-     */
-    protected function getVerknTabId($tabid, $fieldid): mixed
-    {
-        global $gfield;
-
-        $vtabid = null;
-
-        if (array_key_exists('verknparams', $gfield[$tabid]) && array_key_exists($fieldid, $gfield[$tabid]['verknparams'])) {
-            $vtabid = $gfield[$tabid]['verknparams'][$fieldid];
-        }
-
-        return $vtabid;
-    }
-
-
-    /**
-     * Checks if same record/field was changed on both, slave and master
-     * mode 0 = master wins
-     * mode 1 = slave wins
-     * mode 2 = latest wins
-     * mode 3 = manual intervention
-     *
-     * @param int $tabid
-     * @param int $datid
-     * @param int $fieldid
-     * @param array $value ['time' => ..., 'value' => ...]
-     * @return bool
-     * @throws Exception
-     */
-    protected function hasConflict($tabid, $datid, $fieldid = 0, $value = array()): bool
-    {
-        global $db;
-
-        $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM LMB_SYNC_CACHE WHERE TABID = $tabid AND FIELDID = $fieldid AND DATID = $datid AND TYPE = 3" . (($this->is_main) ? "AND SLAVE_ID = {$this->current_client}" : '');
-        $rs = lmbdb_exec($db, $sqlquery);
-        if (lmbdb_num_rows($rs) > 0) {
-            $curval = $this->getData($tabid, $datid, array($fieldid));
-            $curval = $curval[$fieldid];
-            if ($curval['value'] == $value['value']) {
-                return true;
-            }
-            switch ($this->template['conflict_mode']) {
-                case 0:
-                    if ($this->is_main) {
-                        return true;
-                    }
-                    break;
-                case 1:
-                    if (!$this->is_main) {
-                        return true;
-                    }
-                    break;
-                case 2:
-                    lmbdb_fetch_row($rs);
-                    $erstdatum = lmbdb_result($rs, 'ERSTDATUM');
-                    $dt = new DateTime($erstdatum);
-                    $erstdatum = $dt->getTimestamp();
-                    if ($erstdatum > $value['time']) {
-                        return true;
-                    }
-                    break;
-                case 3:
-                    $this->setException('conflict', 1, 'Ungelöster Konflikt', $tabid, $datid, $fieldid);
-                    return true;
-            }
-        }
-        return false;
-    }
-
-
-    /**
-     * Writes all cached exceptions into the database
-     *
-     * @return void
-     */
-    protected function handleExceptions()
-    {
-        global $db;
-        global $gtab;
-
-        $isLimbasTable = array_key_exists('LMB_SYNC_LOG', $gtab['argresult_id']);
-
-        if (lmb_count($this->sync_exceptions) > 0) {
-            foreach ($this->sync_exceptions as $type => $exceptions) {
-                foreach ($exceptions as $tabid => $records) {
-                    foreach ($records as $datid => $record) {
-                        foreach ($record as $fieldid => $field) {
-                            foreach ($field as $msg) {
-
-                                if ($datid === 'new') {
-                                    continue;
-                                }
-
-                                if ($msg['origin'] == 1) {
-                                    $datid = $this->convertID($tabid, $datid);
-                                }
-                                $datid = parse_db_int($datid); //todo 'new' passed
-
-                                if ($isLimbasTable) {
-                                    $ID = next_db_id('lmb_sync_log');
-                                    // TODO ID, slaveid 2x
-                                    $sqlquery = "INSERT INTO LMB_SYNC_LOG (ID,TYPE,TABID,DATID,FIELDID,ORIGIN,SLAVEID,ERRORCODE,MESSAGE) VALUES ($ID,'$type',$tabid,$datid,$fieldid,{$msg['origin']},$this->current_client,{$msg['code']},'{$msg['msg']}')";
-                                } else {
-                                    $sqlquery = "INSERT INTO LMB_SYNC_LOG (TYPE,TABID,DATID,FIELDID,ORIGIN,SLAVEID,ERRORCODE,MESSAGE) VALUES ('$type',$tabid,$datid,$fieldid,{$msg['origin']},$this->current_client,{$msg['code']},'{$msg['msg']}')";
-                                }
-                                $rs = lmbdb_exec($db, $sqlquery);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    /**
-     * @param string $type
-     * @param int $code
-     * @param string $msg
-     * @param int $tabid
-     * @param int $datid
-     * @param int $fieldid
-     */
-    protected function setException($type, $code, $msg, $tabid = 0, $datid = 0, $fieldid = 0)
-    {
-        $this->sync_exceptions[$type][$tabid][$datid][$fieldid][] = array('code' => $code, 'msg' => $msg, 'origin' => ($this->is_main) ? 0 : 1);
-    }
-
-
-    /**
-     * Writes an entry to the sync cache
-     *
-     * @param $tabid
-     * @param $fieldid
-     * @param $datid
-     * @param $type
-     * @return void
-     */
-    protected function putInCache($tabid, $fieldid, $datid, $type)
-    {
-        global $db;
-
-        //TODO: insert current client in global log
-        //TODO: what happens if master deletes record and client has still updates?
-
-        $nextID = next_db_id('LMB_SYNC_CACHE','ID',1);
-
-        if ($datid === 'new') {
-            //$this->setException('warning',12,'Unexpected "new" as id',$tabid,0,$fieldid);
-            return;
-        }
-
-        $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,SLAVE_DATID,TYPE) VALUES($nextID,$tabid,$fieldid,$datid,0,$datid,$type)";
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
-    }
 
     /**
      * @return int
@@ -1880,27 +81,1243 @@ abstract class Datasync
 
 
     /**
-     * @param bool $status
+     * Prepares an array based on lmb_sync_cache which can be applied later
+     *
+     * @return array|false
+     */
+    protected function collectChangedData(): bool|DatasyncData
+    {
+        global $umgvar;
+        global $gtab;
+
+        $db = Database::get();
+        //TODO: Only tables of selected sync template
+
+        $maxRecords = false;
+        if (array_key_exists('sync_max_records', $umgvar)) {
+            if (!empty($umgvar['sync_max_records'])) {
+                $maxRecords = intval($umgvar['sync_max_records']);
+            }
+        }
+
+        try {
+            [$syncCount, $recordCount] = $this->countSyncCache();
+
+            $this->cacheTimestamp = time();
+            $this->setSyncRecords($maxRecords);
+
+            //ORDER: delete (1) -> created (2) -> changed (3)
+            $sqlquery = 'SELECT ID, TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID FROM LMB_SYNC_CACHE WHERE PROCESS_KEY = ' . $this->cacheTimestamp . ' ORDER BY TYPE';
+
+            $rs = lmbdb_exec($db, $sqlquery);
+
+            $syncFields = array();
+            $rowCount = lmbdb_num_rows($rs);
+
+            if ($this->isMain) {
+                DatasyncLog::info('Collecting data on master [' . $rowCount . ' / ' . $syncCount . ' / ' . $recordCount . ']');
+            } else {
+                DatasyncLog::info('Collecting data on client [' . $rowCount . ' / ' . $syncCount . ' / ' . $recordCount . ']');
+            }
+
+            $datasyncData = new DatasyncData($this->cacheTimestamp);
+
+            if ($rowCount <= 0) {
+                return $datasyncData;
+            }
+
+
+            while (lmbdb_fetch_row($rs)) {
+                $syncCacheId = intval(lmbdb_result($rs, 'ID'));
+
+                $tabId = intval(lmbdb_result($rs, 'TABID'));
+                $fieldId = intval(lmbdb_result($rs, 'FIELDID'));
+                $mainRecordId = $this->isMain ? intval(lmbdb_result($rs, 'DATID')) : null;
+                $clientRecordId = $this->isMain ? (intval(lmbdb_result($rs, 'SLAVE_DATID')) ?: null) : intval(lmbdb_result($rs, 'DATID'));
+                $type = DataSyncType::tryFrom(lmbdb_result($rs, 'TYPE')) ?? DataSyncType::UNKNOWN;
+                $createdAt = lmbdb_result($rs, 'ERSTDATUM');
+
+                // get highest timestamp
+                $dt = new DateTime($createdAt);
+                $createdAt = $dt->getTimestamp();
+
+                if (!array_key_exists($tabId, $syncFields)) {
+                    //cache sync fields per table
+                    $syncFields[$tabId] = $this->getSyncFields($tabId);
+                }
+
+                //TODO: clientRecord Id nur einmal pro Record berechnen => Fehler erst am Ende ausgeben, da ggf. durch anderen Eintrag aufgelöst
+                // no client record id is assigned and dataset is deleted or updated
+                if ($this->isMain && empty($clientRecordId) && $type !== DataSyncType::CREATE && !$this->template[$tabId]['global']) {
+                    //try to resolve the client record id
+                    $clientRecordId = $this->convertID($tabId, $mainRecordId, $this->currentClient, self::MAIN_TO_CLIENT);
+
+                    if (empty($clientRecordId)) {
+
+                        $datasyncTableData = $datasyncData->getTableData($tabId);
+                        if (!empty($datasyncTableData)) {
+                            $datasyncRecordData = $datasyncTableData->getRecordData($mainRecordId);
+                            if ($type === DataSyncType::UPDATE && $datasyncRecordData->created) {
+                                // if this update belongs to a created entry, ignore it
+                                $datasyncRecordData->addUpdate($fieldId, $syncCacheId, $createdAt);
+                                continue;
+                            } elseif ($type === DataSyncType::DELETE && $datasyncRecordData->created) {
+                                // if this update belongs to a created entry, ignore it
+                                $datasyncRecordData->setDeleted($syncCacheId);
+                                continue;
+                            }
+                        }
+
+
+                        Database::update('LMB_SYNC_CACHE', ['PROCESS_KEY' => null], ['ID' => $syncCacheId]);
+                        $datasyncData->addError($syncCacheId, DatasyncError::NO_CLIENT_DATA_ID);
+                        continue;
+                    }
+                }
+
+                // TODO: test if main / client from template is used
+                $datasyncTableData = $datasyncData->getOrCreateTableData($tabId);
+                $datasyncRecordData = $datasyncTableData->getOrCreateRecordData($mainRecordId, $clientRecordId);
+
+
+                //deleted
+                if ($type === DataSyncType::DELETE) {
+                    $datasyncRecordData->setDeleted($syncCacheId);
+                } //created & not deleted
+                elseif ($type === DataSyncType::CREATE) {
+
+
+                    $datasyncRecordData->setCreated($syncCacheId);
+                    if ($datasyncRecordData->deleted) {
+                        continue;
+                    }
+
+                    // in case of 1:1 relations all related tables are send
+                    if (array_key_exists('raverkn', $gtab) &&
+                        is_array($gtab['raverkn']) &&
+                        array_key_exists($tabId, $gtab['raverkn']) &&
+                        is_array($gtab['raverkn'][$tabId])) {
+
+                        foreach ($gtab['raverkn'][$tabId] as $relatedTabId) {
+
+                            if (!array_key_exists($relatedTabId, $this->template)) {
+                                continue;
+                            }
+
+                            if ($relatedTabId !== $tabId) {
+                                $relatedDatasyncTableData = $datasyncData->getOrCreateTableData($relatedTabId);
+                                $relatedDatasyncTableData->relatedTableId = $tabId;
+                                $relatedDatasyncRecordData = $datasyncTableData->getOrCreateRecordData($mainRecordId, $clientRecordId);
+                                $relatedDatasyncRecordData->setCreated($syncCacheId);
+                            }
+                        }
+
+                    }
+
+                } //changed & not deleted
+                elseif ($type === DataSyncType::UPDATE) {
+
+                    if (!in_array($fieldId, $syncFields[$tabId]) && $fieldId !== 0) {
+                        $datasyncData->addError($syncCacheId, DatasyncError::FIELD_NOT_MARKED_AS_SYNC);
+                        continue;
+                    }
+
+                    $datasyncRecordData->addUpdate($fieldId, $syncCacheId, $createdAt);
+                }
+            }
+
+            $datasyncData->fill($this->currentClient);
+            return $datasyncData;
+        } catch (Throwable $t) {
+            DatasyncLog::error('Data collection error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
+            return false;
+        }
+    }
+
+    /**
+     * Applies changes out of prepared array.
+     * On slave: ids of created records are collected and send back
+     * On master: all records get their corresponding lmb_sync_slave and lmb_sync_id
+     *
+     * @param DatasyncData $datasyncData
+     * @return bool
+     */
+    protected function applyChangedData(DatasyncData $datasyncData): bool
+    {
+        global $db;
+        global $gtab;
+
+        DatasyncLog::info('Applying changed data');
+
+        //get deleted records => ignore all other actions 
+        $rs = Database::select('LMB_SYNC_CACHE', ['TYPE', 'TABID', 'DATID', 'SLAVE_ID', 'SLAVE_DATID'], ['TYPE' => DataSyncType::DELETE->value]);
+        if (!$rs) {
+            DatasyncLog::error('Applying data: fetching deleted failed');
+            return false;
+        }
+
+        $deletedIds = [];
+        while (lmbdb_fetch_row($rs)) {
+            $tabId = lmbdb_result($rs, 'TABID');
+
+            if (!array_key_exists($tabId, $this->template)) {
+                continue;
+            }
+
+            if (!array_key_exists($tabId, $deletedIds)) {
+                $deletedIds[$tabId] = [];
+            }
+
+            $deletedIds[$tabId][] = intval(lmbdb_result($rs, 'DATID'));
+        }
+
+        try {
+            foreach ($datasyncData->tableData as $tabId => $tableData) {
+
+                //check if table is a parameterized relation table //TODO: other way than name check
+                if (strtoupper(substr($gtab['table'][$tabId], 0, 5)) === 'VERK_') {
+                    continue;
+                }
+
+                if (!array_key_exists($tabId, $this->template)) {
+                    continue;
+                }
+
+                /** @var DatasyncRecordData $recordData */
+                foreach ($tableData->records as $recordKey => $recordData) {
+
+
+                    if ($recordData->deleted) {
+
+                        if ($recordData->relatedTabId !== null) {
+                            // if one-to-one relation => only delete once for main table
+                            continue;
+                        }
+
+                        try {
+                            if ($this->isMain) {
+                                if ($recordData->convertClientRecordId($this->currentClient) === false) {
+                                    // not found means already deleted
+                                    unset($tableData->records[$recordKey]);
+                                    continue;
+                                }
+                            }
+                            $id = $this->isMain ? $recordData->mainRecordId : $recordData->clientRecordId;
+
+                            // if already deleted on local system
+                            if (!empty($deletedIds[$tabId]) && is_array($deletedIds[$tabId]) && in_array($id, $deletedIds[$tabId])) {
+                                unset($tableData->records[$recordKey]);
+                                continue;
+                            }
+
+                            $recordExists = $id !== null && $this->recordExists($tabId, $id);
+                            $delResult = !$recordExists || del_data($tabId, $id);
+
+                            if (!$delResult) {
+                                //if not exists returns false 
+                                $datasyncData->addRecordError($recordData, DatasyncError::DELETE_DATA_FAILED, Log::getMessagesAsString(true));
+                            } elseif ($this->isMain && $this->template[$tabId]['global']) {
+                                //global sync does not need SYNC_SLAVE AND SYNC_ID SET but a new entry in the cache table, so it is synced to all other clients
+                                $this->putInCache($tabId, 0, $id, DataSyncType::DELETE);
+                            }
+                        } catch (Throwable $t) {
+                            $datasyncData->addRecordError($recordData, DatasyncError::DELETE_DATA_FAILED, $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
+                        }
+                    } elseif ($recordData->created) {
+                        //new records
+                        try {
+                            if ($recordData->relatedTabId !== null) {
+                                // if one-to-one relation => only create once for main table
+                                continue;
+                            }
+
+
+                            $id = null;
+                            $tableName = Dbf::handleCaseSensitive($gtab['table'][$tabId]);
+
+
+                            if ($this->template[$tabId]['global']) {
+                                //same record id on main and client
+                                //check if record already exists
+                                $id = $recordData->mainRecordId ?? $recordData->clientRecordId;
+                                $sql = "SELECT ID FROM $tableName WHERE ID = $id";
+                                $rs = lmbdb_exec($db, $sql);
+                                if (!lmbdb_result($rs, 'ID')) {
+                                    //it does not exist => force id
+                                    $id = new_data($tabId, null, null, null, $id);
+                                }
+                                $recordData->mainRecordId = $id;
+                                $recordData->clientRecordId = $id;
+                            } else {
+                                if ($this->isMain) {
+                                    //check if record already exists
+                                    $sql = "SELECT ID FROM $tableName WHERE LMB_SYNC_SLAVE = $this->currentClient AND LMB_SYNC_ID = $recordData->clientRecordId";
+                                    $rs = lmbdb_exec($db, $sql);
+                                    $id = lmbdb_result($rs, 'ID');
+                                    if (empty($id)) {
+                                        $id = new_data($tabId);
+                                    }
+                                    $recordData->mainRecordId = $id;
+                                } else {
+                                    // on client always create new record
+                                    $id = new_data($tabId);
+                                    $recordData->clientRecordId = $id;
+                                }
+                            }
+
+
+                            if (empty($id)) {
+                                $datasyncData->addRecordError($recordData, DatasyncError::NEW_DATA_FAILED);
+                                continue;
+                            }
+
+                            if ($this->isMain && $this->template[$tabId]['global']) {
+                                //global sync does not need SYNC_SLAVE AND SYNC_ID SET but a new entry in the cache table so it is synced to all other clients
+                                $this->putInCache($tabId, 0, $id, DataSyncType::CREATE);
+                            } elseif ($this->isMain) {
+                                // assign lmb_sync_slave and lmb_sync_id
+
+                                $tables = [$tableName];
+
+
+                                if (array_key_exists('raverkn', $gtab) &&
+                                    is_array($gtab['raverkn']) && array_key_exists($tabId, $gtab['raverkn']) &&
+                                    is_array($gtab['raverkn'][$tabId])) {
+                                    foreach ($gtab['raverkn'][$tabId] as $relatedTabId) {
+                                        if (!array_key_exists($relatedTabId, $this->template)) {
+                                            continue;
+                                        }
+                                        if ($relatedTabId !== $tabId) {
+                                            $tables[] = $gtab['table'][$relatedTabId];
+                                        }
+                                    }
+                                }
+
+                                $keyField = $gtab['keyfield'][$tabId];
+                                foreach ($tables as $table) {
+                                    $table = Dbf::handleCaseSensitive($table);
+                                    Database::update($table,
+                                        [
+                                            'LMB_SYNC_SLAVE' => $this->currentClient,
+                                            'LMB_SYNC_ID' => $recordData->clientRecordId
+                                        ], [
+                                            $keyField => $recordData->mainRecordId
+                                        ]);
+                                }
+
+                            }
+
+                        } catch (Throwable $t) {
+                            $datasyncData->addRecordError($recordData, DatasyncError::NEW_DATA_FAILED, $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
+                        }
+                    }
+                }
+
+                // for faster id resolve => load all send records including new to index
+                $this->createTableIndex($datasyncData);
+
+
+                // after creations and deletions => run updates
+                $this->applyUpdates($datasyncData, $tabId, $tableData);
+
+            }
+        } catch (Throwable $t) {
+            DatasyncLog::error('Apply error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());
+            return false;
+        }
+
+        // only on main: update sync_ids of records created on slave
+        $syncIdStatus = $this->updateSyncIds($datasyncData);
+        if ($syncIdStatus !== true) {
+            DatasyncLog::error('Update sync ids error: ' . $syncIdStatus->getMessage() . ' -- ' . $syncIdStatus->getFile() . ' -- ' . $syncIdStatus->getLine());
+            return false;
+        }
+
+        //set or delete relations
+        $setRelationsStatus = $this->setOrDeleteRelations($datasyncData);
+        if ($setRelationsStatus !== true) {
+            DatasyncLog::error('Create relations error: ' . $setRelationsStatus->getMessage() . ' -- ' . $setRelationsStatus->getFile() . ' -- ' . $setRelationsStatus->getLine());
+            return false;
+        }
+
+        //Update relations
+        $updateRelationsStatus = $this->updateRelations($datasyncData);
+        if ($updateRelationsStatus !== true) {
+            DatasyncLog::error('Update relations error:  ' . $updateRelationsStatus->getMessage() . ' -- ' . $updateRelationsStatus->getFile() . ' -- ' . $updateRelationsStatus->getLine());
+            return false;
+        }
+
+        return true;
+    }
+
+
+    protected function applyUpdates(DatasyncData $datasyncData, int $tabId, DatasyncTableData $tableData): void
+    {
+        /**
+         * @var int $recordKey
+         * @var DatasyncRecordData $recordData
+         */
+        foreach ($tableData->records as $recordKey => $recordData) {
+            // dont send back deleted data
+            if ($recordData->deleted) {
+                unset($tableData->records[$recordKey]);
+                continue;
+            }
+            // if there was an error while creating => skip updates for that record
+            if ($recordData->created && (!empty($recordData->failed))) {
+                unset($tableData->records[$recordKey]);
+                continue;
+            }
+
+            // resolve ids
+            if ($this->isMain) {
+                if ($recordData->convertClientRecordId($this->currentClient) === false) {
+                    $datasyncData->addRecordError($recordData, DatasyncError::CLIENT_ID_COULD_NOT_BE_RESOLVED);
+                    continue;
+                }
+            } elseif (empty($recordData->clientRecordId) && !empty($recordData->relatedTabId)) {
+                // if one-to-one relation resolve ids if not already done
+                if (!array_key_exists($recordData->relatedTabId, $datasyncData->tableData)
+                    || !array_key_exists($recordKey, $datasyncData->tableData[$recordData->relatedTabId]->records)) {
+                    $datasyncData->addRecordError($recordData, DatasyncError::ONE_TO_ONE_ID_COULD_NOT_BE_RESOLVED, excludeCreated: $recordData->created);
+                    continue;
+                }
+                $recordData->clientRecordId = $datasyncData->tableData[$recordData->relatedTabId]->records[$recordKey]->clientRecordId;
+            }
+
+            if (!$this->isMain && $recordData->created) {
+                $datasyncData->addNewRecord($tabId, $recordData->mainRecordId, $recordData->clientRecordId);
+            }
+
+
+            $id = $this->isMain ? $recordData->mainRecordId : $recordData->clientRecordId;
+
+
+            // if deleted on local system
+            if (!empty($deletedIds[$tabId]) && is_array($deletedIds[$tabId]) && in_array($id, $deletedIds[$tabId])) {
+                unset($tableData->records[$recordKey]);
+                continue;
+            }
+
+            try {
+                $update = [];
+
+                //Update allowed
+                if ($this->isMain) {
+                    $allowedFieldIds = $this->template[$tabId]['slave'];
+                } else {
+                    $allowedFieldIds = $this->template[$tabId]['master'];
+                }
+
+                $this->handleSystemFieldsUpdate($tabId, $id, $recordData->data, $update, $recordData->created);
+
+                foreach ($recordData->data as $fieldId => $value) {
+
+                    if (!is_numeric($fieldId) || !in_array($fieldId, $allowedFieldIds)) {
+                        continue;
+                    }
+
+                    $apply = $this->applyFieldType($tabId, $fieldId, $id, $value);
+                    if ($apply === true) {
+                        if (!$recordData->created) {
+                            $timestamp = $recordData->timestamps[$fieldId] ?? $recordData->timestamps[0];
+                            $hasConflict = !empty($timestamp) && $this->hasConflict($tabId, $id, $fieldId, $timestamp);
+                            if ($hasConflict === true) {
+                                continue;
+                            } elseif ($hasConflict === ConflictMode::MANUAL) {
+                                foreach ($recordData->updatedFields[$fieldId] as $syncCacheId) {
+                                    $datasyncData->addError($syncCacheId, DatasyncError::CONFLICT);
+                                }
+                                continue;
+                            }
+                        }
+                        $update["$tabId,$fieldId,$id"] = $value ?? '';
+                    } else {
+                        continue;
+                    }
+
+                    if ($this->isMain && $this->template[$tabId]['global']) {
+                        //global sync table create cache
+                        $this->putInCache($tabId, $fieldId, $id, DataSyncType::UPDATE);
+                    }
+                }
+
+                if (!empty($update) && update_data($update) !== true) {
+                    $datasyncData->addRecordError($recordData, DatasyncError::UPDATE_DATA_FAILED, Log::getMessagesAsString(true), excludeCreated: $recordData->created);
+                }
+            } catch (Throwable $t) {
+                $datasyncData->addRecordError($recordData, DatasyncError::UPDATE_DATA_FAILED, $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine(), excludeCreated: $recordData->created);
+            }
+        }
+    }
+
+    /**
+     * update sync_ids of records created on slave
+     *
+     * @param DatasyncData $datasyncData
+     * @return true|Throwable
+     */
+    protected function updateSyncIds(DatasyncData $datasyncData): true|Throwable
+    {
+        global $gtab;
+        global $gfield;
+
+        if (!$this->isMain || empty($datasyncData->newRecords)) {
+            return true;
+        }
+
+        //update sync_ids of records created on slave
+        try {
+            /** @var DatasyncNewRecord $datasyncNewRecord */
+            foreach ($datasyncData->newRecords as $datasyncNewRecord) {
+
+                $tabId = $datasyncNewRecord->tabId;
+
+                //no need to set sync ids if table is globally synced
+                if ($this->template[$tabId]['global']) {
+                    continue;
+                }
+
+                $table = Dbf::handleCaseSensitive($gtab['table'][$tabId]);
+                $keyField = $gtab['keyfield'][$tabId];
+
+                Database::update($table, [
+                    'LMB_SYNC_SLAVE' => $this->currentClient,
+                    'LMB_SYNC_ID' => $datasyncNewRecord->clientRecordId
+                ], [
+                    $keyField => $datasyncNewRecord->mainRecordId
+                ]);
+
+
+                // foreach relation field => create update entry
+                foreach ($gfield[$tabId]['data_type'] as $fieldId => $dataType) {
+                    if (in_array($dataType, [24, 25, 27])) {
+                        $null = null;
+                        execute_sync($tabId, $fieldId, $datasyncNewRecord->mainRecordId, $null, $datasyncNewRecord->clientRecordId, $this->currentClient, DataSyncType::UPDATE->value, true);
+                    }
+                }
+            }
+        } catch (Throwable $t) {
+            return $t;
+        }
+        return true;
+    }
+
+
+    /**
+     * Creates a map from main to client id or vise versa to skip database resolve on new records
+     *
+     * @param DatasyncData $datasyncData
      * @return void
      */
-    protected function endTransaction(bool $status)
+    private function createTableIndex(DatasyncData $datasyncData): void
+    {
+        $this->tableIndex = [];
+        foreach ($datasyncData->tableData as $tabId => $tableData) {
+            $this->tableIndex[$tabId] = [];
+            /** @var DatasyncRecordData $recordData */
+            foreach ($tableData->records as $recordData) {
+                if ($this->isMain) {
+                    $this->tableIndex[$tabId][$recordData->clientRecordId] = $recordData->mainRecordId;
+                } else {
+                    $this->tableIndex[$tabId][$recordData->mainRecordId] = $recordData->clientRecordId;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param DatasyncData $datasyncData
+     * @return true|Throwable
+     */
+    protected function setOrDeleteRelations(DatasyncData $datasyncData): true|Throwable
+    {
+        global $gtab;
+        global $gfield;
+
+        //set or delete relations
+        try {
+
+            /**
+             * @var int $tabId
+             * @var DatasyncTableData $tableData
+             */
+            foreach ($datasyncData->tableData as $tabId => $tableData) {
+                if (empty($tableData->records)) {
+                    continue;
+                }
+
+                /** @var DatasyncRecordData $recordData */
+                foreach ($tableData->records as $recordData) {
+                    if (empty($recordData->relations)) {
+                        continue;
+                    }
+
+                    $recordId = $this->isMain ? $recordData->mainRecordId : $recordData->clientRecordId;
+
+                    foreach ($recordData->relations as $fieldId => $relations) {
+
+
+                        $relatedTabId = intval($gfield[$tabId]['verkntabid'][$fieldId] ?? 0);
+                        $relationTableId = $this->getRelationTableId($tabId, $fieldId);
+                        $relationTableSynced = !empty($relationTableId) && $gtab['datasync'][$relationTableId];
+
+                        //get existing relations
+                        $filter['relationval'][$tabId] = 1;
+                        $filter['status'][$tabId] = -1;
+                        $filter['validity'][$tabId] = 'all';
+                        $gresult = get_gresult($tabId, 1, $filter, [], null, array($tabId => array($fieldId)), $recordId);
+                        $existingRelationIds = [];
+                        if ($gresult[$tabId]['res_count'] > 0) {
+                            $existingRelationIds = $gresult[$tabId][$fieldId][0] ?? null;
+                            if(!is_array($existingRelationIds)) {
+                                $datasyncData->addRecordError($recordData, DatasyncError::APPLYING_RELATIONS_FAILED);
+                                continue;
+                            }
+                            $existingRelationIds = array_filter($gresult[$tabId][$fieldId][0]);
+                        }
+
+
+                        $applyRelationIds = [];
+                        $levelIds = [];
+                        $syncCacheId = null;
+                        $synchronizedRelationTable = $relationTableSynced ? [
+                            'tabId' => $relationTableId,
+                            'keyIds' => [],
+                        ] : null;
+                        /** @var DatasyncRelation $relation */
+                        foreach ($relations as $relation) {
+                            $syncCacheId = $relation->syncCacheId;
+
+                            $sourceRecordId = $this->isMain ? $relation->clientRecordId : $relation->mainRecordId;
+                            $relatedRecordId = $this->isMain ? $relation->mainRelatedRecordId : $relation->clientRelatedRecordId;
+                            if (empty($relatedRecordId)) // the record might has been created, try to resolve
+                            {
+                                if ($this->isMain) {
+                                    // on main simply convert the id, it should already be in the database
+                                    $relatedRecordId = $this->tableIndex[$relatedTabId][$relation->clientRelatedRecordId] ?? $this->convertID($relatedTabId, $relation->clientRelatedRecordId, $this->currentClient);
+                                } else {
+                                    // on client, if the record was created during same sync, the main couldn't have sent the client id because it didn't exist.                                    
+                                    $relatedRecordId = $this->tableIndex[$relatedTabId][$relation->mainRelatedRecordId] ?? null;
+                                }
+                            }
+
+                            if (empty($relatedRecordId)) {
+                                // TODO: maybe set an error
+                                continue;
+                            }
+
+                            if($relationTableSynced) {
+                                // $sourceRecordId is only set when the relation table is synced 
+                                $applyRelationIds[$sourceRecordId] = $relatedRecordId;
+                            }
+                            else {
+                                $applyRelationIds[] = $relatedRecordId;
+                            }
+                            
+                            if (!empty($relation->levelId)) {
+                                $levelIds[$relatedRecordId] = $relation->levelId;
+                            }
+
+                            if ($synchronizedRelationTable !== null) {
+                                // on client, main id is needed to send new record
+                                $synchronizedRelationTable['keyIds'][$relatedRecordId] = $this->isMain ? $relation->clientRecordId : $relation->mainRecordId;
+                            }
+                        }
+
+
+                        $applyRelationIds = array_filter($applyRelationIds);
+
+                        //search ids on both client and main
+                        $intersect = array_intersect($applyRelationIds, $existingRelationIds);
+
+                        // add ids missing on current system
+                        $relationAddIds = array_diff($applyRelationIds, $intersect);
+                        if (!empty($relationAddIds)) {
+                            if (
+                                //table is published and synced too => set lmb_slave_id and keyid from slave
+                                $relationTableSynced
+                                //table is related to dms
+                                || !empty($levelIds)
+                            ) {
+
+                                foreach ($relationAddIds as $sourceRecordId => $relatedRecordId) {
+
+                                    $params = [];
+
+                                    //if relation is parameterized and synced
+                                    if ($this->isMain && $relationTableSynced) {
+                                        $params['LMB_SYNC_SLAVE'] = $this->currentClient;
+                                        $params['LMB_SYNC_ID'] = $sourceRecordId;
+                                    }
+
+                                    if (!empty($levelIds[$relatedRecordId])) {
+                                        $params['LID'] = $levelIds[$relatedRecordId];
+                                    }
+
+
+                                    $this->addRelations($datasyncData, $tabId, $fieldId, $recordId, [$relatedRecordId], $syncCacheId, $synchronizedRelationTable, $params);
+                                }
+                            } else {
+
+                                $this->addRelations($datasyncData, $tabId, $fieldId, $recordId, $relationAddIds, $syncCacheId, $synchronizedRelationTable);
+                            }
+
+
+                        }
+
+                        // delete missing relations
+                        $relationDeleteIds = array_diff($existingRelationIds, $intersect);
+                        if (!empty($relationDeleteIds)) {
+                            $relation = init_relation($tabId, $fieldId, $recordId, null, $relationDeleteIds);
+                            if (!set_relation($relation)) {
+                                if ($syncCacheId) {
+                                    $datasyncData->addError($syncCacheId, DatasyncError::DELETE_RELATIONS_FAILED);
+                                }
+                            }
+                        }
+
+
+                    }
+
+                }
+
+
+            }
+        } catch (Throwable $t) {
+            return $t;
+        }
+
+        return true;
+    }
+
+    protected function addRelations(DatasyncData $datasyncData, int $tabId, int $fieldId, int $recordId, array $relationAddIds, ?int $syncCacheId, ?array $synchronizedRelationTable, array $params = []): void
+    {
+        $relation = init_relation($tabId, $fieldId, $recordId, $relationAddIds, linkParam: $params);
+
+        if ($relation === false) {
+            $message = Log::getMessagesAsString(true);
+            if ($syncCacheId) {
+                $datasyncData->addError($syncCacheId, DatasyncError::DELETE_RELATIONS_FAILED, $message);
+            }
+        } elseif (!set_relation($relation)) {
+            $message = Log::getMessagesAsString(true);
+            //workaround for existing relations
+            if (!(str_contains($message, 'already joined') || str_contains($message, 'already exists'))) {
+                if ($syncCacheId) {
+                    $datasyncData->addError($syncCacheId, DatasyncError::DELETE_RELATIONS_FAILED, $message);
+                }
+            }
+        } elseif (!$this->isMain && is_array($synchronizedRelationTable)) {
+
+            $relationTableId = $synchronizedRelationTable['tabId'];
+            foreach ($relationAddIds as $relatedRecordId) {
+                $masterKeyId = $synchronizedRelationTable['keyIds'][$relatedRecordId] ?? null;
+                if (empty($masterKeyId)) {
+                    continue;
+                }
+                $keyId = $this->getRelKeyID($relationTableId, $recordId, $relatedRecordId);
+                $datasyncData->addNewRecord($relationTableId, $masterKeyId, $keyId);
+            }
+        }
+    }
+
+    protected function updateRelations(DatasyncData $datasyncData): true|Throwable
+    {
+        global $gtab;
+
+        try {
+
+            foreach ($datasyncData->tableData as $tabId => $tableData) {
+
+                //check if table is not a parameterized relation table //TODO: other way than name check
+                if (strtoupper(substr($gtab['table'][$tabId], 0, 5)) !== 'VERK_') {
+                    continue;
+                }
+
+                // only do updates for relation tables
+                $this->applyUpdates($datasyncData, $tabId, $tableData);
+            }
+        } catch (Throwable $t) {
+            return $t;
+        }
+        return true;
+    }
+
+
+    /**
+     * Writes all cached exceptions into the database
+     *
+     * @param array $errors
+     * @return void
+     */
+    protected function writeErrorsToSyncLog(array $errors): void
+    {
+        global $gtab;
+
+        if (empty($errors)) {
+            return;
+        }
+
+        $isLimbasTable = array_key_exists('LMB_SYNC_LOG', $gtab['argresult_id']);
+
+        if ($isLimbasTable) {
+            $id = next_db_id('lmb_sync_log');
+        }
+
+
+        foreach ($errors as $syncCacheId => $error) {
+            $datasyncError = DatasyncError::tryFrom($error[0]);
+            if (!$datasyncError) {
+                continue;
+            }
+            $message = $datasyncError->getMessage();
+            if (array_key_exists(1, $error)) {
+                $message = $message . ': ' . $error[1];
+            }
+
+            $data = [
+                'TYPE' => '',
+                'TABID' => 0,
+                'DATID' => 0,
+                'FIELDID' => 0,
+                'ORIGIN' => 0,
+                'SLAVEID' => $this->currentClient,
+                'ERRORCODE' => $datasyncError->value,
+                'MESSAGE' => $message,
+                'SYNC_CACHE_ID' => $syncCacheId
+            ];
+
+            if ($isLimbasTable) {
+                $data['ID'] = $id;
+                $id++;
+            }
+
+
+            Database::update('LMB_SYNC_CACHE', ['ERROR' => $datasyncError->value . ($message ? '- ' . $message : ''), 'DONE'=>LMB_DBDEF_FALSE], ['ID' => $syncCacheId]);
+            Database::insert('LMB_SYNC_LOG', $data);
+            
+            if (!$this->isMain && ($datasyncError === DatasyncError::RECORD_NOT_FOUND || $datasyncError === DatasyncError::CLIENT_ID_COULD_NOT_BE_RESOLVED)) {
+                // in case of slave sending a change to a record that does not exist on main -> update cache on client from update to create so next time the missing record will be created
+                Database::update('LMB_SYNC_CACHE',['TYPE'=>DataSyncType::CREATE->value],['ID'=>$syncCacheId]);
+            }
+
+        }
+
+    }
+
+
+    /**
+     * Delete all handled records from sync cache
+     *
+     * @param int $timestamp
+     * @return bool success
+     */
+    protected function resetCache(int $timestamp): bool
+    {
+        global $umgvar;
+        $db = Database::get();
+
+        DatasyncLog::info('Resetting cache');
+
+        if (empty($timestamp)) {
+            return true;
+        }
+        
+        $keepCacheDays = intval($umgvar['sync_keep_cache']);
+
+        //TODO: template in lmb_sync_cache
+        if (!$this->isMain || !empty($this->currentClient)) {
+            
+            if($keepCacheDays > 0) {
+                // delete all done cache entries older than specified days
+                $date = new DateTime();
+                $date->modify('-' . $keepCacheDays . ' days');
+                $date->format('Y-m-d H:i:s');
+                $sql = 'DELETE FROM LMB_SYNC_CACHE WHERE DONE IS ' . LMB_DBDEF_TRUE . ' AND ERSTDATUM < \'' . $date->format('Y-m-d H:i:s') . '\'';
+            }
+            else {
+                // delete all cache entries of the current process only
+                $sql = 'DELETE FROM LMB_SYNC_CACHE WHERE ERROR IS NULL AND LMB_SYNC_CACHE.PROCESS_KEY = ' . $timestamp . (($this->isMain) ? ' AND SLAVE_ID = ' . $this->currentClient : '');
+            }
+            
+            
+            $rs = lmbdb_exec($db, $sql);
+            if (!$rs) {
+                DatasyncLog::error('Reset failed');
+                return false;
+            }
+        }
+
+
+        // insert client in global log
+        if ($this->isMain) {
+            $sqlquery = 'SELECT LMB_SYNC_CACHE.ID FROM LMB_SYNC_CACHE LEFT JOIN LMB_SYNC_GLOBAL ON LMB_SYNC_CACHE.ID = LMB_SYNC_GLOBAL.CACHE_ID
+    AND LMB_SYNC_GLOBAL.CLIENT_ID = ' . $this->currentClient . ' WHERE LMB_SYNC_CACHE.PROCESS_KEY = ' . $timestamp . ' AND SLAVE_ID = 0 AND CACHE_ID IS NULL';
+
+            $rs = lmbdb_exec($db, $sqlquery);
+            if (!$rs) {
+                DatasyncLog::error('Reading global cache');
+                return false;
+            }
+
+            $values = [];
+            if (lmbdb_num_rows($rs) > 0) {
+                while (lmbdb_fetch_row($rs)) {
+                    $values[] = '(' . lmbdb_result($rs, 'ID') . ',' . $this->currentClient . ')';
+                }
+            }
+
+            if (!empty($values)) {
+                $sql = 'INSERT INTO LMB_SYNC_GLOBAL (CACHE_ID,CLIENT_ID) VALUES ' . implode(',', $values);
+                $rs = lmbdb_exec($db, $sql);
+                if (!$rs) {
+                    DatasyncLog::error('Put into global cache failed');
+                    return false;
+                }
+            }
+        }
+
+
+        return true;
+    }
+
+    /**
+     * @return void
+     */
+    protected function startTransaction(): void
     {
         global $umgvar;
 
         if ($umgvar['sync_transaction']) {
-            $GLOBALS["lmb_transaction"] = 1;
+            lmb_StartTransaction();
+        }
+    }
+
+    /**
+     * @param bool $status
+     * @return void
+     */
+    protected function endTransaction(bool $status): void
+    {
+        global $umgvar;
+
+        if ($umgvar['sync_transaction']) {
+            $GLOBALS['lmb_transaction'] = 1;
             lmb_EndTransaction($status);
         }
     }
-    
-    
-    private function recordExists(int $tabId, int $id): bool {
-        global $gtab;
-        
+
+
+    /**
+     * count records of sync cache
+     * @return int[]
+     */
+    private function countSyncCache(): array
+    {
+        global $umgvar;
         $db = Database::get();
+
+        $doneSql = '(DONE = ' . LMB_DBDEF_FALSE . ' OR DONE IS NULL)';
+        $maxAttempts = intval($umgvar['sync_max_attempts']);
+        $maxAttemptsSql = ($maxAttempts > 0 ? '(TRY_COUNT <= ' . $maxAttempts . ' OR TRY_COUNT IS NULL)' : '');
         
+        //get count of all records
+        $sqlQuery = 'SELECT COUNT(ID) AS CACHECOUNT FROM LMB_SYNC_CACHE WHERE ' . $doneSql . ($this->isMain ? ' AND (SLAVE_ID = ' . $this->currentClient . ' OR  SLAVE_ID = 0 )' : '');
+        $rs = lmbdb_exec($db, $sqlQuery);
+        $recordCount = 0;
+        if (lmbdb_fetch_row($rs)) {
+            $recordCount = intval(lmbdb_result($rs, 'CACHECOUNT'));
+        }
+
+        // get count of records to be synced
+        $maxAttempts = intval($umgvar['sync_max_attempts']);
+        $syncCount = $recordCount;
+        if($maxAttempts > 0) {
+            $sqlQuery = 'SELECT COUNT(ID) AS CACHECOUNT FROM LMB_SYNC_CACHE WHERE ' . $doneSql . ' AND ' . $maxAttemptsSql . ($this->isMain ? ' AND (SLAVE_ID = ' . $this->currentClient . ' OR  SLAVE_ID = 0 )' : '');
+            $rs = lmbdb_exec($db, $sqlQuery);
+            $syncCount = 0;
+            if (lmbdb_fetch_row($rs)) {
+                $syncCount = intval(lmbdb_result($rs, 'CACHECOUNT'));
+            }
+        }
+        return [$syncCount, $recordCount];
+    }
+
+
+    /**
+     * Mark all records that may be synced by the current process
+     * @param bool|int $maxRecords
+     * @return void
+     */
+    private function setSyncRecords(bool|int $maxRecords): void
+    {
+        global $umgvar;
+        $db = Database::get();
+
+        $doneSql = '(DONE = ' . LMB_DBDEF_FALSE . ' OR DONE IS NULL)';
+        $maxAttempts = intval($umgvar['sync_max_attempts']);
+        $maxAttemptsSql = ($maxAttempts > 0 ? ' AND (TRY_COUNT <= ' . $maxAttempts . ' OR TRY_COUNT IS NULL)' : '');
+        
+        if ($this->isMain) {
+            $filter = ' LEFT JOIN LMB_SYNC_GLOBAL ON LMB_SYNC_CACHE.ID = LMB_SYNC_GLOBAL.CACHE_ID AND LMB_SYNC_GLOBAL.CLIENT_ID = ' . $this->currentClient . '
+    WHERE ((SLAVE_ID = ' . $this->currentClient . ' AND ' . $doneSql . $maxAttemptsSql . ') OR ( SLAVE_ID = 0 AND LMB_SYNC_GLOBAL.CACHE_ID IS NULL ))';
+        }
+        else {
+            $filter = ' WHERE ' . $doneSql . $maxAttemptsSql;
+        }
+
+        $limit = '';
+        if ($maxRecords !== false) {
+            $limit = 'LIMIT ' . $maxRecords;
+        }
+        
+
+        if ($this->isMain || $maxRecords !== false) {
+            $sqlQuery = 'UPDATE LMB_SYNC_CACHE
+        SET PROCESS_KEY = ' . $this->cacheTimestamp . ',
+        ERROR = ' . LMB_DBDEF_NULL . ',
+        TRY_COUNT = COALESCE(TRY_COUNT,0) + 1,
+        DONE = ' . LMB_DBDEF_TRUE . '
+        WHERE ID IN (
+        SELECT LMB_SYNC_CACHE.ID
+          FROM LMB_SYNC_CACHE
+          ' . $filter . '
+          ORDER BY LMB_SYNC_CACHE.TYPE ' . $limit . '
+        )';
+
+        } else {
+            // no filter and limit needed on client => update all records
+            $sqlQuery = 'UPDATE LMB_SYNC_CACHE SET PROCESS_KEY = ' . $this->cacheTimestamp . ', TRY_COUNT = COALESCE(TRY_COUNT,0) + 1, ERROR = ' . LMB_DBDEF_NULL . ', DONE = ' . LMB_DBDEF_TRUE . ' WHERE ' . $doneSql . $maxAttemptsSql;
+        }
+
+
+        lmbdb_exec($db, $sqlQuery);
+    }
+
+
+    /**
+     * Synchronizes special system fields independent of data fields
+     *
+     * @param int $tabId
+     * @param int $id
+     * @param array $data
+     * @param array $update
+     * @param bool $wasCreated
+     */
+    private function handleSystemFieldsUpdate(int $tabId, int $id, array $data, array &$update, bool $wasCreated = false): void
+    {
+
+        if (array_key_exists('LMB_MID', $data) && !empty($data['LMB_MID'])) {
+            $update["$tabId,LMB_MID,$id"] = $data['LMB_MID'];
+        }
+        if (array_key_exists('DEL', $data)) {
+            $update["$tabId,DEL,$id"] = ($data['DEL']) ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE;
+        }
+        if (array_key_exists('LMB_STATUS', $data)) {
+            $update["$tabId,LMB_STATUS,$id"] = intval($data['LMB_STATUS']);
+        }
+
+
+        if (array_key_exists('VID', $data) && !empty($data['VID'])) {
+            $update["$tabId,VID,$id"] = $data['VID'];
+        }
+        if (array_key_exists('VDESC', $data) && !empty($data['VDESC'])) {
+            $update["$tabId,VDESC,$id"] = "'" . $data['VDESC'] . "'";
+        }
+
+        // TODO: versioning VPID not working / same record versioned on both sides
+        if (!$wasCreated) {
+            $vpid = null;
+            if (array_key_exists('VPID', $data) && !empty(trim($data['VPID']))) {
+                $vpid = intval($data['VPID']);
+                if ($this->isMain) {
+                    // TODO: error handling
+                    $vpid = $this->convertID($tabId, $vpid, $this->currentClient);
+                }
+                if (!empty($vpid)) {
+                    $update["$tabId,VPID,$id"] = $vpid;
+                }
+            }
+            if (!empty($vpid) && array_key_exists('VACT', $data)) {
+                $update["$tabId,VACT,$id"] = $data['VACT'] ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE;
+
+                //set all old versions to if updating active version
+                if ($data['VACT'] && $vpid !== null) {
+                    $this->setVersionsInactive($tabId, $vpid);
+                }
+            }
+        }
+
+
+        if (array_key_exists('LMB_VALIDFROM', $data) && !empty($data['LMB_VALIDFROM'])) {
+            $update["$tabId,LMB_VALIDFROM,$id"] = "'" . $data['LMB_VALIDFROM'] . "'";
+        } elseif (array_key_exists('LMB_VALIDFROM', $data)) {
+            $update["$tabId,LMB_VALIDFROM,$id"] = LMB_DBDEF_NULL;
+        }
+        if (array_key_exists('LMB_VALIDTO', $data) && !empty($data['LMB_VALIDTO'])) {
+            $update["$tabId,LMB_VALIDTO,$id"] = "'" . $data['LMB_VALIDTO'] . "'";
+        } elseif (array_key_exists('LMB_VALIDTO', $data)) {
+            $update["$tabId,LMB_VALIDTO,$id"] = LMB_DBDEF_NULL;
+        }
+
+        if (array_key_exists('LID', $data) && !empty($data['LID'])) {
+            $update["$tabId,LID,$id"] = $data['LID'];
+        }
+
+    }
+
+
+    /**
+     * Set all old versions to inactive
+     *
+     * @param int $tabId
+     * @param int $id
+     *
+     * @return void converted id or false if not found
+     */
+    private function setVersionsInactive(int $tabId, int $id): void
+    {
+        global $db;
+        global $gtab;
+
+        $table = Dbf::handleCaseSensitive($gtab['table'][$tabId]);
+        $sql = "UPDATE $table SET VACT = " . LMB_DBDEF_FALSE . " WHERE VPID = $id";
+        lmbdb_exec($db, $sql);
+    }
+
+    /**
+     * Collects all relevant fields of a table for synchronization
+     *
+     * @param int $tabId
+     * @return array
+     * @throws Exception
+     */
+    private function getSyncFields(int $tabId): array
+    {
+        if (!array_key_exists($tabId, $this->template)) {
+            // TODO: error handling
+            throw new Exception("Tabid $tabId not in sync template $this->template!");
+        }
+
+        if (is_array($this->template[$tabId])) {
+            if ($this->isMain) {
+                return $this->template[$tabId]['master'];
+            } else {
+                return $this->template[$tabId]['slave'];
+            }
+        }
+
+        return array();
+    }
+
+
+    /**
+     * Checks if same record/field was changed on both, main and client
+     *
+     * @param int $tabId
+     * @param int $recordId
+     * @param int $fieldId
+     * @param int $timestamp
+     * @return bool|ConflictMode
+     * @throws Exception
+     */
+    private function hasConflict(int $tabId, int $recordId, int $fieldId, int $timestamp): bool|ConflictMode
+    {
+        $conflictMode = ConflictMode::from(intval($this->template['conflict_mode']['global']));
+
+
+        $conflictMode = $this->template['conflict_mode'][$tabId][$fieldId] ?? $conflictMode;
+        if ($conflictMode === ConflictMode::DISABLED) {
+            return false;
+        }
+
+        $where = [
+            'TABID' => $tabId,
+            'FIELDID' => $fieldId,
+            'DATID' => $recordId,
+            'TYPE' => DataSyncType::UPDATE->value
+        ];
+        if ($this->isMain) {
+            $where['SLAVE_ID'] = $this->currentClient;
+        }
+        $rs = Database::select('LMB_SYNC_CACHE', [
+            'ID',
+            'ERSTDATUM'
+        ], $where);
+
+        
+        if (lmbdb_num_rows($rs) <= 0) {
+            return false;
+        }
+
+        // hasConflict is only called during apply => the data checked comes from the remote system
+        switch ($conflictMode) {
+            case ConflictMode::MAIN_WINS:
+                if ($this->isMain) {
+                    return true;
+                }
+                break;
+            case ConflictMode::CLIENT_WINS:
+                if (!$this->isMain) {
+                    return true;
+                }
+                break;
+            case ConflictMode::LATEST_WINS:
+                lmbdb_fetch_row($rs);
+                $erstdatum = lmbdb_result($rs, 'ERSTDATUM');
+                $dt = new DateTime($erstdatum);
+                $erstdatum = $dt->getTimestamp();
+                if ($erstdatum > $timestamp) {
+                    return true;
+                }
+                break;
+            case ConflictMode::MANUAL:
+                return ConflictMode::MANUAL;
+            default:
+                return false;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Writes an entry to the sync cache
+     *
+     * @param int $tabId
+     * @param int $fieldId
+     * @param int $datId
+     * @param DataSyncType $type
+     * @return void
+     */
+    private function putInCache(int $tabId, int $fieldId, int $datId, DataSyncType $type): void
+    {
+        //TODO: insert current client in global log
+        //TODO: what happens if master deletes record and client has still updates?
+
+        $nextID = next_db_id('LMB_SYNC_CACHE', 'ID', 1);
+
+        Database::insert('LMB_SYNC_CACHE', [
+            'ID' => $nextID,
+            'TABID' => $tabId,
+            'FIELDID' => $fieldId,
+            'DATID' => $datId,
+            'SLAVE_ID' => 0,
+            'SLAVE_DATID' => $datId,
+            'TYPE' => $type->value
+        ]);
+    }
+
+
+    private function recordExists(int $tabId, int $id): bool
+    {
+        global $gtab;
+
+        $db = Database::get();
+
         try {
-            $table = dbf_4($gtab['table'][$tabId]);
+            $table = Dbf::handleCaseSensitive($gtab['table'][$tabId]);
             $keyfield = $gtab['keyfield'][$tabId];
 
             $sql = "SELECT $keyfield AS CID FROM $table WHERE $keyfield = $id";
@@ -1908,9 +1325,11 @@ abstract class Datasync
             if (lmbdb_fetch_row($rs)) {
                 return true;
             }
-        } catch (Throwable){}
-        
+        } catch (Throwable) {
+        }
+
         return false;
     }
-    
+
+
 }

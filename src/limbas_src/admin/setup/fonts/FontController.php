@@ -9,7 +9,7 @@
 
 namespace Limbas\admin\setup\fonts;
 
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 
 class FontController extends LimbasController
 {

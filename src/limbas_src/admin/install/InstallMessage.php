@@ -35,10 +35,10 @@ class InstallMessage
         ];
 
         $text = [
-            1 => lang('OK'),
-            2 => lang('OK, but will be better to change'),
-            3 => lang('Function or tool does not work or exist, you can install later'),
-            4 => lang('Necessary. You can not continue until this function works!')
+            1 => iLang('OK'),
+            2 => iLang('OK, but will be better to change'),
+            3 => iLang('Function or tool does not work or exist, you can install later'),
+            4 => iLang('Necessary. You can not continue until this function works!')
         ];
 
 

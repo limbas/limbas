@@ -61,12 +61,12 @@ abstract class TemplateSelector
 
     protected abstract function getElementList(int $gtabid, string $search = '', int $page = 1, int $perPage = 10): array;
 
-    protected abstract function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, array $ids, $use_record, $resolvedTemplateGroups): array;
+    protected abstract function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, array $ids, $use_record, $resolvedTemplateGroups, array $appendData = []): array;
 
     protected abstract function getTemplateResolver(int $elementId): TemplateResolver;
 
 
-    public function getElementListRendered(int $gtabid, string $search = '', int $page = 1, int $perPage = 10, int $id = 0): array
+    public function getElementListRendered(int $gtabid, string $search = '', int $page = 1, int $perPage = 10, int $id = 0, bool $firstCall = false, array $appendData = []): array
     {
         global $lang;
 

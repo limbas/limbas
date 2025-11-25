@@ -12,7 +12,7 @@ namespace Limbas\extra\template\report;
 use Limbas\extra\template\base\HtmlParts\DynamicDataPlaceholder;
 use Limbas\extra\template\base\TemplateConfig;
 use Limbas\extra\template\base\TemplateRender;
-use lmb_log;
+use Limbas\lib\general\Log\Log;
 
 class ReportTemplateRender extends TemplateRender
 {
@@ -98,7 +98,7 @@ class ReportTemplateRender extends TemplateRender
 
             case 'select':
                 if (!$options['select_id']) {
-                    lmb_log::error('Dynamic data: "select_id" not set', $lang[56]);
+                    Log::limbasError('Dynamic data: "select_id" not set', $lang[56]);
                     break;
                 }
                 require_once(COREPATH . 'gtab/sql/add_select.dao');
@@ -115,12 +115,12 @@ class ReportTemplateRender extends TemplateRender
 
             case 'extension':
                 if (!$options['function']) {
-                    lmb_log::error('Dynamic data: "function" for extension not set', $lang[56]);
+                    Log::limbasError('Dynamic data: "function" for extension not set', $lang[56]);
                     break;
                 }
                 $funcName = 'report_' . $options['function'];
                 if (!function_exists($funcName)) {
-                    lmb_log::error('Dynamic data: function "' . $funcName . '" does not exist', $lang[56]);
+                    Log::limbasError('Dynamic data: function "' . $funcName . '" does not exist', $lang[56]);
                     break;
                 }
                 $html[] = $funcName($placeholder->getIdentifier(), $placeholder->getDescription(), $options, $value);

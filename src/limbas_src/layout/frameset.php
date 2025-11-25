@@ -78,7 +78,6 @@ require_once (COREPATH . 'lib/context.lib');
         <?php if ($LINK[251]): ?>
             <div id="nav" name="nav" style="width: <?= $LeftMenuSize ?>px;" class="mainsidebar <?=($leftMenuOpen)?'open':''?>">
                 <?php
-                $GLOBALS["ltmp"]["history_action"] = 1;
                 $bodyclass = "nav";
                 
                 $includeFiles = ['nav.dao','nav_render.php','nav.php'];
@@ -106,7 +105,6 @@ require_once (COREPATH . 'lib/context.lib');
             <div id="multiframecont" name="multiframecont" style="width: <?= $rightMenuSize ?>px;" class="mainsidebar <?=($rightMenuOpen)?'open':''?>">
                 <?php
                 $STYLE = "";
-                $GLOBALS["ltmp"]["history_action"] = 1;
                 $ONCLICK = "OnClick=\"body_click();\"";
                 $ONLOAD = "startautoopen();";
                 $bodyclass = "multiframe";
@@ -120,7 +118,7 @@ require_once (COREPATH . 'lib/context.lib');
         <?php endif; ?>
     </div>
 
-    <div class="modal" id="general-main-modal" tabindex="-1">
+    <div class="modal" id="general-main-modal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -140,15 +138,24 @@ require_once (COREPATH . 'lib/context.lib');
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="toast-success" class="toast text-bg-success">
-            <div class="toast-body" id="toast-success-body"></div>
+            <div class="d-flex">
+                <div class="toast-body" id="toast-success-body"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         </div>
     
         <div id="toast-error" class="toast text-bg-danger">
-            <div class="toast-body" id="toast-error-body"></div>
+            <div class="d-flex">
+                <div class="toast-body" id="toast-error-body"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         </div>
     
         <div id="toast-warning" class="toast text-bg-warning">
-            <div class="toast-body" id="toast-warning-body"></div>
+            <div class="d-flex">
+                <div class="toast-body" id="toast-warning-body"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         </div>
     </div>
 

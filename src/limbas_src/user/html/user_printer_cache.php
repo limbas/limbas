@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\lib\general\Log\Log;
 
 if($delete_single AND is_numeric($delete_single)){
     $cache_select[$delete_single] = 1;
@@ -63,8 +64,8 @@ if($print_selected && is_array($cache_select)) {
         }
 
         if (!lmbPrint($printer, null, $cache[$printer][$key]['file_id'], true)) {
-            lmb_log::error('print failed');
-            $errormsg = lmb_log::getLogMessage(true);
+            Log::error('print failed');
+            $errormsg = Log::getMessagesAsString(true);
             lmb_alert(print_r($errormsg,1));
             $cache_success[$id] = false;
         }

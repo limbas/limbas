@@ -6,17 +6,14 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
 namespace Limbas\admin\tools\update;
 
-global $DBA;
-
-require_once(COREPATH . 'lib/db/db_wrapper.lib');
-require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
-require_once(COREPATH . 'lib/include_admin.lib');
 require_once(COREPATH . 'admin/tools/datasync/DatasyncClient.php');
 
 use Limbas\lib\db\Database;
 use Limbas\admin\tools\datasync\DatasyncClient;
+use Limbas\lib\db\functions\Dbf;
 use Throwable;
 
 class Updater
@@ -42,16 +39,13 @@ class Updater
         global $session;
         global $umgvar;
 
-        $db = Database::get();
-
-
         // user is admin & auto-check for updates enabled
-        if (!$manualUpdate && ($session['user_id'] != 1 || !$umgvar['update_check'])) {
+        if (!$manualUpdate && !$umgvar['update_check']) {
             return false;
         }
 
         // return cached version
-        if (!$manualUpdate and isset($session['latestVersion'])) {
+        if (!$manualUpdate && isset($session['latestVersion'])) {
             return $session['latestVersion'];
         }
 
@@ -64,13 +58,9 @@ class Updater
         $latestVersion = false;
         try {
             $latestVersion = file_get_contents("https://www.limbas.org/version-$currentMajor-$currentMinor-$currentPatch.html", false, $context);
-        } catch (Throwable) {}
+        } catch (Throwable) {
+        }
         if (!$latestVersion) {
-            if (!$manualUpdate && $umgvar['update_check']) {
-                // probably no connection -> disable update_check
-                $sqlquery = "UPDATE LMB_UMGVAR SET NORM='0' WHERE FORM_NAME='update_check'";
-                lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
-            }
             $session['latestVersion'] = false;
             return false;
         }
@@ -91,9 +81,9 @@ class Updater
      *
      * @return array
      */
-    public static function getVersions(): array
+    public static function getVersions(bool $reset = false): array
     {
-        if (!empty(self::$versions)) {
+        if (!empty(self::$versions) && !$reset) {
             return self::$versions;
         }
 
@@ -181,7 +171,7 @@ class Updater
         if (!$updateNeeded) {
             return true;
         }
-        
+
         self::addMsgColumn();
 
         self::loadUpdates();
@@ -322,53 +312,54 @@ class Updater
      *
      * @return void
      */
-    private static function loadUpdates(): void
+    private static function loadUpdates(bool $reset = false): void
     {
 
-        if (!empty(self::$updates)) {
+        if (!empty(self::$updates) && !$reset) {
             return;
         }
 
+        self::$updates = [];
+
         $versions = self::getVersions();
-        
+
         $versions['source'] = preg_replace('/(\d+)\.(\d+)\.\d+/', '$1.$2.0', $versions['source']);
         $versions['db'] = preg_replace('/(\d+)\.(\d+)\.\d+/', '$1.$2.0', $versions['db']);
-        
+
         $updateClasses = [];
-        
+
         // load all available updates
-        $availableUpdateFiles = array_diff(scandir(__DIR__ . '/updates' ), ['.', '..']);
-        $availableUpdateVersions = array_map( function($value) {
+        $availableUpdateFiles = array_diff(scandir(__DIR__ . '/updates'), ['.', '..']);
+        $availableUpdateVersions = array_map(function ($value) {
             $matches = [];
             preg_match('/(\d+)m(\d+)/', $value, $matches);
             return $matches[1] . '.' . $matches[2] . '.0';
         }, $availableUpdateFiles);
 
-        $neededUpdateVersions = array_filter($availableUpdateVersions, function($version) use ($versions) {
+        $neededUpdateVersions = array_filter($availableUpdateVersions, function ($version) use ($versions) {
             return version_compare($versions['db'], $version, '<=');
         });
-        
+
 
         usort($neededUpdateVersions, 'version_compare');
-        
-        if(count($neededUpdateVersions) <= 1) {
+
+        if (count($neededUpdateVersions) <= 1) {
             $secondUpdateVersion = array_pop($availableUpdateVersions);
             $firstUpdateVersion = array_pop($availableUpdateVersions);
-        }
-        else {
+        } else {
             $firstUpdateVersion = array_shift($neededUpdateVersions);
             $secondUpdateVersion = array_shift($neededUpdateVersions);
         }
 
-        if($secondUpdateVersion !== null) {
+        if ($secondUpdateVersion !== null) {
             $secondUpdateVersionParts = array_map('intval', explode('.', $secondUpdateVersion));
             $updateClasses[] = 'Update' . $secondUpdateVersionParts[0] . 'm' . $secondUpdateVersionParts[1];
         }
-        if($firstUpdateVersion !== null) {
+        if ($firstUpdateVersion !== null) {
             $firstUpdateVersionParts = array_map('intval', explode('.', $firstUpdateVersion));
             $updateClasses[] = 'Update' . $firstUpdateVersionParts[0] . 'm' . $firstUpdateVersionParts[1];
         }
-        
+
 
         foreach ($updateClasses as $updateClass) {
             $className = '\\Limbas\\admin\\tools\\update\\updates\\' . $updateClass;
@@ -450,8 +441,8 @@ class Updater
         } else {
             $sql = "UPDATE LMB_DBPATCH SET STATUS = $status, MSG = '$error' WHERE MAJOR = $major AND VERSION = $minor AND REVISION = $patch";
         }
-        
-        
+
+
         $rs = lmbdb_exec($db, $sql);
         if (!$rs) {
             return false;
@@ -468,10 +459,10 @@ class Updater
     public static function addMsgColumn(): void
     {
         global $DBA;
-        
+
         $db = Database::get();
-        $msgColumnExists = (bool)dbf_5([$DBA['DBSCHEMA'], 'LMB_DBPATCH', 'MSG']);
-        
+        $msgColumnExists = (bool)Dbf::getColumns($DBA['DBSCHEMA'], 'LMB_DBPATCH', 'MSG');
+
         if (!$msgColumnExists) {
             lmbdb_exec($db, 'ALTER TABLE LMB_DBPATCH ADD MSG VARCHAR(300)');
         }
@@ -494,7 +485,7 @@ class Updater
 
         $versionParts = $update->getVersion(true);
 
-        $patch = self::getPatch($patchNr,$updateId);
+        $patch = self::getPatch($patchNr, $updateId);
         if (!$patch) {
             return false;
         }
@@ -507,21 +498,22 @@ class Updater
     /**
      * Get all relevant version information of the system
      *
+     * @param bool $reset
      * @return array
      */
-    public static function getSystemInfo(): array
+    public static function getSystemInfo(bool $reset = false): array
     {
 
-        $versions = Updater::getVersions();
+        $versions = self::getVersions($reset);
 
-        self::loadUpdates();
-        
+        self::loadUpdates($reset);
+
         $updateIds = array_keys(self::$updates);
-        
+
         $firstUpdateId = array_shift($updateIds);
         $secondUpdateId = array_shift($updateIds);
-        
-        
+
+
         return [
             'versions' => $versions,
             'updateNecessary' => Updater::checkVersion(false),

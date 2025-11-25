@@ -9,10 +9,15 @@
 
 namespace Limbas;
 
+use Exception;
 use Limbas\Controllers\DefaultController;
-use lmb_log;
+use Limbas\lib\auth\Auth;
+use Limbas\lib\auth\Session;
+use Limbas\lib\db\Database;
+use Limbas\lib\general\Log\Log;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,28 +40,54 @@ use Throwable;
 
 class Limbas extends HttpKernel
 {
+
+    public static RequestContext $context;
+    public static RouteCollection $routes;
+
+    private bool $needsAuthentication;
+    private UrlMatcher $urlMatcher;
+
     public function __construct(RouteCollection $routes)
     {
+        $request = Request::createFromGlobals();
         $context = new RequestContext();
-        $matcher = new UrlMatcher($routes, $context);
+        $context->fromRequest($request);
+        $this->urlMatcher = new UrlMatcher($routes, $context);
         $requestStack = new RequestStack();
+        
+        self::$context = $context;
+        self::$routes = $routes;
 
         $controllerResolver = new ControllerResolver();
         $argumentResolver = new ArgumentResolver();
 
         $dispatcher = new EventDispatcher();
-        $dispatcher->addSubscriber(new RouterListener($matcher, $requestStack, debug: false));
+        $dispatcher->addSubscriber(new RouterListener($this->urlMatcher, $requestStack, debug: false));
         $dispatcher->addSubscriber(new ResponseListener('UTF-8'));
 
         parent::__construct($dispatcher, $controllerResolver, $requestStack, $argumentResolver);
     }
 
-
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
     {
         define('BASE_URL', $request->getBaseUrl() . '/');
-        
+        self::$context->setBaseUrl($request->getBaseUrl());
         try {
+            require_once(COREPATH . 'lib/include.lib');
+
+            $routeName = $this->checkRoutes($request);
+
+            $installed = $this->checkIfInstalled($routeName);
+            if ($installed === false) {
+                return new RedirectResponse(route('install.index'));
+            }
+
+            $this->loadMainIncludes(!$installed);
+
+            $this->authenticate($request);
+
+            $this->loadGlobalExtensions();
+
             $response = parent::handle($request);
         } catch (BadRequestException|BadRequestHttpException) {
             $response = (new DefaultController())->error(400);
@@ -67,16 +98,107 @@ class Limbas extends HttpKernel
         } catch (AccessDeniedHttpException) {
             $response = (new DefaultController())->error(403);
         } catch (Throwable $t) {
-            $response = (new DefaultController())->error(500, $t, $request);
-            lmb_log::error($t->getMessage());
-            #error_log("$t->getMessage(), at:\n$t->getTraceAsString()");
+            $response = (new DefaultController())->error($t->getCode() ?? 500, $t, $request);
+            Log::error($t);
         }
         return $response;
     }
-    
-    
-    public function authenticate() {
-        // TODO: move authentication from session.lib here
+
+
+    private function authenticate(Request $request): void
+    {
+        if (!$this->needsAuthentication) {
+            return;
+        }
+
+        // get login method
+        $authenticator = Auth::getAuthenticator();
+
+        $authenticator::checkLogout();
+
+        // check if user is authenticated
+        try {
+            //try to authenticate user
+            $authenticator->authenticate();
+        } catch (Throwable) {
+            $authenticator::deny();
+        }
+
+        // load limbas session
+        Session::load($request);
+    }
+
+    /**
+     * @param string $routeName
+     * @return bool|null
+     * @throws Exception
+     */
+    private function checkIfInstalled(string $routeName): ?bool
+    {
+        global $DBA;
+        
+        if (str_starts_with($routeName, 'install.')) {
+            return null;
+        }
+        if (!file_exists(DEPENDENTPATH . 'inc/include_db.lib')) {
+            return false;
+        }
+
+        require_once(COREPATH . 'lib/db/db_wrapper.lib');
+        
+        return Database::checkIfInstalled();
+    }
+
+
+    private function checkRoutes(Request $request): string
+    {
+        $this->needsAuthentication = true;
+        $parameters = $this->urlMatcher->matchRequest($request);
+        $routeName = $parameters['_route'] ?? '';
+
+        if (str_starts_with($routeName, 'legacy.main-soap.')) {
+            define('IS_SOAP', true);
+        } elseif (str_starts_with($routeName, 'legacy.main-rest.') || str_starts_with($routeName, 'api.')) {
+            define('IS_REST', true);
+        } elseif (str_starts_with($routeName, 'install.')) {
+            $this->needsAuthentication = false;
+        }
+        return $routeName;
+    }
+
+    private function loadMainIncludes(bool $skipDb = false): void
+    {
+        global $DBA;
+
+        if (!$skipDb) {
+            require_once(COREPATH . 'lib/db/db_wrapper.lib');
+        }
+
+        if (!isset($DBA['CHARSET'])) {
+            $DBA['CHARSET'] = 'UTF-8';
+        }
+
+        # --- mbstring include -------------------------------------------
+        if (strtoupper($DBA['CHARSET']) == 'UTF-8') {
+            require_once(COREPATH . 'lib/include_mbstring.lib');
+            ini_set('default_charset', 'utf-8');
+        } else {
+            require_once(COREPATH . 'lib/include_string.lib');
+            ini_set('default_charset', lmb_strtoupper($DBA['CHARSET']));
+        }
+
+        # --- time library -------------------------------------------
+        require_once(COREPATH . 'lib/include_DateTime.lib');
+    }
+
+    private function loadGlobalExtensions(): void
+    {
+        global $gLmbExt;
+        if ($gLmbExt['ext_global.inc']) {
+            foreach ($gLmbExt['ext_global.inc'] as $key => $extfile) {
+                require_once($extfile);
+            }
+        }
     }
 
 }

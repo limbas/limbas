@@ -18,14 +18,15 @@ class LmbMailForm {
 
     /**
      * @param int $gtabid
-     * @param int $id
+     * @param int|array $id
      * @param int|null $templateId
      * @param array $resolvedTemplateGroups
      * @param array $resolvedDynamicData
-     * @param array $attachments array of names of the files add automatically later (via extension) 
+     * @param array $attachments array of names of the files add automatically later (via extension)
+     * @param array $appendData
      * @return string
      */
-    public function render(int $gtabid, int|array $id, ?int $templateId = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], array $attachments = []): string
+    public function render(int $gtabid, int|array $id, ?int $templateId = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], array $attachments = [], array $appendData = []): string
     {
         global $lang, $gsr, $verkn;
         
@@ -56,7 +57,18 @@ class LmbMailForm {
 
         /** @var array<MailAccount> $senderAccounts */
         $senderAccounts = MailAccount::getUserMailAccounts();
-        $receivers = $lmbMail->getReceiverAddresses($gtabid,$id);
+        $mailSignatures = MailSignature::getUserMailSignatures();
+        $defaultMailSignature = MailSignature::getSystemDefaultMailSignature();
+        
+        if(!empty($appendData['receivers']) && is_array($appendData['receivers'])) {
+            $receivers = $appendData['receivers'];
+        }
+        elseif(!empty($appendData['receiver']) && is_string($appendData['receiver'])) {
+            $receivers = [$appendData['receiver']];
+        }
+        else {
+            $receivers = $lmbMail->getReceiverAddresses($gtabid,$id);
+        }
         
         if(function_exists('lmbBeforeMailFormRender')) {
             lmbBeforeMailFormRender($gtabid,$id,$senderAccounts,$receivers,$templateId,$resolvedTemplateGroups,$resolvedDynamicData,$attachments);
@@ -71,6 +83,11 @@ class LmbMailForm {
                 $templateHtml = $mailTemplate->getRendered($gtabid,$id, $resolvedTemplateGroups, $resolvedDynamicData);
             }
         }
+        
+        if(!empty($appendData['subject']) && is_string($appendData['subject'])) {
+            $subject = $appendData['subject'];
+        }
+        
 
         $senderAccountCount = count($senderAccounts);
         $bulkMail = false;

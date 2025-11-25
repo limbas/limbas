@@ -22,11 +22,13 @@ function lmb_calInit() {
     $calendar = document.getElementById("calendar");
     $calendar.style.visibility = "hidden";
 
-    $("#formCalendar input[name^='cal_']").each(function( index ) {
+    $("#formCalendar input[name^='cal_']").each(function (index) {
         var sname = $(this).attr('name');
         var val = $(this).val();
-        if(val){
-            if(!isNaN(val)){val = parseInt(val);}
+        if (val) {
+            if (!isNaN(val)) {
+                val = parseInt(val);
+            }
             jsvar[sname] = val;
         }
     });
@@ -76,7 +78,14 @@ function lmb_calInit() {
             icon: " lmb-icon lmb-page-find",
             text: jsvar['buttons']['search']['title'],
             click: function () {
-                limbasDetailSearch(event,this,jsvar['gtabid'],'','lmbCalAjaxContainer');
+                limbasDetailSearch(event, this, jsvar['gtabid'], '', 'lmbCalAjaxContainer');
+            }
+        },
+        refresh: {
+            icon: " lmb-icon lmb-refresh",
+            text: jsvar['buttons']['refresh']['title'],
+            click: () => {
+                calendar.refetchEvents()
             }
         },
         dayGridMonth: {
@@ -127,7 +136,7 @@ function lmb_calInit() {
         }
         displayedButtons += 'settings,';
     }
-    displayedButtons += 'create,search'
+    displayedButtons += 'create,search,refresh'
     if (jsvar['buttons']['extras']) {
         customButtons.extras = {
             icon: " lmb-icon lmb-puzzle-piece",
@@ -138,6 +147,13 @@ function lmb_calInit() {
         }
         displayedButtons += ',extras';
     }
+
+    let events = {
+        url: 'main_dyns.php?actid=fullcalendar&action=reload&reload=1',
+        method: 'POST',
+        extraParams: formdata
+    };
+
 
     calendar = new FullCalendar.Calendar($calendar, {
         locale: 'de',
@@ -163,8 +179,7 @@ function lmb_calInit() {
         select: lmb_calQuickAdd,
         contentHeight: '80vh',
         themeSystem: 'bootstrap5',
-        views: {
-        },
+        views: {},
         headerToolbar: {
             left: displayedButtons + ' gridDesc,dayGridMonth,timeGridWeek,timeGridDay listDesc,listMonth,listWeek,listDay',
             center: 'title',
@@ -183,17 +198,14 @@ function lmb_calInit() {
             center: '',
             right: ''
         },
-        events: {
-            url: 'main_dyns.php?actid=fullcalendar&reload=1',
-            method: 'POST',
-            extraParams: formdata
-        }
+        events: events
     });
 
     $lmbCalAjaxContainer = $("#lmbCalAjaxContainer");
 
     calendar.render();
     $("button[class^='fc-'][class*='Desc-button']").prop('disabled', true);
+    $("span.fc-icon").removeClass('fc-icon'); // remove fullcalendar icons messing with fa icons
     $calendar.style.visibility = "visible";
 
     const $fcJumpToDateButton = $('.fc-jumpToDate-button');
@@ -216,13 +228,31 @@ function lmb_calInit() {
     const formattedDate = yyyy + '-' + mm + '-' + dd;
     $inputJumpToDate.val(formattedDate);
 
-    $inputJumpToDate.on('change', function() {
+    $inputJumpToDate.on('change', function () {
         const date = $inputJumpToDate.val();
-        console.log("changed date to " + date);
         if (date) {
             calendar.gotoDate(date);
         }
     });
+}
+
+function sendFullCalendarAction(data) {
+    data['actid'] = 'fullcalendar';
+
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: 'main_dyns.php',
+            type: 'POST',
+            data: data,
+            dataType: 'json',
+            success: function (data) {
+                resolve(data)
+            },
+            error: function (error) {
+                reject(error)
+            }
+        });
+    })
 }
 
 
@@ -262,7 +292,7 @@ function lmb_calEventRender(arg) {
 
     // show event icons before
     if (evtBeforeEvent) {
-        if(calendar.view.type.startsWith('list')){
+        if (calendar.view.type.startsWith('list')) {
             $(arg.el.firstChild).prepend(evtBeforeEvent);
         } else {
             $(arg.el).prepend(evtBeforeEvent);
@@ -296,8 +326,11 @@ function lmb_calEventRender(arg) {
         arg.event.borderColor = evtborderColor;
     }
 
+    const $el = $(arg.el);
+    $el.find('.fc-event-title').html(arg.event.title.replace(/\n/g, '<br>'));
+
     // contextmenu
-    $(arg.el).on('contextmenu', function (event) {
+    $el.on('contextmenu', function (event) {
         lmb_calShowContext(event, arg, null);
         return false;
     });
@@ -392,6 +425,25 @@ function lmb_calPaste(date) {
                 }
             }
         });
+
+        sendFullCalendarAction({
+            action: paste,
+            gtabid: jsvar['gtabid'],
+            ID: id,
+            stamp: offsetDate.getTime() / 1000,
+        }).then(function (data) {
+            if (data.success) {
+                if (!len) {
+                    lmb_calReload();
+                }
+            } else {
+                lmbShowErrorMsg('Action failed.');
+            }
+        }).catch(function () {
+            lmbShowErrorMsg('Action failed.');
+        });
+
+
     }
 
 
@@ -424,13 +476,17 @@ function lmb_calQuickAdd(selectionInfo) {
     let resourceid = null;
     // disable resources - todo
     //if (selectionInfo.resource && selectionInfo.resource.id) {
-        //resourceid = selectionInfo.resource.id;
+    //resourceid = selectionInfo.resource.id;
     //}
 
     //calendar.gotoDate(selectionInfo.start);
 
     // fullcalendar has exclusive end for allday events, we want inclusive, so we subtract one day
-    lmb_calAdd(title, Math.round(selectionInfo.start.getTime() / 1000), Math.round(selectionInfo.end.getTime() / 1000 - 86400), selectionInfo.allDay, resourceid);
+    let endStamp = Math.round(selectionInfo.end.getTime() / 1000);
+    if(selectionInfo.allDay) {
+        endStamp -= 86400;
+    }
+    lmb_calAdd(title, Math.round(selectionInfo.start.getTime() / 1000), endStamp, selectionInfo.allDay, resourceid);
 
     calendar.unselect();
 
@@ -440,10 +496,24 @@ function lmb_calQuickAdd(selectionInfo) {
 
 // post add event
 function lmb_calAdd(title, start, end, allDay) {
-    $.ajax({
-        type: "POST",
-        url: "main_dyns.php",
-        data: "actid=fullcalendar&action=add&gtabid=" + jsvar['gtabid'] + "&start=" + start + "&end=" + end + "&allDay=" + allDay + "&title=" + title + "&verkn_ID=" + jsvar['verkn_ID'] + "&verkn_tabid=" + jsvar['verkn_tabid'] + "&verkn_fieldid=" + jsvar['verkn_fieldid'],
+    sendFullCalendarAction({
+        action: 'add',
+        gtabid: jsvar['gtabid'],
+        start: start,
+        end: end,
+        allDay: allDay,
+        title: title,
+        verkn_ID: jsvar['verkn_ID'],
+        verkn_tabid: jsvar['verkn_tabid'],
+        verkn_fieldid: jsvar['verkn_fieldid']
+    }).then(function (data) {
+        if (data.success) {
+            lmbShowSuccessMsg('Update successful.')
+        } else {
+            lmbShowErrorMsg('Update failed.');
+        }
+    }).catch(function () {
+        lmbShowErrorMsg('Update failed.');
     });
 }
 
@@ -463,10 +533,10 @@ function lmb_calDrop(eventInfo) {
         second: '2-digit',
         hour12: false,
         locale: 'de'
-    }).replace(",","");
+    }).replace(",", "");
     let newStartDate = formatFunction(eventInfo.event.start);
     let newEndDate;
-    if(!eventInfo.event.end) {
+    if (!eventInfo.event.end) {
         let end = new Date();
         end.setTime(eventInfo.event.start.getTime() + (60 * 60 * 1000));
         newEndDate = formatFunction(end);
@@ -478,12 +548,20 @@ function lmb_calDrop(eventInfo) {
             newEndDate = formatFunction(eventInfo.event.end);
         }
     }
-    $.ajax({
-        type: "POST",
-        url: "main_dyns.php",
-        data: "actid=fullcalendar&action=drop&gtabid=" + jsvar['gtabid'] + "&ID=" + eventInfo.event.id + "&newStartDate=" + newStartDate + "&newEndDate=" + newEndDate + "&allDay=" + eventInfo.event.allDay
-    }).done(function (data) {
-        ajaxEvalScript(data);
+
+    sendFullCalendarAction({
+        action: 'drop',
+        gtabid: jsvar['gtabid'],
+        ID: eventInfo.event.id,
+        newStartDate: newStartDate,
+        newEndDate: newEndDate,
+        allDay: eventInfo.event.allDay
+    }).then(function (data) {
+        if (!data.success) {
+            lmbShowErrorMsg('Update failed.');
+        }
+    }).catch(function () {
+        lmbShowErrorMsg('Update failed.');
     });
 }
 
@@ -494,22 +572,27 @@ function lmb_calDelete(evt, gtabid, ID) {
     divclose();
     var title = confirm(jsvar['lng_84']);
     if (title) {
-        $.ajax({
-            type: "POST",
-            url: "main_dyns.php",
-            data: "actid=fullcalendar&action=delete&gtabid=" + gtabid + "&ID=" + ID + "&verkn_ID=" + jsvar['verkn_ID'] + "&verkn_tabid=" + jsvar['verkn_tabid'] + "&verkn_fieldid=" + jsvar['verkn_fieldid'],
-        }).done(function (data) {
-            if (data.trim().substr(0, 4) == 'true' && ID > 0) {
-                //$('#calendar').fullCalendar( 'removeEvents', ID);
+        sendFullCalendarAction({
+            action: 'delete',
+            gtabid: gtabid,
+            ID: ID,
+            verkn_ID: jsvar['verkn_ID'],
+            verkn_tabid: jsvar['verkn_tabid'],
+            verkn_fieldid: jsvar['verkn_fieldid']
+        }).then(function (data) {
+            if (data.success && ID > 0) {
                 calendar.getEventById(ID).remove();
 
                 if ($lmbCalAjaxContainer.dialog()) {
                     $lmbCalAjaxContainer.dialog('destroy');
                 }
+                lmbShowSuccessMsg('Delete successful.')
             } else {
-                ajaxEvalScript(data);
+                lmbShowErrorMsg('Delete failed.');
             }
-            // reset history_fields
+        }).catch(function () {
+            lmbShowErrorMsg('Delete failed.');
+        }).finally(function () {
             document.form1.history_fields.value = '';
         });
     }
@@ -578,9 +661,6 @@ function lmb_calEdit(event) {
 
 // calendar - change view
 function lmb_calView(view) {
-
-    lmb_closeCalDialog();
-
     calendar.changeView(view);
 
     jsvar['cal_viewmode'] = view;
@@ -634,73 +714,68 @@ function lmb_calDetail(eventInfo) {
     if (document.getElementById("bulkmenu")) {
         var bulk = "<div onclick=\"lmb_openBulkMenu()\" id=\"bulkmenuLink\" style=\"position:absolute;top:5px;right:20px;cursor:pointer;z-index:9999;\">&nbsp;Terminserie&nbsp;<i class=\"lmb-icon-cus lmb-cal-span\" style=\"vertical-align:text-bottom\"></i></div><br>";
     }
-    var w_ = 500;
-    var h_ = 600;
 
     // reset history_fields
     document.form1.history_fields.value = '';
 
-    // specific formular
-    if (jsvar['formid']) {
-
-        if (jsvar['form_dimension']) {
-            var size = jsvar['form_dimension'].split('x');
-            var w_ = (parseFloat(size[0]) + 40);
-            var h_ = (parseFloat(size[1]) + 80);
-        }
-
-        // display in iframe
-        if (jsvar['iframe']) {
-            $('#lmb_detailFrame').contents().find('body').html('');
-            $("#lmb_eventDetailFrame").css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
-                width: w_,
-                height: h_,
-                resizable: true,
-                close: lmb_closeCalDialog,
-                modal: true,
-                zIndex: 10,
-                open: function (ev, ui) {
-                    $('#lmb_detailFrame').attr("src", "main.php?&action=" + action + "&ID=" + id + "&gtabid=" + jsvar['gtabid'] + "&form_id=" + jsvar['fformid']);
-                }
-            });
-            return;
-        }
-    }
-
-    $.ajax({
-        type: "GET",
-        url: "main_dyns.php",
-        async: false,
-        dataType: "html",
-        data: "actid=fullcalendar&action=details&gtabid=" + jsvar['gtabid'] + "&form_id=" + jsvar['fformid'] + "&ID=" + id + "&act=" + action,
-        success: function (data) {
+    sendFullCalendarAction({
+        action: 'details',
+        gtabid: jsvar['gtabid'],
+        form_id: jsvar['fformid'],
+        ID: id,
+        act: action
+    }).then(function (data) {
+        if (data.success) {
             if (id) {
                 bulk = '';
             }
-            document.getElementById("lmbCalAjaxContainer").innerHTML = bulk + '<div class="calenderBulk">' + data + '</div>';
-            ajaxEvalScript(data);
+
+            let $modalDetail = $(data.html_modal);
+
+            let $form1 = $('#form1');
+
+            $form1.append($modalDetail);
+
+            if(jsvar['fformid']) {
+                //let widthIFrame = 500;
+                let heightIFrame = 600;
+                if (jsvar['form_dimension']) {
+                    let formDimension = jsvar['form_dimension'].split('x');
+                    //widthIFrame = (parseFloat(formDimension[0]) + 40);
+                    heightIFrame = (parseFloat(formDimension[1]) + 80);
+                }
+
+                let $iframe = $('<iframe>', {
+                    id: 'cal-detail-iframe',
+                    src: "main.php?&action=" + action + "&ID=" + id + "&gtabid=" + jsvar['gtabid'] + "&form_id=" + jsvar['fformid'],
+                    width: '100%',
+                    height: heightIFrame,
+                    frameborder: '0'
+                });
+
+                $modalDetail.find('#cal-detail-modal-body').html($iframe);
+
+                $modalDetail.on('hidden.bs.modal', function () {
+                    document.form1.history_fields.value = '';
+                    lmb_calReload();
+                });
+            } else {
+                let htmlDetailForm = bulk + '<div class="calenderBulk">' + data.html_form + '</div>';
+
+                $modalDetail.find('#cal-detail-modal-body').html(htmlDetailForm);
+
+                $modalDetail.on('hidden.bs.modal', function () {
+                    lmb_calReload();
+                });
+            }
+
+            $modalDetail.modal('show');
+        } else {
+            lmbShowErrorMsg('Opening of detail modal failed.');
         }
+    }).catch(function () {
+        lmbShowErrorMsg('Opening of detail modal failed.');
     });
-
-    if (!jsvar['formid']) {
-        h_ = ($lmbCalAjaxContainer.height() + 80);
-    }
-
-    if ($lmbCalAjaxContainer.hasClass('ui-dialog-content')) {
-        $lmbCalAjaxContainer.dialog('open');
-    } else {
-        $lmbCalAjaxContainer.css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
-            title: title,
-            width: w_,
-            height: h_,
-            resizable: true,
-            modal: true,
-            zIndex: 10,
-            close: lmb_closeCalDialog,
-            appendTo: "#form1"
-        });
-    }
-
 }
 
 // set calendar height
@@ -933,7 +1008,6 @@ function send_form(formid, ajax, need, wclose, calBulk_precalc) {
 }
 
 function lmb_extsearchclear() {
-    $('#extsearchtab input, #extsearchtab select').filter('.gtabHeaderInputINP').val('');
     $("[name='filter_reset']").val('1');
     lmb_calReload(1);
     $("[name='filter_reset']").val('');
@@ -952,14 +1026,6 @@ function LmGs_sendForm(reset) {
     if (reset) {
         lmb_extsearchclear();
     } else {
-        // sync searchtab with detail searchform
-        $('#extsearchtab input, #extsearchtab select').filter('.gtabHeaderInputINP').each(function () {
-            var n = $(this).attr('name');
-            if (document.form11.elements[n]) {
-                $(this).val(document.form11.elements[n].value);
-            }
-        });
-
         lmb_calReload(1, 1);
     }
 }

@@ -8,6 +8,7 @@
  */
 
 use Limbas\extra\mail\MailAccount;
+use Limbas\extra\mail\MailSignature;
 use Limbas\extra\mail\MailTable;
 
 $multiTenantEnabled = false;
@@ -19,8 +20,26 @@ if($umgvar['multitenant'] && !empty($lmmultitenants['mid'])) {
 ?>
 <input type="hidden" value="<?=$adminMails?'1':'0'?>" id="is-admin">
 <div class="container-fluid p-3">
+    
+    <ul class="nav nav-tabs">
+        <?php if ($LINK['user_mails'] || $LINK['setup_mails']): ?>
+            <li class="nav-item">
+                <a class="nav-link active bg-contrast" href="#"><?=$lang[$LINK["desc"][$LINK_ID['setup_mails']]]?></a>
+            </li>
+        <?php endif; ?>
+        <?php if ($LINK['user_mail_signatures'] || $LINK['setup_mail_signatures']): ?>
+            <li class="nav-item">
+                <?php if($adminMails): ?>
+                    <a class="nav-link" href="main_admin.php?action=setup_mail_signatures"><?=$lang[$LINK["desc"][$LINK_ID['setup_mail_signatures']]]?></a>
+                <?php else: ?>
+                    <a class="nav-link" href="main.php?action=user_mail_signatures"><?=$lang[$LINK["desc"][$LINK_ID['setup_mail_signatures']]]?></a>
+                <?php endif; ?>
+            </li>
+        <?php endif; ?>
+    </ul>
+    
 
-    <table class="table table-sm table-striped table-hover border bg-contrast align-middle">
+    <table class="table table-sm table-striped table-hover border border-top-0 bg-contrast align-middle">
         <thead>
         <tr>
             <th></th>
@@ -115,6 +134,14 @@ if($umgvar['multitenant'] && !empty($lmmultitenants['mid'])) {
                         </select>
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <label for="mail-selected" class="col-sm-3 col-form-label"><?=$lang[1845]?></label>
+                    <div class="col-sm-9 pt-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="mail-selected">
+                        </div>
+                    </div>
+                </div>
                 <?php if($adminMails):?>
                 <div class="row mb-3">
                     <label for="mail-default" class="col-sm-3 col-form-label"><?=$lang[2685]?></label>
@@ -202,8 +229,8 @@ if($umgvar['multitenant'] && !empty($lmmultitenants['mid'])) {
                     </div>
                 </div>
 
+                <hr>
                 <?php if($adminMails && !empty($mailTables)):?>
-                    <hr>
                     <div class="row mb-3">
                         <label for="mail-table" class="col-sm-3 col-form-label">Speichertabelle</label>
                         <div class="col-sm-9">
@@ -222,6 +249,20 @@ if($umgvar['multitenant'] && !empty($lmmultitenants['mid'])) {
                         </div>
                     </div>
                 <?php endif; ?>
+
+                <div class="row mb-3">
+                    <label for="mail-signature" class="col-sm-3 col-form-label">Standardsignatur</label>
+                    <div class="col-sm-9">
+                        <select class="form-select" id="mail-signature">
+                            <option value="0"></option>
+                            <?php
+                            /** @var MailSignature $mailSignature */
+                            foreach ($mailSignatures as $mailSignature): ?>
+                                <option value="<?=$mailSignature->id?>"><?=$mailSignature->name?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
             </div>
             
             <div class="modal-footer">

@@ -8,52 +8,60 @@
  */
 
 
+use Limbas\gtab\lib\tables\TableFilter;
+use Limbas\gtab\lib\tables\TableFilterGroup;
+use Limbas\lib\general\Log\Log;
 
 
-
-
-function SNAP_add_group($name){
-    global $db;
-    global $gsnap;
-
-    $NEXTID = next_db_id("LMB_SNAP_GROUP");
-    $sqlquery = "INSERT INTO LMB_SNAP_GROUP (ID,NAME) VALUES ($NEXTID,'".parse_db_string($name,50)."')";
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if(!$rs) {return false;}
+/**
+ * @deprecated create and save new TableFilterGroup instance 
+ * @param $name
+ * @return bool
+ */
+function SNAP_add_group($name): bool
+{
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Create and save new TableFilterGroup instance');
+    $tableFilterGroup = new TableFilterGroup(0,$name);
+    return $tableFilterGroup->save();
 }
 
-
+/**
+ * @deprecated delete instance of TableFilterGroup
+ * @param $snapgroup_id
+ * @return bool
+ */
 function SNAP_del_group($snapgroup_id){
-    global $db;
-    global $gsnap;
+    
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Delete instance of TableFilterGroup');
+    
+    $tableFilterGroup = TableFilterGroup::get(intval($snapgroup_id));
+    if($tableFilterGroup) {
+        return $tableFilterGroup->delete();
+    }
 
-    $sqlquery = "DELETE FROM LMB_SNAP_GROUP WHERE ID = ".parse_db_int($snapgroup_id);
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if(!$rs) {return false;}
-    $sqlquery = "UPDATE LMB_SNAP SET SNAPGROUP = NULL WHERE SNAPGROUP = ".parse_db_int($snapgroup_id);
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if(!$rs) {return false;}
+    return false;
 }
 
+/**
+ * @deprecated update instance of TableFilterGroup
+ * @param $snapgroup_id
+ * @param $name
+ * @param $intern
+ * @return bool
+ */
 function SNAP_update_group($snapgroup_id,$name,$intern){
-    global $db;
-    global $gsnap;
 
-    $qu = array();
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Update instance of TableFilterGroup');
+    
+    $tableFilterGroup = TableFilterGroup::get(intval($snapgroup_id ?? 0));
 
-    if($name){
-        $q[] = "NAME = '".parse_db_string($name,50)."'";
+    if($name) {
+        $tableFilterGroup->name = $name;
     }
-    if($intern){
-        $q[] = "INTERN = ".parse_db_bool($intern);
+    if($intern) {
+        $tableFilterGroup->intern = $intern;
     }
-
-    $qu = implode(',',$q);
-
-    $sqlquery = "UPDATE LMB_SNAP_GROUP SET $qu  WHERE ID = ".parse_db_int($snapgroup_id);
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if(!$rs) {return false;}
-
+    return $tableFilterGroup->save();
 }
 
 
@@ -143,16 +151,24 @@ if (!$snap_view) {
 
 
 if($new_snapgroup AND $new_snapgroupname){
-    SNAP_add_group($new_snapgroupname);
+    (new TableFilterGroup(0,$new_snapgroupname))->save();
 }
 
-if($groupid){
+$tableFilterGroup = TableFilterGroup::get(intval($groupid ?? 0));
+if($tableFilterGroup){    
     if($del){
-        SNAP_del_group($groupid);
+        $tableFilterGroup->delete();
     }
-    if($group_name OR $group_intern) {
-        SNAP_update_group($groupid, $group_name, $group_intern);
+    elseif($group_name || $group_intern) {
+        if($group_name) {
+            $tableFilterGroup->name = $group_name;
+        }
+        if($group_intern) {
+            $tableFilterGroup->intern = filter_var($group_intern, FILTER_VALIDATE_BOOLEAN);
+        }
+        $tableFilterGroup->save();
     }
+    
 }
 
 $gsnapgroup = SNAP_get_group();
@@ -260,7 +276,7 @@ if ($snap_extension) {
                 drop = 0;
             }
 
-            ajaxGet('', 'main_dyns.php', 'showUserGroups&gtabid=' + snap_id + '&usefunction=lmbSnapShareSelect&destUser=' + destUser + '&del=' + del + '&edit=' + edit + '&drop=' + drop, '', function (result) {
+            ajaxGet('', 'main_dyns.php', 'manageTableFilters&action=shareSelect&gtabid=' + snap_id + '&destUser=' + destUser + '&del=' + del + '&edit=' + edit + '&drop=' + drop, '', function (result) {
                 $('#lmbAjaxContainer').html(result).show();
                 if (el) {
                     $('#modal_publicShare').modal('show');
@@ -301,7 +317,7 @@ if ($snap_extension) {
         <input type="hidden" name="snap_group">
         <input type="hidden" name="snap_edit">
         <input type="hidden" name="snap_extension">
-        <input type="hidden" name="del">
+        <input type="hidden" name="del" id="del">
         <input type="hidden" name="groupid">
         <input type="hidden" name="group_intern" id="group_intern">
         <input type="hidden" name="group_name" id="group_name">
@@ -412,7 +428,7 @@ if ($snap_extension) {
                     if ($snap_view == 1 OR $snap_view == 2) {
 
                     $show_public_filter = $show_public_filter ? 1 : 2;
-                    $gsnap_ = SNAP_loadInSession(null, $show_public_filter);
+                    $gsnap_ = TableFilter::loadInSession(null, $show_public_filter);
 
                     ?>
                     <ul class="list-group">
@@ -560,7 +576,7 @@ if ($snap_extension) {
                                 </div>
 
                                 <div class="col-1">
-                                     <i class="lmb-icon lmb-trash cursor-pointer" onclick="edit_snapgroup(<?=$groupid?>,this.checked,'del')" ></i>
+                                     <i class="lmb-icon lmb-trash cursor-pointer" onclick="edit_snapgroup(<?=$groupid?>,1,'del')" ></i>
                                 </div>
 
                            </div>

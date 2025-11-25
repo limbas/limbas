@@ -91,6 +91,8 @@ while($bzm < $gresult[$gtabid]['res_viewcount']) {
         $form_id = $gtab["detailform"][$gtabid];
     }
 
+    if(!is_int($form_id) ){$form_id = null;}
+
     # klick event in views
     if($gtab["typ"][$gtabid] == 5 AND $gtab["event"][$gtabid]) {
         $klickevent = eval("return \"" . $gtab["event"][$gtabid] . "\";");
@@ -154,7 +156,7 @@ while($bzm < $gresult[$gtabid]['res_viewcount']) {
     # checkbox
     if($gtab["checkboxselect"][$gtabid]){
         ?>
-        <input type="checkbox" id="chkbelrow_<?=e($ID)?>_<?=e($gtabid)?>" onclick="lmbTableClickCheckbox(this);">
+        <input type="checkbox" id="chkbelrow_<?=e($ID)?>_<?=e($gtabid)?>" onclick="lmbTableClickCheckbox(this);" value="<?=e($gresult[$gtabid]['id'][$bzm])?>">
         <?php
     }
 
@@ -268,9 +270,6 @@ while($bzm < $gresult[$gtabid]['res_viewcount']) {
         # PHP / SQL - Argument
         if($gfield[$gtabid]["argument_typ"][$key]){
             if(!$gfield[$gtabid]["argument_edit"][$key]){$edittyp = 2;}
-            if($gfield[$gtabid]["argument_typ"][$key] == 15){
-                $gresult[$gtabid][$key][$bzm] = cftyp_13($ID,$gresult,$key,$gtabid,'','','',$edittyp,$bzm);
-            }
         }
 
         if($gresult[$gtabid][$key][$bzm] OR $gresult[$gtabid][$key][$bzm] == "0" OR $gfield[$gtabid]["field_type"][$key] == 11 OR $gfield[$gtabid]["ext_type"][$key] OR $edittyp == 1){

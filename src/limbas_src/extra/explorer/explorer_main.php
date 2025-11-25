@@ -10,6 +10,11 @@
 require_once(COREPATH . 'extra/explorer/explorer_main.lib');
 require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
 
+/** Print options collect function */
+?>
+<script src="assets/js/extra/printer/printer.js?v=<?=$umgvar['version']?>"></script>
+<?php
+
 #----------------- Context-Menü -------------------
 explContextDetail($LID);
 $gtabid = $gtab["argresult_id"]["LDMS_FILES"];
@@ -125,6 +130,11 @@ if ($LINK[304] and $gprinter) {
     # print button
     pop_menu(304, "LmEx_print(event, $LID, $('#LmExMenuOptionsPrinter').val())");
 
+    ob_start();
+    include(COREPATH . 'extra/printer/html/options.php');
+    echo ob_get_clean();
+
+    /*
     # printer selection
     $opt = array();
     $sel = '';
@@ -135,7 +145,7 @@ if ($LINK[304] and $gprinter) {
             $sel = $id;
         }
     }
-    pop_select('', $opt, $sel, 1, 'LmExMenuOptionsPrinter', $lang[2939]);
+    pop_select('', $opt, $sel, 1, 'LmExMenuOptionsPrinter', $lang[2939]);*/
 }
 if($LINK[284]){
     pop_line();
@@ -419,7 +429,7 @@ if($onload){
    # <div class=" mb-3 legacy-table d-inline-block flex-fill table-responsive" style="height:100%">
    ?>
 <div class="p-3 d-flex flex-column">
-<nav class="navbar navbar-expand-sm navbar-light bg-nav mb-3 lmbGtabmenu lmbGtabmenu-list lmbGtabmenu-table-20">
+<nav class="navbar navbar-expand-sm center-navigation bg-nav mb-3 lmbGtabmenu lmbGtabmenu-list lmbGtabmenu-table-20">
     <div class="container-fluid">
         <div class="collapse navbar-collapse" id="lmbDetailsNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-sm-0">
@@ -549,8 +559,9 @@ if(!$headerdesc){
 <div class="container-fluid p-1 border mb-3 bg-secondary-subtle">
     <span class="w-100" ><?=$file_url?></span>
 </div>
-
-<?php explMainContentBootstrap($ID,$LID,$MID,$fid,$typ,$level,$file_url,$ffile,$ffilter);?>
+<div id="gtabExplBody">
+<?php explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,$ffile,$ffilter);?>
+</div>
 </div>
 </form>
 
@@ -561,3 +572,6 @@ if(!$headerdesc){
         LmEx_uploadFilesPrecheck(files, <?= $LID ?>, 1);
     });
 </script>
+
+
+<?php require (COREPATH . 'extra/explorer/parts/details-modal.php'); ?>

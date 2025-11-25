@@ -8,7 +8,7 @@
  */
 
 namespace Limbas\gtab\html;
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 
 class FormController extends LimbasController
 {

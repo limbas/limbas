@@ -7,6 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\Controllers\ApiController;
 use Limbas\Controllers\LegacyController;
 use Limbas\lib\http\Route;
 
@@ -41,6 +42,13 @@ Route::get('/main_wsdl.php', [LegacyController::class, 'mainWsdl'], 'legacy.main
 Route::post('/main_wsdl.php', [LegacyController::class, 'mainWsdl'], 'legacy.main-wsdl.post');
 Route::put('/main_wsdl.php', [LegacyController::class, 'mainWsdl'], 'legacy.main-wsdl.put');
 Route::delete('/main_wsdl.php', [LegacyController::class, 'mainWsdl'], 'legacy.main-wsdl.delete');
+
+
+Route::get('main_rest.php/{path}', [ApiController::class, 'mainRest'], 'legacy.main-rest.get',['path' => '.+']);
+Route::post('main_rest.php/{path}', [ApiController::class, 'mainRest'], 'legacy.main-rest.post',['path' => '.+']);
+Route::put('main_rest.php/{path}', [ApiController::class, 'mainRest'], 'legacy.main-rest.put',['path' => '.+']);
+Route::patch('main_rest.php/{path}', [ApiController::class, 'mainRest'], 'legacy.main-rest.put',['path' => '.+']);
+Route::delete('main_rest.php/{path}', [ApiController::class, 'mainRest'], 'legacy.main-rest.delete',['path' => '.+']);
 
 
 return Route::getRoutes();

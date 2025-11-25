@@ -113,16 +113,97 @@ elseif($use_typ == 'delete' AND $use_record){
 	
 }
 
+# --- set trash status of dataset ------
+elseif($use_typ == 'trash' && $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["trash"][$gtabid_] && $ID_ && $gtabid_ && $LINK[313]){
+			if(hide_data($gtabid_,$ID_,$use_typ)){
+				$useetecount++;
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+    if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[3100]);}
+    elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[3098]);}
+
+}
+
+# --- set archive status of dataset ------
+elseif($use_typ == 'archive' && $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["hide"][$gtabid_] && $ID_ && $gtabid_ && $LINK[164]){
+			if(hide_data($gtabid_,$ID_,$use_typ)){
+				$useetecount++;
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+    if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1326]);}
+    elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1312]);}
+
+}
+
+# --- restore status of dataset ------
+elseif($use_typ == 'restore' && $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if(($gtab["trash"][$gtabid_] OR $gtab["hide"][$gtabid_]) && $ID_ && $gtabid_ && $LINK[166]){
+			if(hide_data($gtabid_,$ID_,$use_typ)){
+				$useetecount++;
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+    if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1327]);}
+    elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1313]);}
+
+}
+
+
+/*
 # --- set status of dataset ------
 elseif(((($use_typ == 'trash' OR $use_typ == 'restore') AND $LINK[313]) OR (($use_typ == 'archive' OR $use_typ == 'restore') AND $LINK[164])) AND $use_record){
 	$use = explode(";",$use_record);
 	$use = array_unique($use);
 	$useetecount = 0;
+
 	foreach ($use as $key => $value){
 		$use_ = explode("_",$use[$key]);
 		$ID_ = $use_[0];
 		$gtabid_ = $use_[1];
-		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[164]){
+		if(($gtab["hide"][$gtabid_] OR $gtab["trash"][$gtabid_]) AND $ID_ AND $gtabid_ AND $LINK[164]){
 			if(hide_data($gtabid_,$ID_,$use_typ)){
 				$useetecount++;
 			}else{
@@ -144,57 +225,6 @@ elseif(((($use_typ == 'trash' OR $use_typ == 'restore') AND $LINK[313]) OR (($us
         elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1313]);}
     }
 
-}
-
-
-
-/*
-# --- Datensatz archivieren ------
-elseif($use_typ == 'hide' AND $use_record){
-	$use = explode(";",$use_record);
-	$use = array_unique($use);
-	$useetecount = 0;
-	foreach ($use as $key => $value){
-		$use_ = explode("_",$use[$key]);
-		$ID_ = $use_[0];
-		$gtabid_ = $use_[1];
-		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[164]){
-			if(hide_data($gtabid_,$ID_,$use_typ)){
-				$useetecount++;
-			}else{
-				$falsecount++;
-			}
-		}else{
-			lmb_alert($lang[114]);
-		}
-	}
-
-	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1326]);}
-	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1312]);}
-
-}
-# --- Datensatz wiederherstellen ------
-elseif($use_typ == 'unhide' AND $use_record){
-	$use = explode(";",$use_record);
-	$use = array_unique($use);
-	$useetecount = 0;
-	foreach ($use as $key => $value){
-		$use_ = explode("_",$use[$key]);
-		$ID_ = $use_[0];
-		$gtabid_ = $use_[1];
-		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[166]){
-			if(hide_data($gtabid_,$ID_,$use_typ)){
-				$useetecount++;
-			}else{
-				$falsecount++;
-			}
-		}else{
-			lmb_alert($lang[114]);
-		}
-	}
-
-	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1327]);}
-	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1313]);}
 }
 */
 

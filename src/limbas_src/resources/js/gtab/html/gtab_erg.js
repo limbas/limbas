@@ -26,6 +26,7 @@ function send_form(id,ajax,b,f,h,s) {
 	if(sendFormTimeout){return;}
 	sendFormTimeout = 1;
 	selected_rows = new Array(); // reset selected_rows;
+    send_form_ = 1; // prevent jaxcall after pagination
 
 	if(typeof(b) == "undefined"){b = 1;}
 	if(typeof(f) == "undefined"){f = 1;}
@@ -57,8 +58,10 @@ function send_form(id,ajax,b,f,h,s) {
         confirm_submit();
     }
 
+    send_form_ = 0; // prevent jaxcall after pagination
 }
 
+var send_form_ = null;
 function confirm_form(id,ajax,need_,listmode,typ) {
 
     // delete, versioning, hide
@@ -372,7 +375,7 @@ function limbasSnapshotManage(gtabid)
 
 function limbasSnapshotSaveas(gtabid,name)
 {
-    var parameters = 'snapshotSaveas&gtabid='+gtabid+'&limbasSnapshotName='+name;
+    var parameters = 'manageTableFilters&action=save&gtabid='+gtabid+'&limbasSnapshotName='+name;
 	ajaxGet(0,"main_dyns.php",parameters,"","limbasSnapshotSaveasPost");
 }
 function limbasSnapshotSaveasPost(string)
@@ -403,7 +406,7 @@ function limbasSnapshotSave()
 	//if(conf)
 	//{
 		var parameters = new Array("snap_id","gtabid","tab_group");
-		ajaxGet(0,"main_dyns.php","snapshotSave",parameters,"limbasSnapshotSavePost");
+		ajaxGet(0,"main_dyns.php","manageTableFilters&action=save",parameters,"limbasSnapshotSavePost");
 	//}
 	//else{
 		divclose();
@@ -426,7 +429,7 @@ function limbasSnapshotDelete()
 	if(conf)
 	{
 		var parameters = new Array("snap_id","gtabid");
-		ajaxGet(0,"main_dyns.php","snapshotDelete",parameters,"limbasSnapshotDeletePost");
+		ajaxGet(0,"main_dyns.php","manageTableFilters&action=delete",parameters,"limbasSnapshotDeletePost");
 	}
 	else{
 		divclose();
@@ -452,7 +455,7 @@ function limbasSnapshotShare(el,snap_id,destUser,del,edit,drop)
 	if(typeof(edit) == "undefined"){edit = 0;}
 	if(typeof(drop) == "undefined"){drop = 0;}
 
-	ajaxGet('','main_dyns.php','showUserGroups&gtabid='+snap_id+'&usefunction=lmbSnapShareSelect&destUser='+destUser+'&del='+del+'&edit='+edit+'&drop='+drop,'', function(result) {
+	ajaxGet('','main_dyns.php','manageTableFilters&action=shareSelect&gtabid='+snap_id+'&destUser='+destUser+'&del='+del+'&edit='+edit+'&drop='+drop,'', function(result) {
         $('#lmbAjaxContainer').html(result).show();
 		if(el){
             limbasDivShow(el,'limbasDivMenuSnapshot','lmbAjaxContainer');
@@ -552,6 +555,12 @@ function lmbTableDblClickEvent(evt,el,gtabid,ID) {
     if(evt && evt.altKey){formopener = 'tab';}
 
     params['formopener'] = formopener;
+    if(document.form1.verkn_tabid) {
+        params['v_tabid'] = document.form1.verkn_tabid.value;
+        params['v_fieldid'] = document.form1.verkn_fieldid.value;
+        params['v_id'] = document.form1.verkn_ID.value;
+    }
+
     lmbOpenForm(evt, gtabid, ID, params);
 
     aktivateRows(0);
@@ -660,7 +669,9 @@ function lmb_setTableWitdh(gtheader){
 		tabwidth = tabwidth + $(gtheader.rows[0].cells[i]).width();
 	}
 
-	document.getElementById('lmbGlistSearchTab').style.width = tabwidth+'px';
+    if(document.getElementById('lmbGlistSearchTab')){
+        document.getElementById('lmbGlistSearchTab').style.width = tabwidth+'px';
+    }
 	document.getElementById('lmbGlistHeaderTab').style.width = tabwidth+'px';
 	document.getElementById('lmbGlistBodyTab').style.width = tabwidth+'px';
 
@@ -753,7 +764,6 @@ function gtabSetTablePagination(){
 
             pagination_s = 1;
             lmbAjax_resultGtab('form1', 1, 0, 0, 0);
-            gtabSetTablePagination();
         });
 
     // scrollbar exists
@@ -763,6 +773,8 @@ function gtabSetTablePagination(){
 			.unbind('DOMMouseScroll mousewheel')
 			.scroll(function(e) {
 				if ($(this).scrollTop() >= pagination_h) {
+                    if(send_form_) {send_form_ = null; return;} // prevent jaxcall after pagination
+
                     $(this).unbind('scroll');
 					var np = document.form1.elements['filter_page[' + jsvar["gtabid"] + ']'];
 					var page = np.value.split('/');
@@ -773,8 +785,7 @@ function gtabSetTablePagination(){
 
 					pagination_s = 1;
 					e.preventDefault();
-					lmbAjax_resultGtab('form1', 1, 0, 0, 0);
-					gtabSetTablePagination();
+                    lmbAjax_resultGtab('form1', 1, 0, 0, 0);
 				}
 			});
     }
@@ -811,11 +822,11 @@ function td_resize() {
 		}
 
 		tabw += tdw;
-		gts.rows[0].cells[e].style.width = tdw+'px';
+        if(gts){gts.rows[0].cells[e].style.width = tdw+'px';}
 		gtb.rows[0].cells[e].style.width = tdw+'px';
 		gth.rows[0].cells[e].style.width = tdw+'px';
 	}
-	gts.style.width = tabw;
+	if(gts){gts.style.width = tabw;}
 	gth.style.width = tabw;
 	gtb.style.width = tabw;
 
@@ -933,7 +944,9 @@ function startDrag(evt,tabid,fieldid) {
 		eltd = document.getElementById("gtdh_"+tabid+"_"+fieldid);
 		elinp = document.getElementById("tdinp_"+tabid+"_"+fieldid);
 
-		tabsw = document.getElementById('lmbGlistSearchTab').offsetWidth;
+        if(document.getElementById('lmbGlistSearchTab')) {
+            tabsw = document.getElementById('lmbGlistSearchTab').offsetWidth;
+        }
 		tabhw = document.getElementById('lmbGlistHeaderTab').offsetWidth;
 		tabbw = document.getElementById('lmbGlistBodyTab').offsetWidth;
 
@@ -957,11 +970,11 @@ function drag(e) {
 				document.getElementById('lmbGlistBodyTab').rows[i].cells[eltd.cellIndex].style.width = tdw + 'px';
 			}
 		}
-		document.getElementById('lmbGlistSearchTab').rows[0].cells[eltd.cellIndex].style.width = tdw + 'px';
+		if(tabsw){document.getElementById('lmbGlistSearchTab').rows[0].cells[eltd.cellIndex].style.width = tdw + 'px';}
 		eltd.style.width = tdw + 'px';
 		if(elinp){elinp.style.width = tdw + 'px';}
 
-		document.getElementById('lmbGlistSearchTab').style.width = tabsw + evw + 'px';
+		if(tabsw){document.getElementById('lmbGlistSearchTab').style.width = tabsw + evw + 'px';}
 		document.getElementById('lmbGlistHeaderTab').style.width = tabhw + evw + 'px';
 		document.getElementById('lmbGlistBodyTab').style.width = tabbw + evw + 'px';
 	}
@@ -1098,7 +1111,10 @@ function gtab_export(typ,medium) {
 	document.form1.exp_medium.value=medium;
 	document.form1.action.value='gtab_exp';
 	document.form1.target='export';
-	document.form1.submit();
+	// select all rows if none are selected, otherwise use selected rows
+	if (countofActiveRows() === 0 || userecord('export')) {
+		document.form1.submit();
+	}
 	document.form1.action.value='gtab_erg';
 	document.form1.target='_self';
 }
@@ -1231,7 +1247,7 @@ function userecord(typ,nomess,actrows) {
     }else {
 	count =	countofActiveRows();
     }
-	var delt = "";
+	let delt = false;
 
 	if(count > 0){
 		if(typ == 'delete'){var mess = jsvar["lng_2153"];if(document.getElementById("filter_force_delete") && document.getElementById("filter_force_delete").checked == true){mess += '\n\n'+jsvar["lng_2794"];}}
@@ -1244,9 +1260,10 @@ function userecord(typ,nomess,actrows) {
         if(typ == 'archive'){var mess = jsvar["lng_2154"];}
         if(typ == 'trash'){var mess = jsvar["lng_3101"];}
         if(typ == 'restore'){var mess = jsvar["lng_2157"];}
+		if(typ == 'export'){var mess = jsvar["lng_3225"];}
 
 		if(mess){
-			var delt=confirm(mess+' ('+count+')');
+			delt=confirm(mess+' ('+count+')');
 		}
 		if(delt || !mess) {
 		    if(!actrows) {
@@ -1257,7 +1274,7 @@ function userecord(typ,nomess,actrows) {
                 var use_records = actrows.join(";");
                 document.form1.use_record.value = use_records;
 
-                if (typ == 'report' || typ == 'diagramm') {
+                if (typ == 'report' || typ == 'diagramm' || typ == 'export') {
                     return use_records;
                 }
 

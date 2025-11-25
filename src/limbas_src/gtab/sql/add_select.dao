@@ -156,7 +156,7 @@ function pool_select_list_simple($pool_id, $attribute=false){
  * @return unknown
  */
 function pool_select_add($select_add,$wert,$keywords,$gtabid,$field_id,$ID,$level_id=0){
-	global $db,$session,$gfield,$umgvar;
+	global $db,$session,$gfield,$umgvar,$lang;
 
 	$level_id = !isset($level_id) || empty($level_id) ? 0 : intval($level_id);
 
@@ -181,6 +181,7 @@ function pool_select_add($select_add,$wert,$keywords,$gtabid,$field_id,$ID,$leve
 		if(!$rs1) {$commit = 1;}
 
 		if(lmbdb_fetch_row($rs1)){
+            echo '<div class="alert alert-warning" role="alert">'.$lang[3207].'</div>';
 			return lmbdb_result($rs1,"ID");
 		}else{
 			// Next Sort-ID
@@ -990,6 +991,13 @@ function pool_select_update($gtabid,$field_id,$ID,$change_array){
 
         // add value
         if($actflag == 'a') {
+            // is unique - drop all values
+            if($gfield[$gtabid]["unique"][$field_id]){
+                $sqlquery = "DELETE FROM {$tabtyp}_D WHERE TAB_ID = $gtabid AND FIELD_ID = $field_id AND DAT_ID = $ID";
+                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                if(!$rs) {$commit = 1;}
+            }
+
             $NEXTID = next_db_id($tabtyp . "_D");
             $sqlquery1 = "INSERT INTO {$tabtyp}_D (ID,TAB_ID,DAT_ID,FIELD_ID,W_ID,ERSTUSER $que_insfield) VALUES($NEXTID,$gtabid,$ID,$field_id,$selectWID,{$session['user_id']} $que_insvalue)";
             $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);

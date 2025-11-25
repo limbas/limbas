@@ -29,5 +29,6 @@ $gtabid = intval($_GET['gtabid'] ?? 0);
 $templateId = $_GET['template_id'] ?? null;
 $resolvedTemplateGroups = json_decode($_GET['resolvedTemplateGroups'], true) ?? [];
 $resolvedDynamicData = json_decode($_GET['resolvedDynamicData'], true) ?? [];
+$appendData = $_GET['appendData'] ?? [];
 
-echo $mailForm->render($gtabid,$id,$templateId, $resolvedTemplateGroups, $resolvedDynamicData);
+echo $mailForm->render($gtabid,$id,$templateId, $resolvedTemplateGroups, $resolvedDynamicData, appendData: $appendData);

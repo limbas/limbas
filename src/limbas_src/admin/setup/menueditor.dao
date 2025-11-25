@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\lib\db\Database;
+
 
 ?>
 
@@ -654,14 +656,11 @@ function lmb_custmenu(&$custmenu,$linkid,$parent){
             $cl = null;
             $readonly = null;
 
-            if($parent) {
-                if($custmenu['typ'][$key] != 1) {
-                    $readonly = 'readonly disabled';
-                }
-                $cli = "<a onclick=\"lmb_loadMenueDetail($id)\"><div style=\"width:15px\" border=\"0\" class=\"lmb-icon lmb-edit\"></div></a>";
-            }else{
-                $cl = "lmbMenuHeaderNav";
+            if($custmenu['typ'][$key] != 1) {
+                $readonly = 'readonly disabled';
             }
+            $cli = "<a onclick=\"lmb_loadMenueDetail($id)\"><div style=\"width:15px\" border=\"0\" class=\"lmb-icon lmb-edit\"></div></a>";
+           
 
             $name = '';
             if($custmenu['typ'][$key] <= 1 OR $custmenu['typ'][$key] == 8 OR $custmenu['typ'][$key] == 13){
@@ -806,4 +805,13 @@ function lmb_custmenu_getSingleId($linkid): int|false {
     }
 
     return $id;
+}
+
+function lmb_custmenu_updateShowMenuSearch(int $id, bool $show): void
+{
+    Database::update('LMB_ACTION_DEPEND',[
+        'SHOW_MENU_SEARCH' => $show ? 1 : 0
+    ],[
+        'ID' => $id,
+    ]);
 }

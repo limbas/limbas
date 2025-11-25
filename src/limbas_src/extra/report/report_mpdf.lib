@@ -7,6 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\extra\printer\PrinterOptions;
 use Limbas\extra\report\LmbMpdf;
 use Limbas\extra\report\ReportMpdf;
 use Limbas\extra\report\ReportOutput;
@@ -24,7 +25,7 @@ function lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename = n
     trigger_error('Method ' . __METHOD__ . ' is deprecated. Use Report->createReport instead.', E_USER_DEPRECATED);
     $reportMpdf = new ReportMpdf();
     $reportOutput = ReportOutput::tryFrom($report_output) ?? ReportOutput::TEMP;
-    return $reportMpdf->createReport(intval($report_id), null,  $ID, $reportOutput, $report_rename, $gsr, $filter, null, null, $printer);
+    return $reportMpdf->createReport(intval($report_id), null,  $ID, $reportOutput, $report_rename, $gsr, $filter, null, null, !empty($printer) ? new PrinterOptions($printer) : null);
 }
 
 
@@ -67,7 +68,7 @@ function lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, &$fil
 {
     trigger_error('Method ' . __METHOD__ . ' is deprecated. Use Report->createReport instead.', E_USER_DEPRECATED);
     $reportMpdf = new ReportMpdf();
-    return $reportMpdf->createReport(intval($report_id), $gtabid, null, $report_output, $report_rename, $gsr, $filter, null, $verkn, intval($printer));
+    return $reportMpdf->createReport(intval($report_id), $gtabid, null, $report_output, $report_rename, $gsr, $filter, null, $verkn, !empty($printer) ? new PrinterOptions(intval($printer)) : null);
 }
 
 
@@ -80,7 +81,7 @@ function lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_re
 {
     trigger_error('Method ' . __METHOD__ . ' is deprecated. Use Report->createReport instead.', E_USER_DEPRECATED);
     $reportMpdf = new ReportMpdf();
-    return $reportMpdf->createReport(intval($report_id), $gtabid, null, $report_output, $report_rename, null, null, $use_record, null, intval($printer));
+    return $reportMpdf->createReport(intval($report_id), $gtabid, null, $report_output, $report_rename, null, null, $use_record, null, !empty($printer) ? new PrinterOptions(intval($printer)) : null);
 }
 
 /**
@@ -93,7 +94,7 @@ function lmb_reportPDF($report_id, $gtabid = null, $ID = null, $report_output = 
     trigger_error('Method ' . __METHOD__ . ' is deprecated. Use Report->createReport instead.', E_USER_DEPRECATED);
     $reportMpdf = new ReportMpdf();
     $reportOutput = ReportOutput::tryFrom($report_output) ?? ReportOutput::TEMP;
-    return $reportMpdf->createReport(intval($report_id), $gtabid, $ID, $reportOutput, $report_rename, $gsr, $filter, $use_record, $verkn, intval($printer));
+    return $reportMpdf->createReport(intval($report_id), $gtabid, $ID, $reportOutput, $report_rename, $gsr, $filter, $use_record, $verkn, !empty($printer) ? new PrinterOptions(intval($printer)) : null);
 }
 
 

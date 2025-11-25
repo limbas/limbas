@@ -148,6 +148,11 @@ function extendTabTyp(el){
 
 // Ajax edit table
 function ajaxEditTable(el,gtabid,tabgroup,act){
+
+    if($("#activetab").find(".active").attr('id')) {
+        document.form3.active_tab.value = $("#activetab").find(".active").attr('id');
+    }
+
 	if(el){
         if($(el).attr('type') == 'checkbox'){
 			if(el.checked){
@@ -195,6 +200,9 @@ function ajaxEditTablePost(result){
         ajaxEditTable(null,$(this).attr('data-tabid'),'<?=$tab_group?>','globalfilter');
     })
 
+    if(document.form3.active_tab.value){
+        $('#'+document.form3.active_tab.value).tab('show');
+    }
     
 }
 

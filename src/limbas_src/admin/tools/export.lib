@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\lib\db\functions\Dbf;
+
 function lmbExport_infotext(){
 
 	$info = "
@@ -249,7 +251,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null){
 	    // links
         if (in_array('links',$tableprefix))
         {
-            $tosync = array_merge($tosync, array('lmb_action_depend','lmb_custmenu', 'lmb_custmenu_list'));
+            $tosync = array_merge($tosync, array('lmb_action_depend','lmb_lang_depend','lmb_custmenu', 'lmb_custmenu_list'));
         	// rules
     		if (in_array('group',$tableprefix)){
     		    $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_action'));
@@ -375,7 +377,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null){
         //Sammle alle nicht Systemtabellen
         $expTableConf = array();
         $expTables = array();
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
+		$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE'");
 		foreach($odbc_table["table_name"] as $tkey => $table) {
             // tables for complete export
 			if (in_array(lmb_strtolower($table), $tosync))
@@ -569,7 +571,7 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 				}
 			}
 
-			$table = dbf_4($table);
+			$table = Dbf::handleCaseSensitive($table);
 
 			if($tableprefix){
 				$table_ = ltrim($table,"lmb_");
@@ -596,7 +598,7 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 
 			/* ---> conf */ fputs($config_datei,"<begin tabledefinition::".$newtablename.">\n");
 			/* --- Spalten_Liste --------------------------------------------- */
-			if($col = dbf_5(array($DBA["DBSCHEMA"],$table,null),1)){
+			if($col = Dbf::getColumns($DBA["DBSCHEMA"],$table,null, false, false, 1)){
 				foreach ($col["columnname"] as $ckey => $cname){
 					$COLUM[] = $col["columnname"][$ckey];
 					$DATATYPE = constant("LMB_DBRETYPE_".trim(lmb_strtoupper($col["datatype"][$ckey])));
@@ -695,11 +697,12 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 
 			/* --- Index_Liste --------------------------------------------- */
 			/* ---> conf */ fputs($config_datei,"<begin indexdefinition>\n");
-			$sqlquery = dbq_2(array($DBA["DBSCHEMA"],$table,null,1,null,'lmb'));
+			$sqlquery = Dbf::getIndicesSql($DBA["DBSCHEMA"], null, $table, null, true, 'lmb');
+
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 			while(lmbdb_fetch_row($rs)) {
-				#$REFTABLENAME = dbf_4(lmbdb_result($rs, "TABLENAME"));
+				#$REFTABLENAME = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABLENAME"));
 				$REFTABLENAME = $newtablename;
 				$REFCOLUMNNAME = lmbdb_result($rs, "COLUMNNAME");
 				#$TYPE = lmbdb_result($rs, "TYPE");
@@ -712,11 +715,11 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 
 			/* --- Foreign-Key_Liste --------------------------------------------- */
 			/* ---> conf */ fputs($config_datei,"<begin keydefinition>\n");
-			$sqlquery = dbq_3(array($table,$DBA["DBSCHEMA"]));
+			$sqlquery = Dbf::getForeignKeySql($DBA["DBSCHEMA"], $table);
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 			while(lmbdb_fetch_row($rs)) {
-				#$DEFTABLENAME = dbf_4(lmbdb_result($rs, "TABLENAME"));
+				#$DEFTABLENAME = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABLENAME"));
 				$DEFTABLENAME = $newtablename;
 				$DEFCOLUMNNAME = lmbdb_result($rs, "COLUMNNAME");
 				$REFTABLENAME = lmbdb_result($rs, "REFTABLENAME");
@@ -845,7 +848,7 @@ function lmbExport_Dump($format,$struct_only=false){
 	/* ---> conf */ fputs($config_datei,$info);
 
 	/* --- Tabellen_Liste --------------------------------------------- */
-	$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
+	$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE'");
 	foreach($odbc_table["table_name"] as $tkey => $table) {
 
 		unset($COLUM);
@@ -857,7 +860,7 @@ function lmbExport_Dump($format,$struct_only=false){
 		/* ---> conf */ fputs($config_datei,"<begin tabledefinition::$table>\n");
 
 		/* --- Spalten_Liste --------------------------------------------- */
-		if($col = dbf_5(array($DBA["DBSCHEMA"],$table,null),1)){
+		if($col = Dbf::getColumns($DBA["DBSCHEMA"],$table,null, false, false, 1)){
 			foreach ($col["columnname"] as $ckey => $cname){
 				$COLUM[] = $col["columnname"][$ckey];
 				$COLUMNNAME = $col["columnname"][$ckey];
@@ -937,7 +940,7 @@ function lmbExport_Dump($format,$struct_only=false){
 
 	/* --- Index_Liste --------------------------------------------- */
 	/* ---> conf */ fputs($config_datei,"<begin indexdefinition>\n");
-	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1,null,'lmb'));
+	$sqlquery = Dbf::getIndicesSql($DBA["DBSCHEMA"], null, null, null, true, 'lmb');
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	while(lmbdb_fetch_row($rs)) {
@@ -952,7 +955,7 @@ function lmbExport_Dump($format,$struct_only=false){
 
 	/* --- Views --------------------------------------------- */
 	/* ---> conf */ fputs($config_datei,"<begin viewdefinition>\n");
-	$sqlquery = dbq_12(array($DBA["DBSCHEMA"]));
+	$sqlquery = Dbf::getExistingViewsSql($DBA['DBSCHEMA']);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$vname = array();
 	while(lmbdb_fetch_row($rs)) {

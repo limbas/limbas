@@ -241,7 +241,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	global $dingbats_char_on;
 	global $dingbats_char_off;
 	global $filestruct;
-	
+
 	$referenz_tab = $report["referenz_tab"];
 
 	# get Fieldlist
@@ -342,6 +342,11 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
                     $baseTableName = $gtab['table'][$baseTableID];
                     $resultTableName = $gtab['table'][$resultTableID];
                     $relationTableName = $gfield[$baseTableID]['md5tab'][$relationFieldID];
+                    if(empty($relationTableName)) {
+                        // in case of 1:1 direct use md5tab of parent
+                        $relationTableName = $gfield[$gfield[$baseTableID]['verkntabid'][$relationFieldID]]['md5tab'][$gfield[$baseTableID]['hasrecverkn'][$relationFieldID]];
+                    }
+                    
                     #$verkn_part_3 = $gtab["table"][$verkn_part[3]]; #field_type (27 or 24)
                     $verkn_part_4 = $gtab['table'][$verkn_part[4]];
 
@@ -558,9 +563,9 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
                         if($mimetype[0] == 'image'){
                             $DBRESULT[$bzm3][$bzm0] = $file["path"];
                             if($report["defformat"] == 'tcpdf') {
-                            $DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$file["path"];
+                                $DBRESULT[$bzm3][$bzm0] = "IMAGE#*#" . $file["path"];
+                            }
                         }
-                    }
                     }
 					# --- sonstige ---
 				}else if($data_type == 30){
@@ -705,7 +710,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 				}elseif($data_type == 39 AND $gfield[$gtabid]["wysiwyg"][$fieldid]){
 					$DBRESULT[$bzm3][$bzm0] = $oresult;
                     if($report["defformat"] == 'tcpdf') {
-					$DBRESULT[$bzm3][$bzm0] = "HTML#*#".$oresult;
+                        $DBRESULT[$bzm3][$bzm0] = "HTML#*#".$oresult;
                     }
 					# --- Upload ---
 				}elseif($data_type == 13){

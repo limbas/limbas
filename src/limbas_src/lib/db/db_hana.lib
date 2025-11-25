@@ -15,98 +15,10 @@
  */
 
 
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Log;
 
-
-# LMB_DBTYPE #
-define("LMB_DBTYPE_CHAR","NVARCHAR");
-define("LMB_DBTYPE_VARCHAR","NVARCHAR");
-define("LMB_DBTYPE_INTEGER","INTEGER");
-define("LMB_DBTYPE_SMALLINT","SMALLINT");
-define("LMB_DBTYPE_BIGINT","BIGINT");
-define("LMB_DBTYPE_FLOAT","REAL");
-define("LMB_DBTYPE_FIXED","DECIMAL");
-define("LMB_DBTYPE_NUMERIC","DECIMAL");
-define("LMB_DBTYPE_DECIMAL","DECIMAL");
-define("LMB_DBTYPE_BOOLEAN","BOOLEAN");
-define("LMB_DBTYPE_DATE","DATE");
-define("LMB_DBTYPE_TIME","TIME");
-define("LMB_DBTYPE_TIMESTAMP","TIMESTAMP");
-define("LMB_DBTYPE_LONG","NCLOB");
-define("LMB_DBTYPE_ASCII","ASCII");
-define("LMB_DBTYPE_BYTE","BYTE");
-define("LMB_DBTYPE_SERIAL","SERIAL");
-
-# LMB_DBDEF #
-define("LMB_DBDEF_TIME","TIME");
-define("LMB_DBDEF_DATE","DATE");
-define("LMB_DBDEF_TIMESTAMP","CURRENT_TIMESTAMP");
-define("LMB_DBDEF_FALSE","FALSE");
-define("LMB_DBDEF_TRUE","TRUE");
-define("LMB_DBDEF_NULL","NULL");
-define("LMB_DBDEF_DTNULL","NULL");
-
-# LMB_DBRETYPE #
-define("LMB_DBRETYPE_NVARCHAR","VARCHAR");
-define("LMB_DBRETYPE_INTEGER","INTEGER");
-define("LMB_DBRETYPE_SMALLINT","SMALLINT");
-define("LMB_DBRETYPE_BIGINT","BIGINT");
-define("LMB_DBRETYPE_REAL","FLOAT");
-define("LMB_DBRETYPE_DECIMAL","FIXED");
-define("LMB_DBRETYPE_BOOLEAN","BOOLEAN");
-define("LMB_DBRETYPE_DATE","DATE");
-define("LMB_DBRETYPE_TIME","TIME");
-define("LMB_DBRETYPE_TIMESTAMP","TIMESTAMP");
-define("LMB_DBRETYPE_NCLOB","LONG");
-define("LMB_DBRETYPE_ASCII","ASCII");
-define("LMB_DBRETYPE_BYTE","BYTE");
-define("LMB_DBRETYPE_SERIAL","SERIAL");
-
-# LMB_DBREDEF #
-define("LMB_DBREDEF_TIMESTAMP","TIMESTAMP");
-define("LMB_DBREDEF_CURRENT_TIMESTAMP","TIMESTAMP");
-define("LMB_DBREDEF_DEFAULT DATE","DATE");
-define("LMB_DBREDEF_FALSE","FALSE");
-define("LMB_DBREDEF_TRUE","TRUE");
-
-# LMB_DBFUNC #
-define("LMB_DBFUNC_ISNULL","IS NULL");
-define("LMB_DBFUNC_PRIMARY_KEY","PRIMARY KEY");
-define("LMB_DBFUNC_UNIQUE","UNIQUE");
-define("LMB_DBFUNC_CONCAT","&");
-define("LMB_DBFUNC_UMASCB","\\");
-define("LMB_DBFUNC_OFFSET_START",0);
-define("LMB_DBFUNC_LIMIT","LIMIT");
-define("LMB_DBFUNC_ROWNO","");
-define("LMB_DBFUNC_SPLIT_TRIGGER","EXECUTE");
-define("LMB_DBFUNC_ADD_COLUMN_FIRST","ADD");
-define("LMB_DBFUNC_ADD_COLUMN_NEXT","");
-define("LMB_DBFUNC_DROP_COLUMN_FIRST","DROP");
-define("LMB_DBFUNC_DROP_COLUMN_NEXT","");
-define("LMB_DBFUNC_DATE","DATE(");
-define("LMB_DBFUNC_TIME","TIME(");
-define("LMB_DBFUNC_YEAR","YEAR(");
-define("LMB_DBFUNC_MONTH","MONTH(");
-define("LMB_DBFUNC_DAY","DAY(");
-define("LMB_DBFUNC_HOUR","HOUR(");
-define("LMB_DBFUNC_MINUTE","MINUTE(");
-
-define("LMB_DBFUNC_LONGHANDLE",0);
-define("LMB_DBFUNC_PROCEDUREHANDLE",1);
-define("LMB_DBFUNC_FKEYHANDLE",1);
-define("LMB_DBFUNC_FLOATHANDLE",1);
-define("LMB_DBFUNC_PREPAREHANDLE",1);
-define("LMB_DBFUNC_TIMEHANDLE",1);
-define("LMB_DBFUNC_NUMROWS",1);
-define("LMB_DBFUNC_VIEWGALIAS",0);
-define("LMB_DBFUNC_VIEWDEPENDENCY",0);
-define("LMB_DBFUNC_MAXFIELDNAMESIZE",50);
-define("LMB_DBFUNC_MAXTABLENAMESIZE",30);
-define("LMB_DBFUNC_TRANSACTION",1);
-define("LMB_DBFUNC_TRANSACTION_WITH_SCHEMA",1);
-
-# DBCURSOR #
-define("LMB_DBCURSOR",1);
-define("LMB_DBFUNC_WITH_RECURSIVE", 'DECLARE C CURSOR FOR WITH RECURSIVE');
+require_once __DIR__ .'/constants/hana.php';
 
 #require_once('db_odbc.lib');
 
@@ -114,38 +26,34 @@ define("LMB_DBFUNC_WITH_RECURSIVE", 'DECLARE C CURSOR FOR WITH RECURSIVE');
 
 
 # odbc connect:
-function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null){
-
-    // CHAR_AS_UTF8=true
-
-	if($dbdriver == "DSN"){
-		$db = lmbdb_pconnect("$database","$dbuser","$dbpass") or
-			die('<BR><BR><div style="text-align:center;">Database connection failed!<BR>'.lmbdb_errormsg($db).'</div>');
-	}elseif($dbdriver){
-		$dsn = "Driver=$dbdriver;ServerNode=$host;ServerDB=$database;ReadOnly=No";
-		$db = lmbdb_pconnect ($dsn, $dbuser, $dbpass);
-	}else{
-		$db = lmbdb_pconnect("$host:$database","$dbuser","$dbpass");
-	}
-	if($db){return $db;}
-	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".lmbdb_errormsg()."</p>"); return false;}
+/**
+ *
+ * @param $host
+ * @param $database
+ * @param $dbuser
+ * @param $dbpass
+ * @param $dbdriver
+ * @param $port
+ * @return null
+ *
+ * @deprecated Use Dbf::connect instead.
+ */
+function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null,$port=null){
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::connect instead.');
+    return Dbf::connect($host,$database,$dbuser,$dbpass,$dbdriver,intval($port));
 }
 
 
 /**
  * convert stamp for db
- *
  * @param number $p
  * @return string
+ *
+ * @deprecated Use Dbf::convertToDbTimestamp instead.
  */
 function dbf_1($p,$t=0){
-    if($t){
-        if(!is_object($p)){return date("Y-m-d",1);}
-        return $p->format("Y-m-d");
-    }else{
-        if(!is_object($p)){return date("Y-m-d H:i:s.",1);}
-        return $p->format("Y-m-d H:i:s.");
-    }
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::convertToDbTimestamp instead.');
+    return Dbf::convertToDbTimestamp($p,$t);
 }
 
 /**
@@ -153,9 +61,12 @@ function dbf_1($p,$t=0){
  *
  * @param string $p
  * @return string
+ *
+ * @deprecated Use Dbf::parseBlob instead.
  */
 function dbf_6($p){
-    return dbf_7($p);
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::parseBlob instead.');
+    return Dbf::parseBlob($p ?? '');
 }
 
 /**
@@ -163,21 +74,24 @@ function dbf_6($p){
  *
  * @param string $p
  * @return string
+ *
+ * @deprecated Use Dbf::parseString instead.
  */
 function dbf_7($p){
-    return str_replace("'","''",$p);
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::parseBlob instead.');
+    return Dbf::parseString($p ?? '');
 }
 
 /**
  * get sequence
  *
- * @param array $p[0]=name
+ * @param string $p=name
+ *
+ * @deprecated Use Dbf::getSequence instead.
  */
 function dbf_8($p){
-	global $db;
-
-	$rs = lmbdb_exec($db,"SELECT ".dbf_4($p).".NEXTVAL AS NEXTSEQ FROM DUMMY") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
-	return lmbdb_result($rs,"NEXTSEQ");
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::getSequence instead.');
+    return Dbf::getSequence($p);
 }
 
 /**
@@ -185,9 +99,12 @@ function dbf_8($p){
  *
  * @param string $p
  * @return string
+ *
+ * @deprecated Use Dbf::handleCaseSensitive instead.
  */
 function dbf_4($p){
-	return lmb_strtoupper($p);
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::handleCaseSensitive instead.');
+    return Dbf::handleCaseSensitive($p);
 }
 
 
@@ -196,9 +113,12 @@ function dbf_4($p){
  *
  * @param array $p
  * @return string
+ *
+ * @deprecated Use Dbf::sqlTimeDiff instead.
  */
 function dbf_9($p){
-	return "TIMEDIFF(".$p[0].",".$p[1].")";
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::sqlTimeDiff instead.');
+    return Dbf::sqlTimeDiff($p[0],$p[1]);
 }
 
 /**
@@ -206,29 +126,29 @@ function dbf_9($p){
  *
  * @param array $p
  * @return string
+ *
+ * @deprecated Use Dbf::sqlDateDiff instead.
  */
 function dbf_10($p){
-	return "DATEDIFF(".$p[0].",".$p[1].")";
+    Log::deprecated('Method ' . __METHOD__ . ' is deprecated. Use Dbf::sqlDateDiff instead.');
+    return Dbf::sqlDateDiff($p[0],$p[1]);
 }
 
 
 
+// TODO: decide if this should be included in DbFunction class
 /**
  * get fieldtype extension
  *
  * @param string
  * @return boolean
+ * @deprecated
  */
 function dbf_11($ftype){
-
+    trigger_error("The function dbf_11 is deprecated, its results are not updated anymore and are likely inaccurate.");
     $hasext = array('NVARCHAR','REAL','DECIMAL','ASCII','BYTE','SERIAL');
 
-    if(in_array(strtoupper($ftype),$hasext)){
-        return true;
-    }
-
-    return false;
-
+    return in_array(strtoupper($ftype),$hasext);
 }
 
 

@@ -14,6 +14,7 @@ global $result_report;
 global $filter_save;
 global $gtabid;
 global $form_id;
+global $snap_id;
 global $filter;
 global $filter_groupheader;
 global $filter_groupheaderKey;
@@ -24,6 +25,7 @@ global $verknpf;
 global $verkn_tabid;
 global $verkn_fieldid;
 global $verkn_ID;
+global $verkn_formid;
 global $verkn_add_ID;
 global $verkn_del_ID;
 global $verkn_showonly;
@@ -45,8 +47,9 @@ global $gform;
 global $gresult;
 global $form_id;
 global $readonly;
-global $verkn_addfrom;
+global $verkn_relationpath;
 global $lmcurrency;
+global $detail_isopenas;
 
 $result_report["count"] = 0;
 
@@ -100,7 +103,7 @@ if(!isset($ID) AND !$form_id){
 //if($gtab["typ"][$i] == 5){$action = "gtab_deterg";}
 
 ?>
-<div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;display:none;" OnClick="activ_menu=1;"></div>
+<div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;display:none;" OnClick="activ_menu=1;" role="listbox" tabindex="-1"></div>
 <div id="lmbAjaxContainer2" class="ajax_container" style="position:absolute;display:none;z-index:999;" onclick="activ_menu=1;"></div>
 <div id="lmbZoomContainer" class="ajax_container" style="position:absolute;display:none;font-size:18px;font-weight:bold" OnClick="activ_menu=1;"></div>
 
@@ -129,6 +132,7 @@ jsvar["confirm_level"] = "<?=$umgvar["confirm_level"]?>";
 jsvar["modal_size"] = "<?=$umgvar["modal_size"]?>";
 jsvar["modal_level"] = "<?=$umgvar["modal_level"]?>";
 jsvar["detail_openas"] = "<?=$umgvar["detail_openas"]?>";
+jsvar["detail_isopenas"] = "<?=$detail_isopenas?>";
 jsvar["detail_rel_openas"] = "<?=$umgvar["detail_rel_openas"]?>";
 
 <?php
@@ -200,24 +204,23 @@ if($useCustomForm && $gformlist[$gtabid]['header'][$form_id]){
     }
 }
 
-
 ?>
 
 <form action="main.php" method="post" name="form1" id="form1" enctype="multipart/form-data" autocomplete="off" <?=!empty($form) && $form->mode !== FormMode::NEW ? 'class="form-switch-new"' : ''?>>
 
 
 <input type="hidden" name="empty">
-<input type="hidden" name="ID" value="<?=$GLOBALS["ID"]?>">
+<input type="hidden" name="ID" value="<?=$ID?>">
 <input type="hidden" name="action" value="<?=$action?>">
-<input type="hidden" name="old_action" value="<?=$GLOBALS["action"]?>">
-<input type="hidden" name="gtabid" value="<?=$GLOBALS["gtabid"]?>">
-<input type="hidden" name="tab_group" value="<?=$GLOBALS["gtab"]["tab_group"][$GLOBALS["gtabid"]]?>">
+<input type="hidden" name="old_action" value="<?=$action?>">
+<input type="hidden" name="gtabid" value="<?=$gtabid?>">
+<input type="hidden" name="tab_group" value="<?=$GLOBALS["gtab"]["tab_group"][$gtabid]?>">
 <input type="hidden" name="change_field">
-<input type="hidden" name="form_id" VALUE="<?=$GLOBALS["form_id"]?>">
-<input type="hidden" name="formlist_id" value="<?=$GLOBALS["formlist_id"];?>">
-<input type="hidden" name="snap_id" value="<?=$GLOBALS["snap_id"]?>">
-<input type="hidden" name="wfl_id" value="<?=$GLOBALS["wfl_id"]?>">
-<input type="hidden" name="wfl_inst" value="<?=$GLOBALS["wfl_inst"]?>">
+<input type="hidden" name="form_id" VALUE="<?=$form_id?>">
+<input type="hidden" name="formlist_id" value="<?=$formlist_id;?>">
+<input type="hidden" name="snap_id" value="<?=$snap_id?>">
+<input type="hidden" name="wfl_id" value="<?=$wfl_id?>">
+<input type="hidden" name="wfl_inst" value="<?=$wfl_inst?>">
 <input type="hidden" name="set_form">
 <input type="hidden" name="change_ok">
 <input type="hidden" name="view_symbolbar">
@@ -234,7 +237,7 @@ if($useCustomForm && $gformlist[$gtabid]['header'][$form_id]){
 <input type="hidden" name="versdesc">
 <input type="hidden" name="lockingtime">
 <input type="hidden" name="history_search">
-<input type="hidden" name="request_flt" value="<?=$GLOBALS["request_flt"]?>">
+<input type="hidden" name="request_flt" value="<?=$request_flt?>">
 <input type="hidden" name="deterg">
 <input type="hidden" name="del_">
 <input type="hidden" name="use_record">
@@ -243,22 +246,21 @@ if($useCustomForm && $gformlist[$gtabid]['header'][$form_id]){
 <input type="hidden" name="verkn_key_field">
 <input type="hidden" name="posy">
 <input type="hidden" name="funcid">
-<input type="hidden" name="gfrist" VALUE="<?=$GLOBALS["gfrist"]?>">
+<input type="hidden" name="gfrist" VALUE="<?=$gfrist?>">
 <input type="hidden" name="gfrist_desc">
 <input type="hidden" name="scrollto">
-<input type="hidden" name="verknpf" VALUE="<?=$GLOBALS["verknpf"]?>">
-<input type="hidden" name="verkn_addfrom" VALUE="<?=$GLOBALS["verkn_addfrom"]?>">
-<input type="hidden" name="verkn_poolid" VALUE="<?=$GLOBALS["verkn_poolid"]?>">
-<input type="hidden" name="wind_force_close">
-<input type="hidden" name="is_new_win" value="<?=$GLOBALS["is_new_win"]?>">
+<input type="hidden" name="verknpf" VALUE="<?=$verknpf?>">
+<input type="hidden" name="verkn_relationpath" VALUE="<?=$verkn_relationpath?>">
+<input type="hidden" name="verkn_poolid" VALUE="<?=$verkn_poolid?>">
+<input type="hidden" name="detail_saveclose">
+<input type="hidden" name="detail_isopenas" value="<?=$detail_isopenas?>">
 
-
-<?php if($GLOBALS["verknpf"]): ?>
-    <input type="hidden" name="verkn_ID" VALUE="<?=$GLOBALS["verkn_ID"]?>">
-    <input type="hidden" name="verkn_tabid" VALUE="<?=$GLOBALS["verkn_tabid"]?>">
-    <input type="hidden" name="verkn_fieldid" VALUE="<?=$GLOBALS["verkn_fieldid"]?>">
-    <input type="hidden" name="verkn_showonly" VALUE="<?=$GLOBALS["verkn_showonly"]?>">
-    <input type="hidden" name="verkn_formid" VALUE="<?=$GLOBALS["verkn_formid"]?>">
+<?php if($verknpf): ?>
+    <input type="hidden" name="verkn_ID" VALUE="<?=$verkn_ID?>">
+    <input type="hidden" name="verkn_tabid" VALUE="<?=$verkn_tabid?>">
+    <input type="hidden" name="verkn_fieldid" VALUE="<?=$verkn_fieldid?>">
+    <input type="hidden" name="verkn_showonly" VALUE="<?=$verkn_showonly?>">
+    <input type="hidden" name="verkn_formid" VALUE="<?=$verkn_formid?>">
 <?php else: ?>
     <input type="hidden" name="verkn_ID">
     <input type="hidden" name="verkn_tabid">
@@ -308,3 +310,5 @@ unset($commit);
 
 </form>
 <div id="lmbUploadLayer"></div>
+
+<?php require (COREPATH . 'extra/explorer/parts/details-modal.php'); ?>

@@ -11,7 +11,7 @@
     <body>
         <div class="container py-3">
             <div class="text-center position-relative mb-3">
-                <img src="../assets/images/logo_topleft.png" alt="LIMBAS Business Solutions" style="max-height: 8rem">
+                <img src="../assets/images/logo.svg" alt="LIMBAS Business Solutions" style="max-height: 8rem">
                 <div class="position-absolute top-0 end-0">
                     <select id="lang-select" class="form-select">
                         <option value="en" <?= (LANG == 'en' ? 'selected' : '') ?>>English</option>

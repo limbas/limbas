@@ -9,6 +9,7 @@
 namespace Limbas\extra\form;
 
 use Limbas\admin\setup\fonts\Font;
+use Limbas\admin\setup\tinymce\TinyMceConfig;
 
 class TinyMce
 {
@@ -17,7 +18,7 @@ class TinyMce
     protected array $options;
     protected ?string $onChangeJs = null;
     
-    public function __construct(protected string $elementId, protected ?int $tabId = null)
+    public function __construct(protected string $elementId, protected ?int $tabId = null, protected ?TinyMceConfig $tinyMceConfig = null)
     {
         static::$tinyMceCounter++;
         $this->loadDefaultOptions();
@@ -32,6 +33,11 @@ class TinyMce
         else {
             $this->options = array_merge($this->options, $options);
         }
+    }
+
+    public function setOption(string $option, mixed $value): void
+    {
+        $this->options[$option] = $value;
     }
     
     public function getOptions(): array
@@ -52,6 +58,7 @@ class TinyMce
     {
         global $umgvar;
         global $gtab;
+        global $session;
 
         // get user language
         $lang = getLangShort();
@@ -98,7 +105,7 @@ class TinyMce
             'width' => '100%',
             'font_formats' => $fontList,
             'promotion' => false,
-            'auto_focus' => false,
+            'auto_focus' => '',
             'skin' => $skin,
             'content_css' => $contentCss,
             'content_style' => $contentStyle,
@@ -151,6 +158,29 @@ class TinyMce
             'paste_block_drop' => false,
             'paste_as_text' => true
         ];
+        
+        
+        // check if any user configuration exists
+        if(!empty($this->tinyMceConfig)) {
+            $tinyMceConfig = $this->tinyMceConfig;
+        }
+        elseif (!empty($session['settings']['tinymceConfig'])) {
+            $tinyMceConfig = TinyMCEConfig::get(intval($session['settings']['tinymceConfig']));
+        }
+        else {
+            $tinyMceConfig = TinyMceConfig::getDefault();
+        }
+
+        if(!empty($tinyMceConfig)) {
+            $this->setOptions($tinyMceConfig->config);
+        }
+
+
+    }
+    
+    public function applyTinyMceConfig(TinyMceConfig $tinyMceConfig, bool $fullReplace = false): void
+    {
+        $this->setOptions($tinyMceConfig->config, $fullReplace);
     }
     
     public function getConfigurationScript(): string

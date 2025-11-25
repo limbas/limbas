@@ -6,6 +6,9 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+use Limbas\lib\db\functions\Dbf;
+
 ?>
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
     <input type="hidden" name="action" VALUE="setup_verkn_editor">
@@ -39,10 +42,10 @@
 
                         <?php endif; ?>
 
-                        <div class="mb-3 form-check mb-1">
+                        <div class="form-check mb-1">
                             <label class="form-check-label" <?=(lmbdb_result($rs, "TAB_ID") == $tabid)?'text-danger':''?>>
                                 <input type="radio" name="new_backview_verkn" value="<?=lmbdb_result($rs, "TAB_ID").'_'.lmbdb_result($rs, "FIELD_ID")?>" OnChange="document.form1.submit();">
-                                <?=dbf_4(lmbdb_result($rs, "TABELLE"))?> (<?=dbf_4(lmbdb_result($rs, "FIELD_NAME"))?>)
+                                <?=Dbf::handleCaseSensitive(lmbdb_result($rs, "TABELLE"))?> (<?=Dbf::handleCaseSensitive(lmbdb_result($rs, "FIELD_NAME"))?>)
                             </label>
                         </div>
 
@@ -79,11 +82,11 @@
                             if(lmbdb_result($rs, "NAME") != $temp){
                             ?>
                             
-                            <div class="table-section p-1 my-1"><?=$lang[lmbdb_result($rs, "NAME")]?></div>
+                            <div class="table-section bg-contrast p-1 my-1"><?=$lang[lmbdb_result($rs, "NAME")]?></div>
                             
                             <?php } ?>
 
-                            <div class="mb-3 form-check mb-1">
+                            <div class="form-check mb-1">
                                 <label class="form-check-label" <?=(lmbdb_result($rs, "TAB_ID") == $tabid)?'text-danger':''?>>
                                     <input type="radio" name="new_verkntabid" value="<?=lmbdb_result($rs, "TAB_ID")?>" OnChange="document.form1.submit();">
                                     <?=$lang[lmbdb_result($rs, "BESCHREIBUNG")]?> (<?=lmbdb_result($rs, "TABELLE")?>)
@@ -223,11 +226,8 @@
                     
                 <?php }?>
 
-    <?php if($rfield['verkntabletype'] == 1 AND $rfield['verkntabid'] AND $rfield['datatype'] != 23): ?>
+
     <hr>
-
-
-
 
 
     <div class="mb-0 row">
@@ -250,6 +250,7 @@
         </div>
     </div>
 
+    <?php if($rfield['verkntabletype'] == 1 AND $rfield['verkntabid'] AND $rfield['datatype'] != 23): ?>
 
     <div class="mb-0 row">
         <label class="col-sm-6 col-form-label">

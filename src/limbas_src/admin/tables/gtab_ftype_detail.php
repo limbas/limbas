@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\admin\setup\tinymce\TinyMceConfig;
+use Limbas\lib\db\functions\Dbf;
 
 global $LINK;
 global $gtrigger;
@@ -319,6 +321,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                 <select class="form-select form-select-sm" onchange="document.form2.val.value=this.value;ajaxEditField('<?=$fieldid?>','triggercount')">
                                     <option value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['triggercount'][1] == 1)?'selected':''?>><?=$lang[2994]?></option>
                                     <option value="2" <?=($result_fieldtype[$table_gtab[$bzm]]['triggercount'][1] == 2)?'selected':''?>><?=$lang[2993]?></option>
+                                    <option value="3" <?=($result_fieldtype[$table_gtab[$bzm]]['triggercount'][1] == 3)?'selected':''?>><?=$lang[1246]?> <?=$lang[2991]?></option>
                                 </select>
                                 <small class="form-text text-muted"><?=$lang[2992]?></small>
                             </div>
@@ -658,20 +661,19 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                         </div>
                     <?php endif; ?>
 
-                    <?php // quick search
+                    <?php // tablesearch
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6):
                         ?>
                         <div class="mb-3 row">
-                            <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2507]?></label>
+                            <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3204]?></label>
                             <div class="col-sm-8">
-                                <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['quicksearch'][1] == 1)?'checked':''?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','quicksearch')">
-                                <small class="form-text text-muted"><?=$lang[2842]?></small>
+                                <input type="checkbox" value="1"  <?=($result_fieldtype[$table_gtab[$bzm]]['tablesearch'][1] == 1)?'':'checked'?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','tablesearch')">
+                                <small class="form-text text-muted"><?=$lang[3205]?></small>
                             </div>
                         </div>
                     <?php endif; ?>
 
-
-                    <?php // full table search
+                    <?php // global table search
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 33 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 20):
                         ?>
                         <div class="mb-3 row">
@@ -683,8 +685,20 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                         </div>
                     <?php endif; ?>
 
+                    <?php // quick search
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6):
+                        ?>
+                        <div class="mb-3 row">
+                            <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3206]?></label>
+                            <div class="col-sm-8">
+                                <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['quicksearch'][1] == 1)?'checked':''?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','quicksearch')">
+                                <small class="form-text text-muted"><?=$lang[2842]?></small>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
-                    <?php // Upload - show preview
+
+                    <?php // Upload - show preview - use quicksearch parameter
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 6):
                         ?>
                         <div class="mb-3 row">
@@ -848,9 +862,24 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
 
                         <?php if($result_fieldtype[$table_gtab[$bzm]]["argument_typ"][1] == 15): ?>
                             <div class="mb-3 row">
-                                <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[1879]?></label>
+                                <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2957]?></label>
                                 <div class="col-sm-8">
                                     <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['argument_edit'][1] == 1)?'checked':''?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','argument_edit')">
+                                    <small class="form-text text-muted"><?=$lang[3208]?></small>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if($result_fieldtype[$table_gtab[$bzm]]["argument_typ"][1] == 15): ?>
+                            <div class="mb-3 row">
+                                <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2991]?></label>
+                                <div class="col-sm-8">
+
+                                    <select class="form-select form-select-sm" onchange="document.form2.val.value=this.value;ajaxEditField('<?=$fieldid?>','argument_modus')">
+                                        <option value="0" <?=(empty($result_fieldtype[$table_gtab[$bzm]]['argument_modus'][1]))?'selected':''?>><?=$lang[3221]?></option>
+                                        <option value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['argument_modus'][1] == 1)?'selected':''?>><?=$lang[2445]?></option>
+                                    </select>
+                                    <small class="form-text text-muted"><?=$lang[3219]?></small>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -965,6 +994,24 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                 <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['wysiwyg'][1] == 1)?'checked':''?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','wysiwyg')">
                             </div>
                         </div>
+                        <?php if($result_fieldtype[$table_gtab[$bzm]]['wysiwyg'][1]):
+                        global $LINK_ID;
+                        $tinyMceConfigs = TinyMceConfig::all();
+                        ?>                    
+                            <div class="mb-3 row">
+                                <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[$LINK['desc'][$LINK_ID['setup_tinymce']]]?></label>
+                                <div class="col-sm-8">
+                                    <select class="form-select form-select-sm" onchange="document.form2.val.value=this.value;ajaxEditField('<?=$fieldid?>','wysiwyg_config')">
+                                        <option value="-1"></option>
+                                        <?php
+                                        /** @var TinyMceConfig $tinyMceConfig */
+                                        foreach($tinyMceConfigs as $tinyMceConfig):?>
+                                            <option value="<?=e($tinyMceConfig->id)?>" <?= $result_fieldtype[$table_gtab[$bzm]]['wysiwyg_config'][1] === $tinyMceConfig->id ? 'selected' : '' ?>><?=e($tinyMceConfig->name)?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                         <div class="mb-3 row">
                             <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2795]?></label>
                             <div class="col-sm-8">
@@ -978,11 +1025,16 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
 
                     <?php // Long / Textblock
                     if($result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 39 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 10):
+                        $tbs = $umgvar["memolength"];
+                        if($result_fieldtype[$table_gtab[$bzm]]['select_pool'][1]){
+                            $tbs = $result_fieldtype[$table_gtab[$bzm]]['select_pool'][1];
+                        }
                         ?>
                         <div class="mb-3 row">
                             <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2817]?></label>
                             <div class="col-sm-8">
-                                <input type="text" class="form-control form-control-sm" value="<?=$result_fieldtype[$table_gtab[$bzm]]['select_pool'][1]?>" onchange="document.form2.val.value=this.value;ajaxEditField('<?=$fieldid?>','textblocksize')">
+                                <input type="text" class="form-control form-control-sm" value="<?=$tbs?>" onchange="document.form2.val.value=this.value;ajaxEditField('<?=$fieldid?>','textblocksize')">
+                                <small class="form-text text-muted"><?=$lang[3197]?></small>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -1196,6 +1248,8 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                     $depviews = lmb_checkViewDependency($gtab["table"][$gtabid],$result_fieldtype[$table_gtab[$bzm]]["field"][1]);
                     if(is_array($depviews)):
                         ?>
+                        <hr>
+                        <p class="mb-0 fw-bold col-form-label-sm"><?=$lang[2912]?></p>
                         <div class="mb-3 row">
                             <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2912]?></label>
                             <div class="col-sm-8">
@@ -1218,7 +1272,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
             <table class="table table-sm table-striped table-hover">
                 <tr><td colspan="2"><hr></td></tr>
                 <?php
-                if($rs = dbf_5(array($DBA["DBSCHEMA"],$table_gtab[$bzm],dbf_4($result_fieldtype[$table_gtab[$bzm]]["field"][1]),1))):
+                if($rs = Dbf::getColumns($DBA["DBSCHEMA"],$table_gtab[$bzm] ?? '',Dbf::handleCaseSensitive($result_fieldtype[$table_gtab[$bzm]]["field"][1]),true)):
 
                     while (lmbdb_fetch_row($rs)):
                         

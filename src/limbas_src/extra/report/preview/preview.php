@@ -51,11 +51,21 @@ $reportPreview = new ReportPreview();
     <input type="hidden" name="resolvedDynamicData" value="<?= htmlentities(json_encode($resolvedDynamicData ?? [])) ?>">
     
     <div class="container-fluid h-100">
-        <?php if ($dynamicDataPlaceholdersExist): ?>
-            <?php require __DIR__ . '/data_preview.php'; ?>
-        <?php else: ?>
-            <?php require __DIR__ . '/pdf_preview.php'; ?>
-        <?php endif; ?>
+        <div class="row h-100">
+
+            <?php if ($dynamicDataPlaceholdersExist): ?>
+                <?php require __DIR__ . '/data_preview.php'; ?>
+            <?php else: ?>
+                <div class="col-md-10">
+                    <?php require __DIR__ . '/pdf_preview.php'; ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="col-md-2 pt-2">
+                <?php require __DIR__ . '/sidebar.php'; ?>
+            </div>
+            
+        </div>
     </div>
     
 </form>

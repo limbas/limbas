@@ -15,8 +15,8 @@ use Limbas\gtab\export\TableExportTypes;
 
 set_time_limit(1200); #20min
 
-$onlyGetVisibleRows = intval($exp_typ) === 1;
+$selectedRecords = TableExport::useRecordToSelectedRecords($_REQUEST['use_record']);
 $exportType = TableExportTypes::from($exp_medium);
-$tableExport = new TableExport($gtabid, $exportType, $onlyGetVisibleRows, $verkn);
+$tableExport = new TableExport($gtabid, $exportType, $selectedRecords, $verkn);
 $tableExport->export();
 

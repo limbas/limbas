@@ -1,0 +1,111 @@
+<?php
+/*
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+use Limbas\lib\db\Database;
+
+/**
+ * @param $group_id
+ * @return array all key value pairs from table LMB_RULES_SETTINGS for the group
+ */
+function get_group_settings($group_id) : array {
+    if (!isset($group_id)) {return [];}
+
+    $rs = Database::select('lmb_rules_settings',['key','value'],['group_id' => $group_id]);
+
+    $values = [];
+    while (lmbdb_fetch_row($rs)) {
+        $values[lmbdb_result($rs, 'key')] = lmbdb_result($rs, 'value');
+    }
+
+    return $values;
+}
+
+/**
+ * @param array $ids all group IDs which all changes should be applied to
+ * @param array $kvs key value pairs which get deleted if value is empty or updated/inserted
+ * @return void
+ */
+function set_rights(array $ids,$kvs): void
+{
+    global $db;
+
+    $deleteSql = 'DELETE FROM LMB_RULES_SETTINGS WHERE group_id = ? AND key = ?';
+    $insertSql = 'INSERT INTO LMB_RULES_SETTINGS (id, group_id, key, value) VALUES (?, ?, ?, ?)';
+
+    $deleteStmt = lmbdb_prepare($db, $deleteSql);
+    $insertStatement = lmbdb_prepare($db, $insertSql);
+
+    $nextId = next_db_id('LMB_RULES_SETTINGS');
+    
+    foreach ($ids as $id) {
+        foreach ($kvs as $key => $value) {
+            lmbdb_execute($deleteStmt, [$id, $key]);
+            if(!empty($value)) {
+                lmbdb_execute($insertStatement, [$nextId, $id, $key, $value]);
+                $nextId++;
+            }
+        }
+    }
+}
+
+/**
+ * @param $ID int group ID
+ * @param $addsubgroup bool true = all changes will be inherited to all children on all levels
+ * @return void
+ */
+function group_settings_update($ID,$addsubgroup): void
+{
+    global $db;
+    global $rules_settings;
+
+    $ID = intval($ID);
+
+    //if not inherit, apply as is
+    if (!$addsubgroup) {
+        set_rights([$ID], $rules_settings);
+        return;
+    }
+
+    //collect all child/grandchild IDs
+    $queue = [$ID];
+    $sqlquery = 'SELECT GROUP_ID FROM LMB_GROUPS WHERE LEVEL = ?';
+    $stmt = lmbdb_prepare($db, $sqlquery);
+    $childIDs = [];
+
+    while($current = array_shift($queue)) {
+        $rs = lmbdb_execute($stmt, [$current]) or errorhandle(lmbdb_errormsg($db),$sqlquery . "; VALUES ($current)",$action,__FILE__,__LINE__);
+        while(lmbdb_fetch_row($stmt)) {
+            $i = intval(lmbdb_result($stmt, "GROUP_ID"));
+            $childIDs[] = $i;
+            $queue[] = $i;
+        }
+    }
+
+    $childIDs[] = $ID;
+    $childIDs = array_unique($childIDs);
+
+    //find differences in new values to current values
+    $before = get_group_settings($ID);
+    $changed = [];
+    foreach ($rules_settings as $key => $value) {
+        if (empty($value) && empty($before[$key])) {
+            continue;
+        }
+        if (strval($value) == strval($before[$key]) ) {
+            continue;
+        }
+        $changed[$key] = $value;
+    }
+
+    //apply only differences to this and all children
+    set_rights($childIDs, $changed);
+}
+
+//lmb_rules_settings
+

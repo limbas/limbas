@@ -7,6 +7,10 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+global $DBA;
+
+use Limbas\lib\db\functions\Dbf;
+
 
 ?>
 <!-- include codemirror with sql syntax highlighting and sql code completion -->
@@ -50,7 +54,7 @@
                     <div class="col-6">
                         <select id="select_sql-table" name="table" class="form-select form-select-sm">
                             <?php
-                            $odbc_table = dbf_20(array($DBA['DBSCHEMA'], null, "'TABLE','VIEW','MATVIEW'"));
+                            $odbc_table = Dbf::getTableList($DBA['DBSCHEMA'], null, "'TABLE','VIEW','MATVIEW'");
                             foreach ($odbc_table['table_name'] as $tableKey => $tvalue) {
                                 $domaintables['tablename'][] = $odbc_table['table_name'][$tableKey];
                                 $domaintables['owner'][] = $odbc_table['table_owner'][$tableKey];
@@ -244,7 +248,7 @@
                     } else if ($info and $table) {
                         # show info of table
                         echo "<h3>$table</h3>";
-                        $rs = dbf_5(array($DBA['DBSCHEMA'], $table, null, 1));
+                        $rs = Dbf::getColumns($DBA['DBSCHEMA'], $table ?? '', null, true);
                         echo ODBCResourceToHTML($rs, 'id="lmb_resource" class="table table-sm table-bordered" style="width:100%"', '', $sqlexecnum);
                     } else if ($showsys and $domaintable) {
                         # show system info

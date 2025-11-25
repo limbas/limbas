@@ -10,7 +10,13 @@ $(function () {
     $('#mailForm').find('.btn-send-mail').click(lmbSendMailForm);
     initAttachmentModal();
     initRecipients();
+    loadDataFromSessionStorage();
     $('#btn-show-mail-preview').on('click', loadMailPreview);
+    $('#mail-signature-select').on('change', onSignatureChange);
+    $('#mail_account').on('change', onMailAccountChanged);
+    setTimeout(()=>{
+        onMailAccountChanged();
+    },1000);
 });
 
 /* region send mail */
@@ -24,6 +30,8 @@ function lmbSendMailForm() {
     $('.attachment').each(function() {
         attachments.push($(this).data('id'));
     });
+    
+    resetSessionStorage();
     
     lmbSendMail(
         $('#mail_account').val(),
@@ -39,6 +47,7 @@ function lmbSendMailForm() {
         $('#mail_template').val(),
         $('#mail_resolvedTemplateGroups').val(),
         $('#mail_resolvedDynamicData').val(),
+        $('#mail_signature').val(),
     ).then(function (data) {
         if(data.success) {
             $('#mail_receiver').val('');
@@ -57,7 +66,7 @@ function lmbSendMailForm() {
     });
 }
 
-function lmbSendMail(mailAccountId, receivers, subject, message, gtabid = 0, id = 0, fileInput = '', attachments = [], cc = null, bcc = null, templateId = null,resolvedTemplateGroups='',resolvedDynamicData='') {
+function lmbSendMail(mailAccountId, receivers, subject, message, gtabid = 0, id = 0, fileInput = '', attachments = [], cc = null, bcc = null, templateId = null,resolvedTemplateGroups='',resolvedDynamicData='', signature = '') {
     return new Promise((resolve, reject) => {
 
         let formData = new FormData();
@@ -68,6 +77,7 @@ function lmbSendMail(mailAccountId, receivers, subject, message, gtabid = 0, id 
         formData.append('templateId', templateId);
         formData.append('resolvedTemplateGroups', resolvedTemplateGroups);
         formData.append('resolvedDynamicData', resolvedDynamicData);
+        formData.append('signature', signature);
 
         if(Array.isArray(id)) {
             for (let i = 0; i < id.length; i++) {
@@ -152,7 +162,7 @@ function selectAttachments(files,params) {
     $.each(files, function(i, file) {
         let $html = $('<div class="border px-2 py-1 rounded-2 attachment" data-id="' + file.id + '">' +
             '<i class="fas fa-file"></i> ' +
-            file.name +
+            '<a href="main.php?action=download&amp;ID=' + file.id + '" target="_blank">' + file.name + '</a>' +
             ' <i class="fas fa-times ms-2 link-danger cursor-pointer"></i>' +
             '</div>');
 
@@ -178,9 +188,8 @@ function initRecipients() {
         $(this).remove();
     });
     
-    $('#mail-expand-receivers').on('click', expandReceivers)
-    
     initRecipientSelect($('select#mail_receiver'));
+    initRecipientDataReset();
 }
 
 function initRecipientSelect($element) {
@@ -198,29 +207,126 @@ function initRecipientSelect($element) {
                 text: params.term
             }
         }
+    }).on('change', saveDataToSessionStorage);
+}
+
+function initRecipientDataReset() {
+    const generalMainModal = window.parent.document.getElementById('general-main-modal');
+    $(generalMainModal).find('[data-bs-dismiss]').on('click', resetSessionStorage)
+}
+
+function getFormKey() {
+    const $mailForm = $('#mailForm');
+    const data = $mailForm.attr('data-id') + '-' + $mailForm.data('gtabid');
+    let hash = 2166136261n;
+    for (let i = 0; i < data.length; i++) {
+        hash ^= BigInt(data.charCodeAt(i));
+        hash *= 16777619n;
+    }
+    return hash.toString(16);
+}
+
+function saveDataToSessionStorage() {
+    const formKey = getFormKey();
+    const isBulk = parseInt($('#mailForm').data('bulk')) === 1;
+    const fields = ['bcc', 'cc'];
+    if(!isBulk) {
+        fields.push('receiver');
+    }
+
+    fields.forEach(field => {
+        const value = $('#mail_' + field).val();
+        sessionStorage.setItem('mail-' + formKey + field[0], JSON.stringify(value));
     });
 }
 
-function expandReceivers() {
-    const $this = $(this);
-    const $list = $('#mail-receivers-list');
-    let expanded = $this.data('expanded');
-    if(expanded === true) {
-        expanded = false;
-        $list.css('height', '2rem');
-        $this.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+function loadDataFromSessionStorage() {
+    const formKey = getFormKey();
+    const isBulk = parseInt($('#mailForm').data('bulk')) === 1;
+    const fields = ['bcc', 'cc'];
+    if(!isBulk) {
+        fields.push('receiver');
     }
-    else {
-        expanded = true;
-        $list.css('height', 'auto');
-        $this.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-    }
-    $this.data('expanded', expanded);
+
+    fields.forEach(field => {
+        const data = sessionStorage.getItem('mail-' + formKey + field[0]);
+        const receivers = data ? JSON.parse(data) : [];
+        if (data !== null && receivers.length > 0) {
+            let $field = $('#mail_' + field);
+            setSelectValue($field, receivers)
+            if(field !== 'receiver') {
+                $('[data-add-mail-recipient="' + field + '"]').trigger('click');
+            }
+        }
+    });
+}
+
+function resetSessionStorage() {
+    const formKey = getFormKey();
+    const fields = ['receiver', 'bcc', 'cc'];
+
+    fields.forEach(field => {
+        sessionStorage.removeItem('mail-' + formKey + field[0]);
+    });
+}
+
+function setSelectValue($select, values) {
+    $select.val(null);
+    values.forEach(value => {
+        if ($select.find("option[value='" + value + "']").length) {
+            $select.val(value).trigger('change.select2');
+        } else {
+            const newOption = new Option(value, value, true, true);
+            $select.append(newOption).trigger('change.select2');
+        }
+    });
 }
 
 /* endregion recipient handling */
 
+/* region signature handling */
 
+function onMailAccountChanged() {
+    $('#mail-signature-select').val(0).trigger('change');
+}
+
+function onSignatureChange() {
+    const $signatureSelect = $('#mail-signature-select');
+    let signatureId = parseInt($signatureSelect.val());
+    const useDefault = isNaN(signatureId) || signatureId === 0;
+    
+    let signatureContent;
+    if(useDefault) {
+        const $mailAccounts = $('#mail_account');
+        if($mailAccounts.is('input')) {
+            signatureId = parseInt($mailAccounts.data('signature'));
+            signatureContent = $mailAccounts.data('signature-content');
+        }
+        else {
+            const $mailAccount = $mailAccounts.find(':selected');
+            signatureId = parseInt($mailAccount.data('signature'));
+            signatureContent = $mailAccount.data('signature-content');
+        }
+    }
+    else {
+        signatureId = parseInt($signatureSelect.val());
+        signatureContent = $signatureSelect.find(':selected').data('signature-content');
+    }
+
+    if(useDefault && (isNaN(signatureId) || signatureId === 0)) {
+        signatureId = 0;
+        signatureContent = $signatureSelect.data('default-content');
+    }
+    loadSignature(signatureId, signatureContent);
+}
+
+function loadSignature(id, content) {
+    $('#mail_signature').val(id);
+    tinymce.get('mail_signature_content').setContent(content ?? '');
+}
+
+
+/* endregion signature handling */
 
 function loadMailPreview() {
     let $mailEditor = $('#mail-editor');
@@ -258,10 +364,7 @@ function loadMailPreview() {
         url: 'main_dyns.php?actid=handleMail&action=preview',
         data: formData,
         dataType: 'json',
-        success: function (data) {
-            
-            console.log(data);
-            
+        success: function (data) {            
             if(data.success) {
                 $mailPreview.html(data.html);
             }

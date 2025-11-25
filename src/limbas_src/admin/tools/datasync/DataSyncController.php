@@ -12,7 +12,7 @@ namespace Limbas\admin\tools\datasync;
 
 require_once(COREPATH . 'admin/tools/datasync/loaddatasync.php');
 
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 
 class DataSyncController extends LimbasController
 {
@@ -38,6 +38,8 @@ class DataSyncController extends LimbasController
         global $gfield;
         global $tabgroup;
         global $gtab;
+        global $file_struct;
+        global $result_conf;
 
         ob_start();
 
@@ -92,7 +94,9 @@ class DataSyncController extends LimbasController
                 $cache->clientRecordId,
                 $cache->type->name(),
                 $cache->createDate ? $cache->createDate->format('Y-m-d H:i:s') : '',
-                $cache->processKey
+                $cache->processKey,
+                $cache->error,
+                $cache->tryCount
             ];
         }
 

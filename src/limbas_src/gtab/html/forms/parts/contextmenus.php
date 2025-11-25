@@ -159,56 +159,74 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
 <DIV ID="limbasDivMenuContext" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position:absolute;display:none;z-index:991;" OnClick="activ_menu = 1;">
     <?php #----------------- Datei -------------------
     if($form_id){pop_top('limbasDivMenuContext');}
-    if(!$isview){pop_submenu(9,'','');}					# Infomenü
-    if($gtab["logging"][$gtabid]){
+
+    if(!$isview && !$gtab["menudisplay"][$gtabid][2][9]){       # Info
+        pop_submenu(9,'','');
+    }
+    # Infomenü
+    if($gtab["logging"][$gtabid] && !$gtab["menudisplay"][$gtabid][2][173]){
         pop_submenu(173,'','');							# History
     }
+
     pop_line();
-    if($gtab["edit"][$gtabid] AND $action == "gtab_change" AND !$readonly){pop_menu(197,'','');}	# speichern
+    if($gtab["edit"][$gtabid] AND $action == "gtab_change" AND !$readonly AND !$gtab["menudisplay"][$gtabid][2][197]){
+        pop_menu(197,'',''); # speichern
+    }
 
-
-    if($gtab["add"][$gtabid]){
+    if($gtab["add"][$gtabid] && !$gtab["menudisplay"][$gtabid][2][1]){
         pop_menu(1,'','');								# neuer Datensatz
     }
 
     # id ID ~ new dataset
     if($ID){
 
-        if($gtab["copy"][$gtabid] AND !$readonly){
+        if($gtab["copy"][$gtabid] && !$readonly && !$gtab["menudisplay"][$gtabid][2][201]){
             pop_menu(201,'','');							# Datensatz kopieren
         }
 
-        if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid] AND $gresult[$gtabid]["VACT"][0] AND !$readonly){
+        if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid] AND $gresult[$gtabid]["VACT"][0] AND !$readonly AND !$gtab["menudisplay"][$gtabid][2][235]){
             pop_menu(235,'','');							# Datensatz versionieren
         }
 
-        pop_line();
-        pop_menu(23,'','');									# drucken
+        if(!$gtab["menudisplay"][$gtabid][2][23]) {
+            pop_line();
+            pop_menu(23, '', '');                                    # drucken
+        }
+
         pop_line();
         if(($gtab["hide"][$gtabid] OR $gtab["trash"][$gtabid]) AND !$readonly){
             if($gresult[$gtabid]["LMB_STATUS"][0]) {
-                pop_menu(166,'','',0,0);                            # restore
+                if(!$gtab["menudisplay"][$gtabid][2][166]) {
+                    pop_menu(166, '', '', 0, 0);                            # restore
+                }
             }else{
-                if($gtab["trash"][$gtabid]) {
+                if($gtab["trash"][$gtabid] && !$gtab["menudisplay"][$gtabid][2][313]) {
                     pop_menu(313, '', '', 0, 0);                    # trash
                 }
-                if($gtab["hide"][$gtabid]) {
+                if($gtab["hide"][$gtabid] && !$gtab["menudisplay"][$gtabid][2][164]) {
                     pop_menu(164, '', '', 0, 0);                    # archive
                 }
             }
         }
 
-
         if($gtab["lock"][$gtabid] AND !$gresult[$gtabid]["LOCK"]["USER"][$ID] AND !$readonly){
             if($gresult[$gtabid]["LOCK"]["STATIC"][$ID]){
-                pop_menu(271,'','');							# freigeben
+                if(!$gtab["menudisplay"][$gtabid][2][271]) {
+                    pop_menu(271, '', '');                            # freigeben
+                }
             }else{
-                #pop_menu(270,'','');							# sperren
-                pop_submenu(270,'','',1);
-            }}
+                if(!$gtab["menudisplay"][$gtabid][2][270]) {
+                    pop_submenu(270, '', '', 1);                   # sperren
+                }
+            }
+        }
 
         pop_line();
-        if($gtab["delete"][$gtabid] AND !$readonly){pop_menu(11,'','');}	# löschen
+        if($gtab["delete"][$gtabid] AND !$readonly){
+            if(!$gtab["menudisplay"][$gtabid][2][11]) {
+                pop_menu(11, '', '');                                   # löschen
+            }
+        }
 
         # extension
         if(function_exists($GLOBALS["gLmbExt"]["menuChangeCContext"][$gtabid])){
@@ -232,19 +250,31 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
     <?php #----------------- Ansicht -------------------
     if($form_id){pop_top('limbasDivMenuAnsicht');}
 
-    pop_menu(240,'','',$session["symbolbar"]);	# Symbolleiste
-    if(!$form_id){pop_menu(281,'','',$filter["groupheader"][$gtabid]);}	# grouping fieldheaders
+    if(!$gtab["menudisplay"][$gtabid][2][240]) {
+        pop_menu(240, '', '', $session["symbolbar"]);    # Symbolleiste
+    }
+    if(!$form_id && !$gtab["menudisplay"][$gtabid][2][281]){
+        pop_menu(281,'','',$filter["groupheader"][$gtabid]);    	# grouping fieldheaders
+    }
     if(!$isview){
-        pop_line();
-        pop_menu(10,'','');						# Liste
+        if(!$gtab["menudisplay"][$gtabid][2][10]) {
+            pop_line();
+            pop_menu(10, '', '');                        # Liste
+        }
         if($action == "gtab_change"){
-            pop_menu(6,'','');					# Detail
+            if(!$gtab["menudisplay"][$gtabid][2][6]) {
+                pop_menu(6, '', '');                    # Detail
+            }
         }elseif($gtab["edit"][$gtabid] AND !$readonly){
-            pop_menu(3,'','');					# bearbeiten
+            if(!$gtab["menudisplay"][$gtabid][2][3]) {
+                pop_menu(3, '', '');                    # bearbeiten
+            }
         }
         pop_line();
     }
-    pop_menu(282,'','');					# Ansicht speichern
+    if(!$gtab["menudisplay"][$gtabid][2][282]) {
+        pop_menu(282, '', '');                    # Ansicht speichern
+    }
 
     # extension
     if(function_exists($GLOBALS["gLmbExt"]["menuChangeCDisplay"][$gtabid])){
@@ -268,42 +298,40 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
         #----------------- Extras -------------------
         if($form_id){pop_top('limbasDivMenuExtras');}
 
-        if($GLOBALS["gformlist_exist"]){
+        if($GLOBALS["gformlist_exist"] && !$gtab["menudisplay"][$gtabid][2][132]){
             pop_submenu(132,'','');			# Formulare
             $l = 1;
         }
-        if($GLOBALS["greportlist_exist"]){
-            #pop_submenu(131,'','');			# Berichte
-            pop_submenu(315,'','');
+        if($GLOBALS["greportlist_exist"] && !$gtab["menudisplay"][$gtabid][2][315]){
+            pop_submenu(315,'','');             # Berichte
             $l = 1;
         }
-        if($GLOBALS["gdiaglist_exist"]){
+        if($GLOBALS["gdiaglist_exist"] && !$gtab["menudisplay"][$gtabid][2][232]){
             pop_submenu(232,'','');			# Diagramme
             $l = 1;
         }
-        if($GLOBALS["filelist_exist"]){
+        if($GLOBALS["filelist_exist"] && !$gtab["menudisplay"][$gtabid][2][193]){
             pop_submenu(193,'','');			# Dateien
             $l = 1;
         }
-        if($gfield[$gtabid]["r_verkntabid2"] AND $GLOBALS["rverknpf_exist"]){
+        if($gfield[$gtabid]["r_verkntabid2"] && $GLOBALS["rverknpf_exist"] && !$gtab["menudisplay"][$gtabid][2][133]){
             pop_submenu(133,'','');			# Link Herkunft
             $l = 1;
         }
-        #if($GLOBALS["workflow_exist"]){
-        #	if($l){pop_line();}
-        #	pop_submenu(238,'','');			# Workflow
-        #	$l = 1;
-        #}
 
         if($l){pop_line();}
 
-        if(!$isview){
+        if(!$isview && !$gtab["menudisplay"][$gtabid][2][109]){
             pop_submenu(109,'','',1);		# Wiedervorlage
         }
 
-        if($gtab["edit_userrules"][$gtabid] OR ($gtab["edit_ownuserrules"][$gtabid] AND $gresult[$gtabid]["IS_OWN_USER"][0])){pop_submenu(266,'','',0);}
+        if($gtab["edit_userrules"][$gtabid] OR ($gtab["edit_ownuserrules"][$gtabid] AND $gresult[$gtabid]["IS_OWN_USER"][0])){
+            if(!$gtab["menudisplay"][$gtabid][2][266]) {
+                pop_submenu(266, '', '', 0);
+            }
+        }
 
-        if($LINK[239] AND $gtab["viewver"][$gtabid] AND $gresult[$gtabid]["V_ID"]){	# Version Diff
+        if($LINK[239] && $gtab["viewver"][$gtabid] && $gresult[$gtabid]["V_ID"] && !$gtab["menudisplay"][$gtabid][2][239]){	# Version Diff
             foreach ($gresult[$gtabid]["V_ID"] as $key => $value){
                 if($value != $ID){
                     $versionlist .= "<OPTION VALUE=\"$value\">Vers. ".$key;
@@ -319,7 +347,7 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
             }
         }
 
-        if($LINK[277]){
+        if($LINK[277] && !$gtab["menudisplay"][$gtabid][2][277]){
             pop_line();
             pop_submenu(277,'','');					# Einstellungen
         }
@@ -357,8 +385,8 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
 <DIV ID="limbasDivRowSetting" class="lmbContextMenu lmbGtabmenu-list lmbGtabmenu-table-<?=$gtabid?>" style="display:none;z-index:993" OnClick="activ_menu = 1;">
     <?php #----------------- SubMenü - Rowsetting -------------------
     pop_top('limbasDivRowSetting');
-    pop_menu2($lang[861],null,null,"lmb-textsort-up",null,"LmExt_RelationFields(this,lmbGlobVar['ActiveTab'],lmbGlobVar['ActiveRow'],'','1',lmbGlobVar['res_next'],lmbGlobVar['sortid'],'','ASC','',lmbGlobVar['gformid'],lmbGlobVar['formid'])");
-    pop_menu2($lang[862],null,null,"lmb-textsort-down",null,"LmExt_RelationFields(this,lmbGlobVar['ActiveTab'],lmbGlobVar['ActiveRow'],'','1',lmbGlobVar['res_next'],lmbGlobVar['sortid'],'','DESC','',lmbGlobVar['gformid'],lmbGlobVar['formid'])");
+    pop_menu2($lang[861],null,null,"lmb-textsort-up",null,"LmExt_RelationFields(this,lmbGlobVar['ActiveTab'],lmbGlobVar['ActiveRow'],'','1',lmbGlobVar['ID'],lmbGlobVar['sortid'],'','ASC','',lmbGlobVar['gformid'],lmbGlobVar['formid'])");
+    pop_menu2($lang[862],null,null,"lmb-textsort-down",null,"LmExt_RelationFields(this,lmbGlobVar['ActiveTab'],lmbGlobVar['ActiveRow'],'','1',lmbGlobVar['ID'],lmbGlobVar['sortid'],'','DESC','',lmbGlobVar['gformid'],lmbGlobVar['formid'])");
     pop_bottom();
     ?>
 </DIV>

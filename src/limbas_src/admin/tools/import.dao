@@ -8,7 +8,8 @@
  */
 
 
-
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Log;
 
 set_time_limit(12000); #200min
 ob_implicit_flush();
@@ -69,7 +70,7 @@ function errorlist($line,$value,$id){
 
 /* --- mapping fields for import/create/convert new table ------- */
 function import_create_fieldmapping($ifield,$import_typ,$covertfromtable,$odbc=null,$txt_terminate=null,$txt_enclosure=null,$txt_calculate=null,$txt_encode=null){
-    global $db;
+    global $db, $DBA;
     global $umgvar;
     global $session;
     global $lang;
@@ -97,7 +98,7 @@ function import_create_fieldmapping($ifield,$import_typ,$covertfromtable,$odbc=n
     # check fieldtype for convert
     }elseif($import_typ == "convert" AND $covertfromtable){
     	/* --- Tabellenfelder auslesen --------------------------------------------- */
-    	$columns = dbf_5(array($DBA["DBSCHEMA"],$covertfromtable));
+    	$columns = Dbf::getColumns($DBA["DBSCHEMA"], $covertfromtable, null);
     	foreach ($columns["columnname"] as $key => $value){
     		$header[] = $value;
     		$e["field_type"][] = $columns["datatype"][$key];
@@ -519,10 +520,10 @@ function import_create_fillodbc($ifield, $odbc, $txt_encode, $verbose=null){
     }
 
     // predefined fields
-    if (in_array(dbf_4('id'), $ifield['name'])) {
+    if (in_array(Dbf::handleCaseSensitive('id'), $ifield['name'])) {
         $NOID = 1;
     }
-    if (in_array(dbf_4('erstuser'), $ifield['name'])) {
+    if (in_array(Dbf::handleCaseSensitive('erstuser'), $ifield['name'])) {
         $NOERSTUSER = 1;
     }
     
@@ -1040,7 +1041,7 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 			if($bzm4 > 1){
 				$rs3 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $GLOBALS['action'], __FILE__, __LINE__);
 				if(!$rs3) {
-                    LimbasLogger::log("import failure in insert statement of table $tab and ID $id", LimbasLogger::LL_ERROR);
+                    Log::error("import failure in insert statement of table $tab and ID $id");
 					$success = 0;
 					$count_false++;
 				}else{
@@ -1065,7 +1066,7 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
                     $prepare_string = "UPDATE ".$tab." SET ".$prepare_long["field"][$bzm4][$lkey]." = ? WHERE ID = ".$prepare_long["id"][$bzm4];
                     $rs4 = lmb_PrepareSQL($prepare_string,array($prepare_long["value"][$bzm4][$lkey]),__FILE__,__LINE__);
                     if(!$rs4) {
-                        LimbasLogger::log("import failure in prepare statement of table $tab and ID $id", LimbasLogger::LL_ERROR);
+                        Log::error("import failure in prepare statement of table $tab and ID $id");
                         $success = 0;
                         $count_false++;
                     }
@@ -1110,11 +1111,11 @@ function create($tab,$sqlquery,$key){
     ob_flush();
     
 	if($rs2){
-        LimbasLogger::log("create table $tab", LimbasLogger::LL_INFO);
+        Log::info("create table $tab");
 		if($GLOBALS["action"]){echo "<p class=\"fw-bold mt-3 mb-0\">$lang[164] $tab $lang[1018]</p>";}
 		return true;
 	}else {
-        LimbasLogger::log("Could not create table $tab - Message: ".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+        Log::error("Could not create table $tab - Message: ".lmbdb_errormsg($db));
 		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1020] <font style=\"font-style:italic;font-weight:bold\">$tab</FONT> $lang[1012]!</div>\n";}
 		return false;
 	}
@@ -1129,19 +1130,19 @@ function deleteExistingTab($tab){
 	global $lang;
     global $DBA;
 
-    $odbc_table = dbf_20(array($DBA["DBSCHEMA"],$tab,"'TABLE'"));
+    $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$tab,"'TABLE'");
     if(!$odbc_table) {
         return true;
     }
 
-	$sqlquery = "DROP TABLE ".dbf_4($tab);
+	$sqlquery = "DROP TABLE ".Dbf::handleCaseSensitive($tab);
 	$rs2 = lmbdb_exec($db,$sqlquery);
 	if($rs2){
-        LimbasLogger::log("delete table $tab", LimbasLogger::LL_INFO);
+        Log::info("delete table $tab");
 		if($GLOBALS["action"]){echo "<div>$lang[164] <font style=\"font-style:italic;font-weight:bold\">$tab</FONT> <B>$lang[770]</B></div>\n";}
         return true;
 	}else{
-        LimbasLogger::log("Could not create table $tab - Message: ".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+        Log::error("Could not create table $tab - Message: ".lmbdb_errormsg($db));
 		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1021] <font style=\"font-style:italic;font-weight:bold\">$tab</FONT> $lang[1012]!</div>\n";}
         return false;
 	}
@@ -1253,7 +1254,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 
 				$tab = lmb_substr($line,24);
 				$tab = lmb_substr($tab,0,lmb_strlen($tab) - 2);
-                $tab = dbf_4($tab);
+                $tab = Dbf::handleCaseSensitive($tab);
 				$filename = ($tab_name != '' && $tab_name != 'export') ? '' : strtolower($tab);
 				$tabname = $prefix.$tab;
 				$oldtabname = $tabname;
@@ -1275,7 +1276,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				}elseif ($import_overwrite == "add" OR $import_overwrite == "add_with_ID"){
 					$tab = $oldtabname;
 					// check if table exists
-					$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$tab,"'TABLE','VIEW'"));
+					$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$tab,"'TABLE','VIEW'");
 					if($odbc_table) {
 						$iscreated = 'attach';
 					}else{
@@ -1379,9 +1380,9 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				$cdf[0] = $newtabname[lmb_strtoupper($cdf[0])];
 
                 $indname = lmb_getConstraintName('LMB_IND',$cdf[0],$cdf[1]);
-				$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$cdf[0],"'TABLE'"));
+				$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$cdf[0],"'TABLE'");
 				if($odbc_table) {
-					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$cdf[0],$cdf[1]));
+                    $sqlquery = Dbf::createIndexSql($indname,$cdf[0],$cdf[1]);
 					$rs4 = lmbdb_exec($db,$sqlquery);
 					if(!$rs4) {
                         $success = 0;
@@ -1405,7 +1406,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				$cdf[1] = lmb_substr($line,lmb_strpos($line,"::")+2,lmb_strlen($line));
 				
 				if($cdf){
-					$sqlquery = dbq_19($cdf);
+                    $sqlquery = Dbf::createViewSql($cdf[0],$cdf[1]);
 					$rs4 = lmbdb_exec($db,$sqlquery);
 					if(!$rs4) {
                         $success = 0;
@@ -1639,7 +1640,7 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 	}elseif($import_typ == "atm"){
 
 		/* --- Liste vorhandener Tabellen --------------------------------------------- */
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
+		$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE','VIEW'");
 		foreach($odbc_table["table_name"] as $tkey => $tvalue) {
 			$existingtabs[] = lmb_strtoupper($tvalue);
 		}
@@ -1686,11 +1687,11 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 			/* ----------- prüfen ob Tabelle schon vorhanden ------------- */
 			if(in_array(lmb_strtoupper($prefix_.$imptabgroup[$bzm]),$existingtabs)){
 				/* ----------- Tabelle schon vorhanden ------------- */
-				$table = dbf_4($imptabgroup[$bzm]);
+				$table = Dbf::handleCaseSensitive($imptabgroup[$bzm]);
 			}else{
 				/* ----------- Tabelle noch nicht vorhanden ------------- */
 				$typ = "new";
-				$table = dbf_4($prefix_.$imptabgroup[$bzm]);
+				$table = Dbf::handleCaseSensitive($prefix_.$imptabgroup[$bzm]);
 			}
 			
 			/* ----------- neue Tabelle anlegen / anhängen / umbenennen ------------- */
@@ -1726,7 +1727,7 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 
 		# delete all trigger
 		if(LMB_DBFUNC_PROCEDUREHANDLE){
-			if(lmb_dropAllDBTrigger()){
+			if(lmb_TriggerDropFromDB()){
 				echo 'drop existing trigges ... <span class="text-success">done</span><br>';
 			}
 		}
@@ -1739,10 +1740,10 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 		}
 		
 		# drop views
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'VIEW'"));
+		$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'VIEW'");
 		if($odbc_table){
 			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-				$sqlquery1 = "DROP VIEW ".dbf_4($tvalue);
+				$sqlquery1 = "DROP VIEW ".Dbf::handleCaseSensitive($tvalue);
 				$vrs1 = lmbdb_exec($db,$sqlquery1);
 				if(!$vrs1) {$commit = 1;}
 			}
@@ -1750,10 +1751,10 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 		}
 		
 		# drop tables
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
+		$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE'");
 		if($odbc_table){
 			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-				$sqlquery1 = "DROP TABLE ".dbf_4($tvalue);
+				$sqlquery1 = "DROP TABLE ".Dbf::handleCaseSensitive($tvalue);
 				$vrs1 = lmbdb_exec($db,$sqlquery1);
 				if(!$vrs1) {$commit = 1;}
 			}
@@ -1764,10 +1765,10 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 	# procedures
 	if(LMB_DBFUNC_PROCEDUREHANDLE){
 		# drop functions
-		dbq_21(array($DBA["DBSCHEMA"]));
+		Dbf::dropLimbasVknFunction();
 
 		# add functions
-		if(!dbq_16(array($DBA["DBSCHEMA"]))){
+		if(!Dbf::createLimbasVknFunction($DBA["DBSCHEMA"])){
 			echo '<span class="text-danger">error by adding stored procedures!</span><br>';
 		}else{
 			echo 'adding stored procedures ... <span class="text-success">done</span><br>';
@@ -1789,7 +1790,7 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 	}
 	
 	# Trigger
-	if(lmb_rebuildTrigger(1)){
+	if(lmb_TriggerRebuildSystem(1)){
 		if($GLOBALS["action"]){
 			echo 'rebuild trigger... <span class="text-success">done</span><br>';
 		}
@@ -1811,12 +1812,12 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 	}
 # 987 / 1014 <?=lang('Limbas is already installed.')
 	if($GLOBALS["action"]){
-		echo "<BR><BR><HR><H4>".lang('Limbas has been successfully installed').",</H4>";
+		echo "<BR><BR><HR><H4>".iLang('Limbas has been successfully installed').",</H4>";
         
         if($isInstaller) {
-            echo '<a class="btn btn-primary pull-right" href="../">'.lang('start Limbas now!')."</a><BR><BR><BR>";
+            echo '<a class="btn btn-primary pull-right" href="../">'.iLang('start Limbas now!')."</a><BR><BR><BR>";
         } else {
-            echo "<a class=\"btn btn-primary pull-right\" onclick=\"top.window.location.reload();\">".lang('start Limbas now!')."</a></div><BR><BR><BR>";
+            echo "<a class=\"btn btn-primary pull-right\" onclick=\"top.window.location.reload();\">".iLang('start Limbas now!')."</a></div><BR><BR><BR>";
         }
         
 		

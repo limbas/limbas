@@ -16,7 +16,7 @@
              <?php if(!$demoFilesInstalled): ?>
 
                  <div class="alert alert-success mt-3">
-                     <?=lang('If you want extension files for demonstration purposes, you can extract the files')?><br>
+                     <?=iLang('If you want extension files for demonstration purposes, you can extract the files')?><br>
                      public/localassets/demo.tar.gz<br>
                      dependent/EXTENSIONS/demo.tar.gz
                  </div>

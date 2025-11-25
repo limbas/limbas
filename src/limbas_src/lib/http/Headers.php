@@ -55,6 +55,17 @@ class Headers
         header("Access-Control-Allow-Origin: $httpOrigin");
         header("Access-Control-Allow-Headers: $allowedHeaders");
     }
+    
+    public function getAccessControlHeaders(): array
+    {
+        $httpOrigin = $this->getAccessControlOrigin();
+        $allowedHeaders = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
+        
+        return [
+            'Access-Control-Allow-Origin' => $httpOrigin,
+            'Access-Control-Allow-Methods' => $allowedHeaders,
+        ];
+    }
 
     private function loadFromDatabase(): void {
         try {

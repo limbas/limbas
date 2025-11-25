@@ -23,9 +23,6 @@ require_once __DIR__ . '/reportManager.dao';
     <script type="text/javascript" src="assets/js/lib/global.js?v=<?=$umgvar["version"]?>"></script>
     <script src="main.php?action=syntaxcheckjs"></script>
     <script type="text/javascript" src="assets/vendor/jquery/jquery.min.js?v=<?=$umgvar["version"]?>"></script>
-    
-    <script type="text/javascript" src="assets/js/extra/extensions/ext.js?v=<?=$umgvar["version"]?>"></script>
-
     <link rel="stylesheet" type="text/css" href="<?=$session['css']?>?v=<?=$umgvar["version"]?>">
 </head>
 

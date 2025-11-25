@@ -207,6 +207,8 @@ EOD;
 
         // require all extensions that are available when report/form is rendered
         require_once(COREPATH . 'extra/report/report.dao');
+        require_once(COREPATH . 'extra/template/report/functions.php');
+        require_once(COREPATH . 'extra/template/form/functions.php');
         if ($gLmbExt["ext_main.inc"]) {
             foreach ($gLmbExt["ext_main.inc"] as $key => $extfile) {
                 require_once($extfile);

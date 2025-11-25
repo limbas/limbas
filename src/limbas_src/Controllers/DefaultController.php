@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-class DefaultController
+class DefaultController extends AbstractController
 {
 
     public function index(Request $request): Response
@@ -79,21 +79,16 @@ class DefaultController
         }
 
         ob_end_clean();
-        ob_start();
+        
+        $view = 'error';
+        $stackTrace = null;
         if ($code === 500 && $error !== null && $request !== null && ($session['debug'] || defined('LIMBAS_INSTALL'))) {
-
             try {
                 $stackTrace = new StackTrace($error);
-                include(COREPATH . 'resources/views/errors/debugError.php');
-            } catch (Throwable) {
-                ob_end_clean();
-                include(COREPATH . 'resources/views/errors/error.php');
-            }
-
-        } else {
-            include(COREPATH . 'resources/views/errors/error.php');
+                $view = 'debugError';
+            } catch (Throwable) {}
         }
 
-        return new Response(ob_get_clean() ?: '', $code);
+        return $this->render('errors.' . $view,compact('stackTrace','title', 'message', 'code', 'error', 'request'));
     }
 }

@@ -12,6 +12,7 @@ namespace Limbas\admin\tools\update\updates;
 
 use Exception;
 use Limbas\admin\tools\update\Update;
+use Limbas\lib\db\functions\Dbf;
 
 class Update5m2 extends Update
 {
@@ -78,7 +79,7 @@ class Update5m2 extends Update
     protected function patch2(): bool
     {
         global $DBA;
-        return $this->databaseUpdate(dbq_15(array($DBA["DBSCHEMA"],'LMB_CUSTMENU_LIST','NAME',LMB_DBTYPE_INTEGER)));
+        return $this->databaseUpdate(Dbf::modifyColumnTypeSql('LMB_CUSTMENU_LIST','NAME',LMB_DBTYPE_INTEGER));
     }
 
     /**
@@ -160,7 +161,7 @@ class Update5m2 extends Update
     protected function patch8(): bool
     {
         $sqlQueries = [
-            dbf_17(array('LMB_REPORT_TEMPLATES','LMB_DEFAULT_TEMPLATES')),
+            Dbf::renameTableSql('LMB_REPORT_TEMPLATES','LMB_DEFAULT_TEMPLATES'),
             'UPDATE LMB_CONF_TABLES SET TABELLE = \'lmb_default_templates\'  WHERE LOWER(TABELLE) = \'lmb_report_templates\'',
             'UPDATE LMB_LANG_DEPEND SET WERT = \'lmb_default_templates\' WHERE WERT = \'lmb_report_templates\''
         ];

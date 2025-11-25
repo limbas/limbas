@@ -7,14 +7,14 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\lib\db\functions\Dbf;
 
 
 
 /* ---Sprach-Liste --------------------------------------------- */
 function get_language_list($langtyp=null){
 	global $db;
-	$langtyp = dbf_4($langtyp);
+	$langtyp = Dbf::handleCaseSensitive($langtyp);
 
 	$sqlquery = "SELECT DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG ORDER BY LANGUAGE";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -36,7 +36,7 @@ function get_language_list($langtyp=null){
 function lang_delete($del,$langtyp=null){
 	global $db;
 	global $lang;
-	$langtyp = dbf_4($langtyp);
+	$langtyp = Dbf::handleCaseSensitive($langtyp);
 
 	if(is_numeric($del)){
 		$sqlquery1 = "DELETE FROM LMB_LANG$langtyp WHERE ELEMENT_ID = $del";
@@ -53,7 +53,7 @@ function lang_change($id,$element_id,$new_value,$language_id,$langtyp,$typ=1,$fi
 	global $db;
 	global $lang;
 	global $session;
-	$langtyp = dbf_4($langtyp);
+	$langtyp = Dbf::handleCaseSensitive($langtyp);
 
 	if($id){
 		$sqlquery = "UPDATE LMB_LANG{$langtyp} SET WERT = '".parse_db_string($new_value,249)."',EDIT = ".LMB_DBDEF_TRUE." WHERE ID = $id";
@@ -87,7 +87,7 @@ function lang_change($id,$element_id,$new_value,$language_id,$langtyp,$typ=1,$fi
 /* --- ändern js --------------------------------------------- */
 function lang_changejs($id,$new_js,$language_id,$langtyp){
 	global $db;
-	$langtyp = dbf_4($langtyp);
+	$langtyp = Dbf::handleCaseSensitive($langtyp);
 
 	if($id){
 		$sqlquery = "UPDATE LMB_LANG$langtyp SET JS = ".parse_db_bool($new_js)." WHERE ELEMENT_ID = (SELECT ELEMENT_ID FROM LMB_LANG$langtyp WHERE ID = $id))";
@@ -99,7 +99,7 @@ function lang_changejs($id,$new_js,$language_id,$langtyp){
 /* --- ändern override --------------------------------------------- */
 function lang_changeoverride($id,$new_override,$language_id,$langtyp){
 	global $db;
-	$langtyp = dbf_4($langtyp);
+	$langtyp = Dbf::handleCaseSensitive($langtyp);
 
 	if($id){
 		$sqlquery = "UPDATE LMB_LANG$langtyp SET OVERRIDE = ".parse_db_int($new_override)." WHERE ELEMENT_ID = (SELECT ELEMENT_ID FROM LMB_LANG$langtyp WHERE ID = $id)";
@@ -113,7 +113,7 @@ function lang_add($language_id,$typ,$file,$wert,$langtyp=null,$element_id=null){
 	global $db;
 	global $lang;
 	global $umgvar;
-	$langtyp = dbf_4($langtyp);
+	$langtyp = Dbf::handleCaseSensitive($langtyp);
 
 	$result_language = get_language_list($langtyp);
 

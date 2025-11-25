@@ -7,8 +7,11 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+global $DBA;
 
 use Limbas\extra\template\select\TemplateSelector;
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\general\Log\Log;
 
 set_time_limit(3600); #60min
 ob_implicit_flush();
@@ -156,7 +159,7 @@ if($locking){
 if($newsystem){
 
 	# delete all trigger
-	lmb_dropAllDBTrigger();
+	lmb_TriggerDropFromDB();
 
 	# delete all constrains
 	lmb_dropAllForeignKeys();
@@ -165,7 +168,7 @@ if($newsystem){
 	lmb_dropAllViews();
 	
 	# Tabellen löschen
-	$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
+	$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE'");
 	foreach($odbc_table["table_name"] as $tkey => $tablename) {
 		if(lmb_strtoupper(lmb_substr($tablename,0,4)) != "LMB_" AND lmb_strtoupper(lmb_substr($tablename,0,5)) != "LDMS_"){
 		    lmb_dropTable($tablename);
@@ -375,7 +378,7 @@ if($newsystem){
 
 
 function create_default_files(){
-	global $db;
+	global $db, $DBA;
 
 	$tab_group = 0;
 
@@ -391,7 +394,7 @@ function create_default_files(){
 		$tab_group = lmbdb_result($rs,"TAB_GROUP");
 	}
 	
-	$odbc_table = dbf_20(array($DBA["DBSCHEMA"],"LDMS_%","'TABLE'"));
+	$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],"LDMS_%","'TABLE'");
 	foreach($odbc_table["table_name"] as $tkey => $tablename) {
 		if(lmb_strtoupper($tablename) == "LDMS_FILES"){
 		    lmb_dropTable('LDMS_FILES');
@@ -527,43 +530,70 @@ function specificUserrules($tabid){
 }
 
 
-/* --- Auswahlpools neu sortieren ------------------------------- */
-function resortSelect(){
+/* --- clean table settings ------------------------------- */
+function cleantablesettings(){
 	global $db;
-	
-	$sqlquery = "SELECT ID FROM LMB_SELECT_P";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	while(lmbdb_fetch_row($rs)) {
-		$sqlquery1 = "SELECT ID FROM LMB_SELECT_W WHERE POOL = ".lmbdb_result($rs, "ID")." ORDER BY LEVEL,SORT";
-		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-		$NEXTID=1;
-		while(lmbdb_fetch_row($rs1)) {
-			$sqlquery2 = "UPDATE LMB_SELECT_W SET SORT = $NEXTID WHERE ID = ".lmbdb_result($rs1, "ID");
-			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-			if(!$rs2) {$commit = 1;}
-			$NEXTID++;
-		}
-	}
+    global $gtab;
 
-	$sqlquery = "SELECT ID FROM LMB_ATTRIBUTE_P";
+	$sqlquery = "SELECT ID,FIELD_TYPE,FIELD_NAME,FIELD_ID,TAB_ID,VERKNTABID,VERKNVIEW,VERKNSEARCH,VERKNFIND FROM LMB_CONF_FIELDS WHERE FIELD_TYPE < 100";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	while(lmbdb_fetch_row($rs)) {
-		$sqlquery1 = "SELECT ID FROM LMB_ATTRIBUTE_W WHERE POOL = ".lmbdb_result($rs, "ID")." ORDER BY LEVEL,SORT";
-		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-		$NEXTID=1;
-		while(lmbdb_fetch_row($rs1)) {
-			$sqlquery2 = "UPDATE LMB_ATTRIBUTE_W SET SORT = $NEXTID WHERE ID = ".lmbdb_result($rs1, "ID");
-			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-			if(!$rs2) {$commit = 1;}
-			$NEXTID++;
-		}
-	}
-	
-	if(!$commit){return true;}else{return false;}
+	if(!$rs){$commit = 1;}
+	while(lmbdb_fetch_row($rs)){
+		$id = lmbdb_result($rs,"ID");
+        $fl['tab_id'][$id] = lmbdb_result($rs,"TAB_ID");
+        $fl['field_name'][$id] = lmbdb_result($rs,"FIELD_NAME");
+        $fl['verkntab_id'][$id] = lmbdb_result($rs,"VERKNTABID");
+        $fl['gf'][lmbdb_result($rs, "TAB_ID")][lmbdb_result($rs, "FIELD_ID")] = 1;
+        if(lmbdb_result($rs,"FIELD_TYPE") == 11) {
+            if (lmbdb_result($rs, "VERKNVIEW")) {
+                $verknview[$id] = explode('?', lmbdb_result($rs, "VERKNVIEW"));
+            }
+            if (lmbdb_result($rs, "VERKNSEARCH")) {
+                $verknsearch[$id] = explode('?', lmbdb_result($rs, "VERKNSEARCH"));
+            }
+            if (lmbdb_result($rs, "VERKNFIND")) {
+                $verknfind[$id] = explode('?', lmbdb_result($rs, "VERKNFIND"));
+            }
+        }
+    }
+
+     // clean verknview sewttings
+    function flcl(&$fl,&$verknview,$type){
+        global $db;
+        global $gtab;
+
+        foreach ($verknview as $fkey => $verknviewval) {
+            if (!$verknviewval) {
+                continue;
+            }
+            $verknviewval_ = explode(',', $verknviewval[0]);
+            if ($verknviewval[0]) {
+                $missmatch = 0;
+                $new_verknview = array();
+                foreach ($verknviewval_ as $key => $verknviewfield) {
+                    if (!$fl['gf'][$fl['verkntab_id'][$fkey]][$verknviewfield]) {
+                        $missmatch = 1;
+                    } else {
+                        $new_verknview[] = $verknviewfield;
+                    }
+                }
+                if ($missmatch) {
+                    $new_verknview_ = implode(',', $new_verknview);
+                    if ($verknviewval[1]) {
+                        $new_verknview_ .= '?' . $verknviewval[1];
+                    }
+                    $sqlquery = "UPDATE LMB_CONF_FIELDS SET $type = '" . $new_verknview_ . "' WHERE ID = $fkey";
+                    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                    Log::info("clean $type relation settings for table [" . $gtab['table'][$fl['tab_id'][$fkey]] . "] field [" . $fl['field_name'][$fkey] . "]");
+                }
+            }
+        }
+    }
+
+    flcl($fl,$verknview,'VERKNVIEW');
+    flcl($fl,$verknsearch,'VERKNSEARCH');
+    flcl($fl,$verknfind,'VERKNFIND');
+
 }
 
 
@@ -619,7 +649,7 @@ if($refresh_foreignkey){
 }
 
 if($refresh_trigger){
-    lmb_rebuildTrigger($rebuild);
+    lmb_TriggerRebuildSystem($rebuild);
     $modalouput = 'rebuild trigger';
 }
 
@@ -629,7 +659,7 @@ if($refresh_indexes){
 }
 
 if($refresh_procedures){
-	if(!dbq_16(array($DBA["DBSCHEMA"],1))){
+	if(!Dbf::createLimbasVknFunction($DBA["DBSCHEMA"],true)){
 		lmb_alert("some errors by rebuild database procedures, check error logs..");
 	}else{
 		lmb_alert("database procedures successfully build!");
@@ -652,9 +682,11 @@ if($refresh_hashes){
 }
 
 if($refresh_squences){
-	if(lmb_rebuildSequences(null,null,$rebuild)){
-        lmb_alert("sequences successfully created");}else{lmb_alert("failed to create sequences!");
-    }
+	#if(lmb_rebuildSequences(null,null,$rebuild)){
+    #    lmb_alert("sequences successfully created");}else{lmb_alert("failed to create sequences!");
+    #}
+    lmb_rebuildSequences(null,null,$rebuild);
+    $modalouput = 'rebuild Sequences';
 }
 
 # lock message
@@ -675,10 +707,9 @@ if($refresh_thumps){
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
-if($resortselect){
-	if(!resortSelect()){
-		lmb_alert("ERROR by sorting Selectpools");
-	}
+if($cleantablesettings){
+	cleantablesettings();
+    $modalouput = 'clean table relation settings';
 }
 
 if($validateFiles){
@@ -716,18 +747,25 @@ $lock_message = get_lockmessage();
           <div class="modal-body">
     <?php
 
-    foreach (LimbasLogger::getLogLines() as $key => $log_) {
-        if($log_['level'] == LimbasLogger::LL_ERROR) {
-            echo '<div class="alert alert-danger" role="alert">'.$log_['message'].'</div>';
-            echo "<script>$(function() { $('.modal-title').css('color','red'); });</script>";
+    $log = Log::getLogger()->getLog(false);
+
+    if ($log) {
+        foreach ($log as &$logEntry) {
+            if($logEntry->level->name == 'ERROR') {
+                echo '<div class="alert alert-danger" role="alert">'.$logEntry->message.'</div>';
+                echo "<script>$(function() { $('.modal-title').css('color','red'); });</script>";
+            }
+            $bzm++;
         }
-        $bzm++;
     }
-    foreach (LimbasLogger::getLogLines() as $key => $log_) {
-        if($log_['level'] == LimbasLogger::LL_INFO) {
-            echo '<div class="alert alert-info" role="alert">'.$log_['message'].'</div>';
+
+    if ($log) {
+        foreach ($log as &$logEntry) {
+            if($logEntry->level->name == 'INFO') {
+                echo '<div class="alert alert-info" role="alert">'.$logEntry->message.'</div>';
+            }
+            $bzm++;
         }
-        $bzm++;
     }
 
     if(!$bzm){
@@ -932,11 +970,11 @@ function newsystem(evt) {
 	}
 }
 
-function resortselect(evt) {
+function cleantablesettings(evt) {
 	link = confirm("<?=$lang[2734]?>?");
 	if(link) {
 		limbasWaitsymbol(evt,1);
-		document.location.href="main_admin.php?action=setup_sysupdate&resortselect=1";
+		document.location.href="main_admin.php?action=setup_sysupdate&cleantablesettings=1";
 	}
 }
 
@@ -995,7 +1033,7 @@ function validateFiles(evt) {
                             <TR><TD><?=$lang[2695]?></TD>
                                 <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="deletefiles(event);">OK</button></TD></TR>
                             <TR><TD><?=$lang[2734]?></TD>
-                                <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="resortselect(event);">OK</button></TD></TR>
+                                <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="cleantablesettings(event);">OK</button></TD></TR>
                             <TR><TD><?=$lang[2862]?></TD>
                                 <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="createExifConf(event);">OK</button></TD></TR>
                             <TR><TD><?=$lang[1137]?> Cache <?=$lang[550]?></TD>

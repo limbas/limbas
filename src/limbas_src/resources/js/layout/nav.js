@@ -278,94 +278,164 @@ function delayedSidebarWidthSave(element) {
 
     if (frameName === 'nav') {
         hide_sidenav_size = elw;
-    }
-    else {
+    } else {
         hide_multiframe_size = elw;
     }
     ajaxGet(null,'main_dyns.php','layoutSettings&frame=' + frameName + '&open=1&size='+elw,null);
 }
 
+function postTableTreeAction(data) {
+    data['actid'] = 'manageTableTree';
 
-function lmb_treeElOpen(treeid,tabid,elid,rand){
-    var elname = treeid+'_'+tabid+'_'+elid+'_'+rand;
-    var el = document.getElementById('lmbTreeEl_'+elname);
-    var img_src = document.getElementById('lmbTreePlus_'+elname).src;
-
-    if(el.style.display == 'none'){
-        el.style.display = '';
-        document.getElementById('lmbTreePlus_'+elname).src = img_src.replace(/(plus)/,"minus");
-    }else{
-        el.style.display = 'none';
-        document.getElementById('lmbTreePlus_'+elname).src = img_src.replace(/(minus)/,"plus");
-    }
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: 'main_dyns.php',
+            type: 'POST',
+            data: data,
+            dataType: 'json',
+            success: (data) => {
+                resolve(data)
+            },
+            error: (error) => {
+                reject(error)
+            }
+        });
+    })
 }
 
+function lmb_treeElOpen(treeid, tabid, elid, rand) {
+    const elname = `${treeid}_${tabid}_${elid}_${rand}`;
+    const $el = $('#lmbTreeEl_' + elname);
+    const $img = $('#lmbTreePlus_' + elname);
 
-function lmb_treeOpen(treeid,tabid,id){
+    const isVisible = $el.is(':visible');
 
-    if(id.length>0 && document.getElementById("img"+treeid)){
-        var img_src = document.getElementById("img"+treeid).src;
-        if(img_src && img_src.match(/(minus)+/g)){
-            document.getElementById("img"+treeid).src = img_src.replace(/(minus)/,"plus");
-            document.getElementById(treeid).style.display = "none";
-            return;
+    const img_src = $img.attr('src');
+    if (isVisible) {
+        $el.hide();
+        $img.attr('src', img_src.replace('minus', 'plus'));
+    } else {
+        $el.show();
+        $img.attr('src', img_src.replace('plus', 'minus'));
+    }
+
+    const recursivePath = getRecursivePath($el, treeid, tabid, elid, elid, rand);
+
+    const data = {
+        action: 'savePath',
+        recursive_path: recursivePath,
+        remove_path: isVisible ? 1 : 0,
+    }
+
+    postTableTreeAction(data).then((data) => {
+        if (!data.success) {
+            lmbShowErrorMsg('Path could not be saved.');
         }
-        if(document.getElementById(treeid)
-            && document.getElementById(treeid).innerHTML.length>1
-            && img_src.match(/(plus)+/g)){
-            document.getElementById("img"+treeid).src = img_src.replace(/(plus)/,"minus");
-            document.getElementById(treeid).style.display = "";
-            return;
+    }).catch(() => {
+        lmbShowErrorMsg('Path could not be saved.');
+    });
+}
+
+function lmb_treeOpen(treeid, tabid, id, element) {
+    if (id.length > 0 && document.getElementById("img" + treeid)) {
+        const $el = $('#' + treeid);
+        const $img = $('#img' + treeid);
+
+        const isVisible = $el.is(':visible');
+
+        const img_src = $img.attr('src');
+        if (isVisible) {
+            $el.hide();
+            $img.attr('src', img_src.replace('minus', 'plus'));
+        } else {
+            $el.show();
+            $img.attr('src', img_src.replace('plus', 'minus'));
         }
     }
 
-    ajaxGet(null,"main_dyns.php","getRelationTree&gtabid="+tabid+"&treeid="+treeid,null,"","",treeid);
-}
+    const isClosing = !$(element).parent().hasClass('open');
+    const formattedTreeId = treeid.replace('PH_279_2790', '');
+    const basePath = `${formattedTreeId}_${tabid}`;
 
-
-function lmb_treeSubOpen(treeid,tabid,elid,rand,gtabid,rkey){
-
-    var elname = treeid+'_'+tabid+'_'+elid+'_'+rand;
-    var el = document.getElementById('lmbTreeTR_'+elname);
-    var img_src1 = document.getElementById('lmbTreeSubPlus_'+elname).src;
-
-    if(el.style.display == 'none'){
-        el.style.display = '';
-        document.getElementById('lmbTreeSubPlus_'+elname).src = img_src1.replace(/(plus)/,"minus");
-
-        if($('#lmbTreeSubBox_'+elname).hasClass('lmb-folder-closed')){
-            $('#lmbTreeSubBox_'+elname).removeClass('lmb-folder-closed');
-            $('#lmbTreeSubBox_'+elname).addClass('lmb-folder-open');
-        }
-    }else{
-        el.style.display = 'none';
-        document.getElementById('lmbTreeSubPlus_'+elname).src = img_src1.replace(/(minus)/,"plus");
-
-        if($('#lmbTreeSubBox_'+elname).hasClass('lmb-folder-open')){
-            $('#lmbTreeSubBox_'+elname).removeClass('lmb-folder-open');
-            $('#lmbTreeSubBox_'+elname).addClass('lmb-folder-closed');
-        }
+    const data = {
+        action: 'getTree',
+        recursive_path: basePath,
+        remove_path: isClosing ? 1 : 0,
+        gtabid: tabid,
+        treeid: treeid,
+        open_full_tree: true,
     }
 
-    ajaxGet(null,"main_dyns.php","getRelationTree&gtabid="+tabid+"&treeid="+treeid+"&verkn_tabid="+gtabid+"&verkn_fieldid="+rkey+"&verkn_ID="+elid,null,"","","lmbTreeDIV_"+elname);
-
+    postTableTreeAction(data).then((data) => {
+        if (data.success && data.html) {
+            $(`#${treeid}`).html(data.html);
+        } else {
+            lmbShowErrorMsg('TableTree could not be opened.');
+        }
+    }).catch(() => {
+        lmbShowErrorMsg('TableTree could not be opened.');
+    });
 }
 
+function lmb_treeSubOpen(treeid, tabid, elid, rand, gtabid, rkey) {
+    const elname = `${treeid}_${tabid}_${elid}_${rand}`;
+    const $el = $('#lmbTreeTR_' + elname);
+    const $img = $('#lmbTreeSubPlus_' + elname);
+    const $box = $('#lmbTreeSubBox_' + elname);
+
+    const isVisible = $el.is(':visible');
+
+    if (isVisible) {
+        $el.hide();
+        $img.attr('src', $img.attr('src').replace('minus', 'plus'));
+        $box.removeClass('lmb-folder-open').addClass('lmb-folder-closed');
+    } else {
+        $el.show();
+        $img.attr('src', $img.attr('src').replace('plus', 'minus'));
+        $box.removeClass('lmb-folder-closed').addClass('lmb-folder-open');
+    }
+
+    const recursivePath = getRecursivePath($el, treeid, gtabid, rkey, elid, rand);
+
+    const data = {
+        action: 'getTree',
+        recursive_path: recursivePath,
+        remove_path: isVisible ? 1 : 0,
+        gtabid: tabid,
+        treeid: treeid,
+        open_full_tree: true,
+        verkn_tabid: gtabid,
+        verkn_fieldid: rkey,
+        verkn_ID: elid,
+    }
+
+    postTableTreeAction(data).then((data) => {
+        if (data.success && data.html) {
+            $(`#lmbTreeDIV_${elname}`).html(data.html);
+        } else {
+            lmbShowErrorMsg('TableTree could not be opened.');
+        }
+    }).catch(() => {
+        lmbShowErrorMsg('TableTree could not be opened.');
+    });
+}
 
 function lmbTreeOpenTable(gtabid,verkn_tabid,verkn_fieldid,verkn_ID){
     parent.main.location.href='main.php?action=gtab_erg&verknpf=1&verkn_showonly=1&verkn_ID='+verkn_ID+'&gtabid='+gtabid+'&verkn_tabid='+verkn_tabid+'&verkn_fieldid='+verkn_fieldid;
 }
 
-function lmbTreeOpenData(gtabid,ID,verkn_tabid,verkn_fieldid,verkn_ID,form_id){
-    var url = '';
-    if(verkn_ID && verkn_tabid && verkn_fieldid){
-        url += '&verkn_ID='+verkn_ID+'&verkn_tabid='+verkn_tabid+'&verkn_fieldid='+verkn_fieldid+'+&verknpf=1&verkn_showonly=1';
-    }
-    if(form_id){
-        url += '&form_id='+form_id;
+function lmbTreeOpenData(gtabid, ID, verkn_tabid, verkn_fieldid, verkn_ID, form_id) {
+    let url = `main.php?action=gtab_change&gtabid=${gtabid}&ID=${ID}`;
+
+    if (verkn_ID && verkn_tabid && verkn_fieldid) {
+        url += `&verkn_ID=${verkn_ID}&verkn_tabid=${verkn_tabid}&verkn_fieldid=${verkn_fieldid}&verknpf=1&verkn_showonly=1`;
     }
 
-	parent.main.location.href='main.php?action=gtab_change&gtabid='+gtabid+'&ID='+ID+url;
+    if (form_id) {
+        url += `&form_id=${form_id}`;
+    }
+
+    parent.main.location.href = url;
 }
 
 
@@ -395,6 +465,15 @@ function format_tree(elemid){
     return true;
 }
 
+function getRecursivePath($el, treeid, gtabid, pathAppendix, elid, rand) {
+    const $parentTree =  $el.parent().closest('[id^="lmbTreeEl_"], [id^="lmbTreeTR_"]')
+    const parentPath = $parentTree.data('recursivepath');
+    const basePath = `${treeid}_${gtabid}_`;
+    const pathPrefix = parentPath ? `${parentPath}_` : basePath;
+    const newPath = `${pathPrefix}${pathAppendix}`;
+    $el.data('recursivepath', newPath);
+    return newPath;
+}
 
 
 // add clicked menu item to favorites
@@ -771,12 +850,14 @@ function lmbFilterTables(event, searchFieldEl, navID, enterPressed=false) {
             return true;
         }
 
+        //TODO: also matches "neu anlegen"
         // title (name & tabid)
         var title = header.attr('title');
         if (title && title.toUpperCase().indexOf(textUpper) >= 0) {
             return true;
         }
 
+        //TODO: matches text in all children, which can also be "neu anlegen"
         return textMatches(header);
     };
 
@@ -810,7 +891,7 @@ function lmbFilterTables(event, searchFieldEl, navID, enterPressed=false) {
                 replaceOnclick(header.children('span'));
                 return true;
             } else if (levelLHeaderMatches(header)) {
-                //header & body are the same element => only one children => single a
+                //header & body are the same element => only one child => single a
                 return true;
             }
 
@@ -823,6 +904,10 @@ function lmbFilterTables(event, searchFieldEl, navID, enterPressed=false) {
                 } else {
                     action.addClass('lmb-table-search-hide d-none');
                 }
+            }
+            else {
+                //in the admin panel, hides tables that do not match within a table group if at least one table in the group matches
+                $(this).addClass('lmb-table-search-hide d-none');
             }
             return false;
         }).length;
@@ -970,7 +1055,7 @@ function limbasSetActiveClass(el,parentid,element) {
 function mainMenu(menu){
 
     $('.mainmenu').hide();
-    $('#' + menu)
+    $('#mainmenu-' + menu)
         .show()
         .find('.sidenav-quicksearch input')
         .focus();

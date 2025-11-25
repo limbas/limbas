@@ -19,7 +19,8 @@
     <ul class="nav nav-tabs flex-column sticky-top h-100 border-0">
 
         <?php
-        $links = [135,76,100,192,260,291,292,290,293];
+        global $LINK;
+        $links = [135, 331, 76,100,192,260,291,292,290,293];
         foreach($links as $link):
             if($LINK[$link]): ?>
                 <li class="nav-item">

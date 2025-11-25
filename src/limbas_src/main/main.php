@@ -7,8 +7,10 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\extra\calendar\resource\ResourceCalendarController;
 use Limbas\gtab\html\FormController;
 use Limbas\gtab\lib\tables\TableController;
+use Limbas\extra\calendar\fullcalendar\FullCalendarController;
 use Limbas\layout\Layout;
 use Limbas\lib\auth\Session;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -71,7 +73,7 @@ if ($rgsr) {
 }
 
 //load layout / choose between new and legacy based on action and template //TODO: remove legacy switch in future version
-if(in_array($action, ['sess_refresh','gtab_exp','gtab_change_col','my_workflow','use_workflow','user_check_email','explorer_detail','explorer_convert','download','explorer_upload','explorer_dublicates','userstat','userstat_set','userstat_list','userstat_main','lwf_mytask','history','report','diag_erg','user_reportmanager','user_templatemanager','syntaxcheckjs','null','gtab_search'])) {
+if(in_array($action, ['sess_refresh','gtab_exp','gtab_change_col','my_workflow','use_workflow','user_check_email','explorer_convert','download','explorer_upload','explorer_dublicates','lwf_mytask','history','report','diag_erg','user_reportmanager','user_templatemanager','syntaxcheckjs','null','gtab_search'])) {
     $layout_bootstrap = false;
 }
 
@@ -140,12 +142,10 @@ if (! $bodyclass) {
 /* --- Aktion :-------------------------------------------------------- */
 if ($action == 'nav_info') {
     $require2 = 'extra/dashboard/html/intro.php';
-    $GLOBALS['ltmp']['history_action'] = 1;
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == 'intro') {
     $require2 = 'extra/dashboard/html/dashboard.php';
-    $GLOBALS['ltmp']["history_action"] = 1;
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action === 'maintenance') {
@@ -376,11 +376,7 @@ elseif (($action == "explorer") and $LINK[$action] == 1) {
     $require5 = "gtab/sql/gtab_change.dao";
     $require6 = "extra/explorer/explorer_detail.dao";
     $require7 = "extra/explorer/explorer_detail.php";
-    if ($show_part) {
-        $ONLOAD = "window.focus();show_part('$show_part');";
-    } else {
-        $ONLOAD = "window.focus();show_part('format');";
-    }
+    $ONLOAD = "window.focus();";
     $ONKEYDOWN = "OnKeydown=\"sendkeydown(event);\"";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 } elseif ($action == "explorer_convert" and $LINK[$action] == 1) {
@@ -418,10 +414,11 @@ elseif (($action == "explorer") and $LINK[$action] == 1) {
     $ONLOAD = "window.focus()";
 }/* ---------------------- Kalender -------------------------- */
 elseif ($action == "kalender" and $LINK[$action] == 1) {
-    $require1 = "gtab/gtab_erg.lib";
-    $require2 = "gtab/gtab_type.lib";
-    $require3 = "extra/calendar/fullcalendar/cal.dao";
-    $require4 = "extra/calendar/fullcalendar/cal.php";
+    if ($gtab["params2"][$gtabid]['resourcecalendar']) {
+        $controllerAction = [ResourceCalendarController::class, 'index', [$request]];
+    } else {
+        $controllerAction = [FullCalendarController::class, 'index', [$request]];
+    }
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
     $ONCLICK = "OnClick=\"body_click();\"";
 }/* ---------------------- Kanban -------------------------- */
@@ -434,26 +431,6 @@ elseif ($action == "kanban") {// and $LINK[$action] == 1) {
     $require6 = "extra/kanban/kanban.php";
     $ONCLICK = "OnClick=\"body_click();\"";
 }
-
-/* ---------------------- userstat -------------------------- */
-elseif ($action == "userstat") {
-    $require2 = "extra/calendar/dom/cal.php";
-    $require3 = "gtab/gtab_register.lib";
-} elseif ($action == "userstat_set") {
-    $require1 = "extra/calendar/dom/cal_set.php";
-    $ONLOAD = "window.focus();showFlatCalendar();";
-    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
-} elseif ($action == "userstat_list") {
-    $require2 = "extra/calendar/dom/cal_list.php";
-    $ONLOAD = "window.focus();";
-} elseif ($action == "userstat_main") {
-    $require2 = "gtab/gtab.lib";
-    $require4 = "extra/calendar/dom/cal.dao";
-    $require5 = "extra/calendar/dom/cal_main.php";
-    $ONLOAD = "window.focus();call_year('" . date("Y") . "','" . (date("m") - 1) . "','" . date("d") . "','tag',91); ";
-    $BODYHEADER = "<IMG SRC=\"" . $LINK["icon_url"][169] . "\">&nbsp;&nbsp;" . $lang[$LINK["desc"][$LINK_ID["kalender"]]];
-}
-
 /* ---------------------- workflow -------------------------- */
 elseif ($action == "lwf_mytask" and $LINK[$action] == 1) {
     $require1 = "extra/workflow/lwf.lib";
@@ -512,6 +489,10 @@ elseif ($action == 'user_mails'  and $LINK[$action] == 1) {
     $require1 = 'admin/setup/mail/mail_user.dao';
     $require2 = 'admin/setup/mail/mail.php';
 }
+elseif ($action == 'user_mail_signatures'  and $LINK[$action] == 1) {
+    $require1 = 'admin/setup/mail/signature/signature_user.dao';
+    $require2 = 'admin/setup/mail/signature/signature.php';
+}
 elseif ($action == 'mail_preview') {
     $require1 = 'extra/mail/html/init.php';
 }
@@ -564,7 +545,6 @@ if ($BODY != 1) {
 
 <?php if ($action == 'gtab_erg' or $action == 'gtab_change' or $action == 'gtab_deterg' or $action == 'gtab_neu' or $action == 'gtab_search' or $action == 'gtab_form' or $action == 'diag_erg' or $action == 'diag_erg' or $action == 'explorer_tree' or $action == 'explorer_main' or $action == 'kalender' or $action == 'kanban' or $action == 'mini_explorer' or $action=="report_preview") {?>
 	<script src="assets/js/extra/explorer/file-cache.js?v=<?=$umgvar["version"]?>"></script>
-	<script src="assets/js/extra/extensions/ext.js?v=<?=$umgvar["version"]?>"></script>
 	<script src="assets/vendor/jquery-ui/jquery-ui.min.js?v=<?=$umgvar["version"]?>"></script>
 	<script src="assets/vendor/jquery-ui/jquery.ui.datepicker-de.js?v=<?=$umgvar["version"]?>"></script>
 	<script src="assets/vendor/jquery-ui/jquery-ui-timepicker-addon.js?v=<?=$umgvar["version"]?>"></script>
@@ -584,10 +564,10 @@ if ($action == "explorer_main" or $action == "explorer_detail" or $action == "mi
 if ($action == "kalender") {?>
     <script src="assets/js/gtab/html/gtab.js?v=<?=$umgvar["version"]?>"></script>
     <script src="assets/js/gtab/html/gtab_change.js?v=<?=$umgvar["version"]?>"></script>
-    <link rel="stylesheet" type="text/css" href="assets/vendor/fullcalendar/main.min.css?v=<?=$umgvar["version"]?>" />
-    <link rel="stylesheet" type="text/css" href="assets/vendor/fullcalendar/main.min.css?v=<?=$umgvar["version"]?>" media='print' />
+    <?php if (!$gtab["params2"][$gtabid]['resourcecalendar']) { ?>
     <script type="text/javascript" src="assets/vendor/fullcalendar/main.min.js?v=<?=$umgvar["version"]?>"></script>
     <script type="text/javascript" src="assets/js/extra/calendar/fullcalendar/cal.js?v=<?=$umgvar["version"]?>"></script>
+    <?php } ?>
     <script src="assets/vendor/select2/select2.full.min.js"></script>
     <script src="assets/vendor/select2/i18n/<?= getLangShort() ?>.js"></script>
 <?php }
@@ -712,11 +692,6 @@ if(isset($controllerAction))
 
 /* -------------------------------------------------------------------- */
 
-// ---- History Eintrag ---------
-if (! $ltmp["history_action"] and $session["logging"] == 2 and ! $BODY) {
-    history_action($gtabid, $ID, $LINK_ID[$action], 2);
-}
-
 // --- J-Script ---
 if($BODY != 1){
     
@@ -732,11 +707,6 @@ if($BODY != 1){
     echo '</script>';
     
     require_once(Layout::getFilePath('main/foot.php'));
-}
-
-// --- History ---------
-if ($lhist and $session["logging"]) {
-    lhist($lhist);
 }
 
 /* --- DB-CLOSE ------------------------------------------------------ */

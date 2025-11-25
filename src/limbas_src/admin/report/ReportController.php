@@ -10,7 +10,7 @@
 namespace Limbas\admin\report;
 
 use Limbas\admin\templates\TemplateEditor;
-use Limbas\lib\LimbasController;
+use Limbas\Controllers\LimbasController;
 
 class ReportController extends LimbasController
 {

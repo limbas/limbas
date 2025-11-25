@@ -282,7 +282,7 @@ abstract class GetRequestHandler extends RequestHandler {
         $paramname = Request::API_PARAMETERS['fields'];
 
         if (!array_key_exists($paramname, $queryParams)) {
-            $onlyfield[$this->request->table_id] = array_keys($gfield[$this->request->table_id]['sort']); # all fields
+            $onlyfield[$this->request->table_id] = array_keys($gfield[$this->request->table_id]['id']); # all fields
             return;
         }
 
@@ -302,7 +302,7 @@ abstract class GetRequestHandler extends RequestHandler {
 
             # shortcut: * for every field
             if ($showFieldListStr === '*') {
-                $onlyfield[$showFieldTableID] = array_keys($gfield[$showFieldTableID]['sort']); # all fields
+                $onlyfield[$showFieldTableID] = array_keys($gfield[$showFieldTableID]['id']); # all fields
                 continue;
             }
 
@@ -315,7 +315,7 @@ abstract class GetRequestHandler extends RequestHandler {
 
         # set to include all fields
         if (!$onlyfield) {
-            $onlyfield[$this->request->table_id] = array_keys($gfield[$this->request->table_id]['sort']); # all fields
+            $onlyfield[$this->request->table_id] = array_keys($gfield[$this->request->table_id]['id']); # all fields
         }
     }
 

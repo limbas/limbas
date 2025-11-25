@@ -136,10 +136,10 @@ if($form_possize){
 		$style_ = explode(';',lmbdb_result($rs, "STYLE"));
 		if($typ_ != 'tabcell' AND $typ_ != 'tabuitem' AND $typ_ != 'php' AND $typ_ != 'js' AND $style_[26] != 'none'){
 			if(lmbdb_result($rs, 'WIDTH')+lmbdb_result($rs, 'POSX') > $max['X']){
-				$max['X'] = lmbdb_result($rs, 'WIDTH')+lmbdb_result($rs, 'POSX');
+				$max['X'] = lmbdb_result($rs, 'WIDTH')+lmbdb_result($rs, 'POSX')+10;
 			}
 			if(lmbdb_result($rs, 'HEIGHT')+lmbdb_result($rs, 'POSY') > $max['Y']){
-				$max['Y'] = lmbdb_result($rs, 'HEIGHT')+lmbdb_result($rs, 'POSY');
+				$max['Y'] = lmbdb_result($rs, 'HEIGHT')+lmbdb_result($rs, 'POSY')+100;
 			}
 		}
 
@@ -1022,9 +1022,8 @@ function getFormElements($form_id){
 		$form["class"][$id] = trim(lmbdb_result($rs, "CLASS"));
 		$form["subel"][$id] = lmbdb_result($rs, "SUBELEMENT");
 		$form["categorie"][$id] = lmbdb_result($rs, "CATEGORIE");
-		
-		$form["uform_vtyp"] = lmbdb_result($rs, "UFORM_VTYP");
-		$form["uform_typ"] = lmbdb_result($rs, "UFORM_TYP");
+		$form["uform_vtyp"][$id] = lmbdb_result($rs, "UFORM_VTYP");
+		$form["uform_typ"][$id] = lmbdb_result($rs, "UFORM_TYP");
 		
 		if($form["typ"][$id] == 'tabcell'){
 			$form["tab_cell"][$form["tab_el"][$id]][$form["tab_el_col"][$id]][$form["tab_el_row"][$id]] = $id;

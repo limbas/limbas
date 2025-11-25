@@ -2,14 +2,12 @@
 
 
 global $form_done;
-global $verkn_addfrom;
-
+global $verkn_relationpath;
 global $lang;
 global $session;
 global $gtab;
 global $userdat;
 global $ID;
-
 global $gfield;
 global $verknpool;
 global $gverkn;
@@ -63,7 +61,7 @@ if($GLOBALS["old_action"] == 'gtab_readonly'){$action = 'gtab_change';} # for sc
     <input type="hidden" name="gfrist_desc">
     <input type="hidden" name="scrollto">
     <input type="hidden" name="verknpf" VALUE="<?=$GLOBALS["verknpf"]?>">
-    <input type="hidden" name="verkn_addfrom" VALUE="<?=$GLOBALS["verkn_addfrom"]?>">
+    <input type="hidden" name="verkn_relationpath" VALUE="<?=$GLOBALS["verkn_relationpath"]?>">
     <input type="hidden" name="verkn_poolid" VALUE="<?=$GLOBALS["verkn_poolid"]?>">
     <input type="hidden" name="filter_force_delete">
     <input type="hidden" name="wind_force_close">

@@ -10,6 +10,7 @@
 namespace Limbas\lib\auth;
 
 use Limbas\lib\db\Database;
+use Limbas\lib\db\functions\Dbf;
 
 class AuthDefault extends Auth
 {
@@ -28,6 +29,12 @@ class AuthDefault extends Auth
         [$auth_user, $auth_pass, $auth_token] = $this->getCredentialsFromRequest();
 
         if (empty($auth_user) && empty($auth_token)) {
+            Session::start();
+            if ($this->isAuthenticated()) {
+                $this->authId = $_SESSION['authId'];
+                $this->authUser = $_SESSION['authUser'];
+                return true;
+            }
             self::deny();
         }
 
@@ -83,9 +90,9 @@ class AuthDefault extends Auth
             $auth_pass = $_SERVER['PHP_AUTH_PW'];
         }
 
-        $auth_user = dbf_7(substr($auth_user, 0, 30));
-        $auth_pass = dbf_7(substr($auth_pass, 0, 30));
-        $auth_token = dbf_7($auth_token);
+        $auth_user = Dbf::parseString(substr($auth_user, 0, 30));
+        $auth_pass = Dbf::parseString(substr($auth_pass, 0, 30));
+        $auth_token = Dbf::parseString($auth_token);
 
         return [$auth_user, $auth_pass, $auth_token];
     }

@@ -188,6 +188,10 @@
                                                           class="form-control form-control-sm">
                             </div>
 
+                            <?php
+                            if($atid AND $fieldid){
+                            ?>
+
                             <div class="col-2">
                                 <?= $lang[1837] ?><br>
                                 <select name="fssort"
@@ -201,6 +205,9 @@
                                     <option value="WERT DESC" <?= $result_fieldselect['sort'] == 'WERT DESC' ? 'selected' : '' ?>><?= $lang[1839] ?></option>
                                 </select>
                             </div>
+                            <?php
+                            }
+                            ?>
 
                             <?php if ($typ == 'LMB_ATTRIBUTE' AND ($result_fieldselect['field_type'] == 19 OR $result_fieldselect['data_type'] == 32)) { ?>
                             <div class="col-2">

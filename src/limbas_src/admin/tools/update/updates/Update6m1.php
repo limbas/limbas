@@ -11,6 +11,7 @@
 namespace Limbas\admin\tools\update\updates;
 
 use Limbas\admin\tools\update\Update;
+use Limbas\lib\db\functions\Dbf;
 
 class Update6m1 extends Update
 {
@@ -61,7 +62,7 @@ class Update6m1 extends Update
 
         $sqlQueries = [
             "UPDATE LMB_CONF_FIELDS SET FIELD_SIZE = 50 WHERE ID = (SELECT ID FROM LMB_CONF_FIELDS WHERE UPPER(FIELD_NAME) = 'SECNAME' AND TAB_ID = (SELECT TAB_ID FROM LMB_CONF_TABLES WHERE UPPER(TABELLE) = 'LDMS_FILES'))",
-            dbq_15(array($DBA['DBSCHEMA'],'LDMS_FILES','SECNAME','VARCHAR(50)'))
+            Dbf::modifyColumnTypeSql('LDMS_FILES','SECNAME','VARCHAR(50)')
         ];
         
         return $this->databaseUpdate($sqlQueries);
@@ -74,7 +75,7 @@ class Update6m1 extends Update
     protected function patch3(): bool
     {
         global $DBA;
-        return $this->databaseUpdate(dbq_15(array($DBA['DBSCHEMA'],'LMB_ACTION','EXTENSION','VARCHAR(250)')));
+        return $this->databaseUpdate(Dbf::modifyColumnTypeSql('LMB_ACTION','EXTENSION','VARCHAR(250)'));
     }
 
     /**
@@ -188,13 +189,6 @@ class Update6m1 extends Update
         return $this->databaseUpdate($sqlQueries);
     }
 
-    /**
-     * bugfixes
-     * @return bool
-     */
-    protected function patch13(): bool
-    {
-        return true;
-    }
+
 }
 

@@ -52,88 +52,6 @@ function explSearch($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null) {
 
 	if($ffilter["viewmode"][$LID] == 2){
 		# ---------------- Google Schema ------------------
-        $cols = 2 + lmb_count($gfile['show'][$LID]);
-		echo "<TR><TD COLSPAN=\"$cols\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" width=\"100%\">";
-		
-		echo "<TR class=\"gtabHeaderInputTR\"><TD class=\"gtabHeaderInputTD\" nowrap><input class=\"gtabHeaderInputINP\" type=\"text\" style=\"width:300px;\" value=\"".$ffilter["content"][$fid]."\" name=\"ffilter_content\" maxlength=\"50\">&nbsp;";
-
-		if ($umgvar['postgres_use_fulltextsearch']) {
-            echo '<select name="fts_search_mode" onchange="document.form1.ffilter_fts_search_mode.value = this.value;">';
-            echo '<option value="and" ' . ($ffilter['fts_search_mode'][$fid] == 'and' ? 'selected' : '') . '>', $lang[3062], '</option>';
-            echo '<option value="or" ' . ($ffilter['fts_search_mode'][$fid] == 'or' ? 'selected' : '') . '>', $lang[3063], '</option>';
-            if (!$umgvar['postgres_strip_tsvector']) {
-                echo '<option value="phrase" ' . ($ffilter['fts_search_mode'][$fid] == 'phrase' ? 'selected' : '') . '>', $lang[3064], '</option>';
-            }
-            echo '</select>';
-
-            if($ffilter["sub"]){$checked = "checked";}else{$checked = "";}
-            echo "&nbsp;<label title=\"".$lang[1240]."\" class=\"first-letter-red\">sub<input type=\"checkbox\" style=\"border:none;\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></label>";
-        } else {
-            if($umgvar["indize_cs"]){
-                if($ffilter["content_cs"][$fid]){$checked = "checked";}else{$checked = "";}
-                echo "&nbsp;<label title=\"".$lang[1902]."\" class=\"first-letter-red\">Cs<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_cs.value=this.checked;\"></label>";
-            }
-
-            if($ffilter["content_ts"][$fid]){$checked = "checked";}else{$checked = "";}
-            echo "&nbsp;<label title=\"".$lang[1904]."\" class=\"first-letter-red\">Ts<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_ts.value=this.checked;\"></label>";
-
-            if($ffilter["content_mf"][$fid]){$checked = "checked";}else{$checked = "";}
-            echo "&nbsp;<label title=\"".$lang[2448]."\" class=\"first-letter-red\">Snd<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_mf.value=this.checked;\"></label>";
-
-            if($umgvar["indize_level"] == 2 /* allow sentence search */){
-                if($ffilter["content_se"][$fid]){$checked = "checked";}else{$checked = "";}
-                echo "&nbsp;<label title=\"".$lang[1903]."\" class=\"first-letter-red\">Str<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_se.value=this.checked;\"></label>";
-            }
-
-            if($ffilter["sub"]){$checked = "checked";}else{$checked = "";}
-            echo "&nbsp;<label title=\"".$lang[1240]."\" class=\"first-letter-red\">sub<input type=\"checkbox\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></label>";
-
-            #if($ffilter["onlymeta"]){$checked = "checked";}else{$checked = "";}
-            #echo "&nbsp;<span title=\"".$lang[1908]."\"><span style=\"color:red\">m</span>eta<input type=\"checkbox\" ".$ffilter["onlymeta"][$fid]." OnClick=\"document.form1.ffilter_onlymeta.value=this.checked;\"></span>";
-
-            if($ffilter["content_andor"][$fid] == 2){$and = "";$or = "checked";}else{$and = "checked";$or = "";}
-            echo "&nbsp;&nbsp;&nbsp;<label>".$lang[854]."<input type=\"radio\" name=\"ffilter_content_andor\" value=\"1\" ".$and."></label><label>".$lang[855]."<input type=\"radio\" name=\"ffilter_content_andor\" value=\"2\" ".$or."></label>";
-        }
-
-		echo '</TD></TR><TR class="gtabHeaderInputTR"><TD nowrap style="height:5px;"></TD></TR>';
-		echo '</TABLE></TD></TR>';
-	}else{
-		# ---------------- Suchfelder ------------------
-        if($ID){
-			$onchange = "onchange=\"LmExt_Ex_RelationFields('$gtabid','$fieldid','','','$ID','','','','','','','','',this)\"";
-		}
-
-        // name always first element
-        $key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
-        echo "<TD class=\"gtabHeaderInputTD\"><input type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\" CLASS=\"gtabHeaderInputINP\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"></TD>";
-
-		foreach ($gfile['show'][$LID] as $key1 => $val1){
-			# Felder ohne Rechte
-            if(!$gfile["id"][$key1] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key1){continue;}
-
-			# Sonderfelder
-			if($gtab["argresult_id"]["LDMS_FILES"]."_34" == $key1 OR $gtab["argresult_id"]["LDMS_FILES"]."_36" == $key1){echo "<TD></TD>";continue;}
-			if($ID OR !$ffilter["rowsize"][$LID][$key1]){$ffilter["rowsize"][$LID][$key1] = "100%";}
-			if($gfile['typ'][$key1] == 3){
-				if($ffilter[$key1][$fid][0] == "TRUE"){$sel1 = "selected";}elseif($ffilter[$key1][$fid][0] == "FALSE"){$sel2 = "selected";}
-				echo "<TD class=\"gtabHeaderInputTD\"><select $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" CLASS=\"gtabHeaderInputINP\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"><option><option value=\"1\" $sel1>ja<option value=\"2\" $sel2>nein</select></TD>";
-				unset($sel1,$sel2);
-			}elseif($gfile['typ'][$key1]){
-				echo "<TD class=\"gtabHeaderInputTD\"><input type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter['gsr'][$key1][$fid][0]."\" CLASS=\"gtabHeaderInputINP\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"></TD>";
-			}else{echo "<TD></TD>";}
-		}
-		echo "</TR>";
-	}
-}
-
-function explSearchBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null) {
-	global $lang;
-	global $umgvar;
-	global $gfile;
-	global $gtab;
-
-	if($ffilter["viewmode"][$LID] == 2){
-		# ---------------- Google Schema ------------------
 		$cols = 2 + lmb_count($gfile['show'][$LID]);
 		echo "<TR><TD COLSPAN=\"$cols\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" width=\"100%\">";
 
@@ -187,7 +105,7 @@ function explSearchBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=
 
 		// name always first element
 		$key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
-		echo "<tr class=\"w-auto\"><th><input class=\"w-100 form-control form-control-sm\" type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\"></th>";
+		echo "<tr class=\"w-auto\"><th class=\"p-1\"><input class=\"w-100 form-control form-control-sm\" type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\"></th>";
 
 		foreach ($gfile['show'][$LID] as $key1 => $val1){
 			# Felder ohne Rechte
@@ -195,11 +113,11 @@ function explSearchBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=
 
 			# Sonderfelder
 			if($gtab["argresult_id"]["LDMS_FILES"]."_34" == $key1 OR $gtab["argresult_id"]["LDMS_FILES"]."_36" == $key1){
-				echo "<TD></TD>";
+				echo "<th></th>";
 				continue;
 			}
 			if($ID OR !$ffilter["rowsize"][$LID][$key1]){
-				$ffilter["rowsize"][$LID][$key1] = "100%";
+				#$ffilter["rowsize"][$LID][$key1] = "100%";
 			}
 			if($gfile['typ'][$key1] == 3){
 				if($ffilter[$key1][$fid][0] == "TRUE"){
@@ -209,11 +127,11 @@ function explSearchBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=
 					$ffilter[$key1][$fid][0] == "FALSE"){
 					$sel2 = "selected";
 				}
-				echo "<th><select $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" class=\"w-100 form-select form-select-sm\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"><option><option value=\"1\" $sel1>ja<option value=\"2\" $sel2>nein</select></th>";
+				echo "<th class=\"p-1\"><select $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" class=\"w-100 form-select form-select-sm\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"><option><option value=\"1\" $sel1>ja<option value=\"2\" $sel2>nein</select></th>";
 				unset($sel1,$sel2);
 			}elseif($gfile['typ'][$key1]){
-				echo "<th><input type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\" class=\"w-100 form-control form-control-sm\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"></th>";
-			}else{echo "<TD></TD>";}
+				echo "<th class=\"p-1\"><input type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\" class=\"w-100 form-control form-control-sm\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"></th>";
+			}else{echo "<th></th>";}
 		}
 		echo "</tr>";
 	}
@@ -221,43 +139,6 @@ function explSearchBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=
 
 # --- Überschriften ---
 function explHeader($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
-
-	global $lang;
-	global $umgvar;
-	global $gfile;
-	global $gtab;
-
-
-    // name always first element
-    $key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
-	echo "<TR class=\"gtabHeaderTitleTR\">";
-	echo "<TD class=\"gtabHeaderTitleTD\" ID=\"tabheader_$key1\" onMousedown=\"LmEx_startDrag(event,'$key1');\" HEIGHT=\"20\" STYLE=\"cursor:e-resize;width:".$ffilter["rowsize"][$LID][$key1]."px;$style\" $colspan>
-	<span class=\"gtabHeaderTitleTDItem\" OnClick=\"document.form1.ffilter_order.value='$key1';LmEx_send_form(1,1);\" style=\"cursor:pointer\">".$lang[209]."</span>
-	</TD>\n";
-
-	foreach ($gfile['show'][$LID] as $key1 => $val1){
-
-        # Felder ohne Rechte / Feld "Name"
-        if(!$gfile["id"][$key1] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key1){continue;}
-		
-		# if extrelation
-		if($ID){
-			$onclick = "onclick=\"LmExt_Ex_RelationFields('$gtabid','$fieldid','','','$ID','$key1','','','','','','','','')\"";
-			$onmove = "";
-		}else{
-			$onclick="onclick=\"document.form1.ffilter_order.value='".$key1."';LmEx_send_form(1,1);document.form1.ffilter_order.value=''\"";
-			$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
-		}
-
-		echo "<TD class=\"gtabHeaderTitleTD\" ID=\"tabheader_$key1\"  HEIGHT=\"20\" $onmove title=\"".htmlentities($lang[$gfile['desc'][$key1]],ENT_QUOTES,$umgvar["charset"])."\">";
-		if($ffilter["order"][$fid][0] == $key1){$style = "text-decoration:underline;";}else{$style = "";}
-		if($gfile['typ'][$key1] AND $gfile['data_type'][$key1] != 39){echo "<span class=\"gtabHeaderTitleTDItem\" $onclick STYLE=\"cursor:pointer;white-space:nowrap;$style\">";}
-		echo "&nbsp;".htmlentities($gfile['title'][$key1],ENT_QUOTES,$umgvar["charset"])."&nbsp;</span></TD>\n";
-	}
-	echo "</TR>";
-}
-
-function explHeaderBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
 
 	global $lang;
 	global $umgvar;
@@ -274,26 +155,39 @@ function explHeaderBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=
 		$style = "";
 		$order = "";
 	}
-	echo "<thead><tr>";
-	echo "<th ID=\"tabheader_$key1\" onmousedown=\"LmEx_startDrag(event,'$key1');\" $colspan>
-	<span class=\"gtabHeaderTitleTDItem\" onclick=\"document.form1.ffilter_order.value='$key1';LmEx_send_form(1,1);\" style=\"cursor:pointer;$style\">".$lang[209]."<i class=\"fa-solid fa-sort$order float-end\"></i></span>
+
+    # data relation
+    if($ID){
+        $onclick = "onclick=\"LmExt_Ex_RelationFields('$gtabid','$fieldid','','','$ID','$key1','','','','','','','','')\"";
+    # explorer
+    }else{
+        $onclick="onclick=\"document.form1.ffilter_order.value='".$key1."';LmEx_send_form(1,1);document.form1.ffilter_order.value=''\"";
+        #$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
+    }
+
+
+	echo "<thead><tr class=\"gtabBodyTR\">";
+	echo "<th id=\"tabheader_$key1\" class=\"gtabBodyTD p-1\" style=\"width:".$ffilter["rowsize"][$LID][$key1]."px;\">
+	<span class=\"gtabHeaderTitleTDItem\" $onclick style=\"cursor:pointer;$style\">".$lang[209]."</span><i class=\"fa-solid fa-sort$order float-end\"></i>
 	</th>";
+    # onmousedown=\"LmEx_startDrag(event,'$key1');\"
 
 	foreach ($gfile['show'][$LID] as $key1 => $val1){
 
 		# Felder ohne Rechte / Feld "Name"
 		if(!$gfile["id"][$key1] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key1){continue;}
 
-		# if extrelation
+		# data relation
 		if($ID){
 			$onclick = "onclick=\"LmExt_Ex_RelationFields('$gtabid','$fieldid','','','$ID','$key1','','','','','','','','')\"";
 			$onmove = "";
-		}else{
+		# explorer
+        }else{
 			$onclick="onclick=\"document.form1.ffilter_order.value='".$key1."';LmEx_send_form(1,1);document.form1.ffilter_order.value=''\"";
-			$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
+			#$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
 		}
 
-		echo "<th ID=\"tabheader_$key1\" $onmove title=\"".e($lang[$gfile['desc'][$key1]])."\">";
+		echo "<th id=\"tabheader_$key1\" class=\"gtabBodyTD p-1\" title=\"".e($lang[$gfile['desc'][$key1]])."\" style=\"width:".$ffilter["rowsize"][$LID][$key1]."px;\">";
 		if($ffilter["order"][$fid][0] == $key1){
 			$style = "text-decoration:underline;";
 			$order = $ffilter["order"][$fid][1] == 'DESC' ? '-down' : '-up';
@@ -301,8 +195,8 @@ function explHeaderBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=
 			$style = "";
 			$order = "";
 		}
-		if($gfile['typ'][$key1] && $gfile['data_type'][$key1] != 39){echo "<span class=\"gtabHeaderTitleTDItem\" $onclick STYLE=\"cursor:pointer;white-space:nowrap;$style\"><i class=\"fa-solid fa-sort$order float-end\"></i>";}
-		echo e($gfile['title'][$key1])."</span></th>\n";
+		if($gfile['typ'][$key1] && $gfile['data_type'][$key1] != 39){echo "<span class=\"gtabHeaderTitleTDItem\" $onclick STYLE=\"cursor:pointer;white-space:nowrap;$style\">";}
+		echo e($gfile['title'][$key1])."</span><i class=\"fa-solid fa-sort$order float-end\"></i></th>\n";
 	}
 	echo "</tr></thead>";
 }
@@ -388,7 +282,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 			if($gtab["tab_view_form"][$tabid_files]){
 			    echo "ondblclick=\"LmEx_open_details(event,$value,$LID,$tabid_files,'".$gtab["tab_view_form"][$tabid_files]."','".$gformlist[$tabid_files]["dimension"][$gtab["tab_view_form"][$tabid_files]]."')\"";
 			}else {
-			    echo "ondblclick=\"LmEx_file_detail('$key')\"";
+			    echo "ondblclick=\"openExplorerDetailModal('$key','".($ffile['storageID'][$key] ? '[' . $externalStorage['desc'][$ffile['storageID'][$key]] . '] ' : '').$ffile["url"][$key].$ffile['name'][$key]."')\"";
 			}
 			echo "OnMouseOver=\"LmEx_explorerLineOver(this,$key,1,'$LID','d')\" OnMouseOut=\"LmEx_explorerLineOver(this,$key,2,'$LID','d')\" 
 			oncontextmenu=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d');return LmEx_open_detail(event,this,$key,'$LID','".$GLOBALS['gcustmenu'][$tabid_files][1]['id'][0]."');return false;\">";
@@ -461,32 +355,32 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 					echo "&nbsp;</DIV></TD>";
 					# Sort
 				}elseif($gfile["name"][$gkey] == "SORT"){
-					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  ID=\"td_".$key1."_".$key2."\" VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">";
+					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  ID=\"td_".$key1."_".$key2."\" VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\">";
 					echo "&nbsp;<INPUT TYPE=\"TEXT\" STYLE=\"width:30px;border:none\" MAXSIZE=\"4\" NAME=\"files_order[".$ffile["id"][$key]."]\" VALUE=\"".$ffile[$gkey][$key]."\" OnChange=\"document.getElementById('fileupdate_".$LID."_".$key."').value='sort';\">&nbsp;";
 					echo "</DIV></TD>";
 					# Checked
 				}elseif($gfile["name"][$gkey] == "CHECKED"){
 					if($ffile[$gkey][$key]){$CHECKED = "CHECKED";}else{$CHECKED = "";}
 					if($filestruct["edit"][$LID]){$READONLY = "READONLY";}else{$READONLY = "";}
-					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"CENTER\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">&nbsp;<input type=\"checkbox\" NAME=\"files_status[".$ffile["id"][$key]."][checked]\" OnChange=\"document.getElementById('filestatus_d_".$LID."_".$key."').value=2;\" $CHECKED $READONLY>&nbsp;</DIV></TD>\n";
+					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"CENTER\"><DIV ID=\"td_".$key1."_".$key2."\" >&nbsp;<input type=\"checkbox\" NAME=\"files_status[".$ffile["id"][$key]."][checked]\" OnChange=\"document.getElementById('filestatus_d_".$LID."_".$key."').value=2;\" $CHECKED $READONLY>&nbsp;</DIV></TD>\n";
 					# PERM
 				}elseif($gfile["name"][$gkey] == "PERM"){
 					if($ffile[$gkey][$key]){$CHECKED = "CHECKED";}else{$CHECKED = "";}
 					if($filestruct["edit"][$LID]){$READONLY = "READONLY";}else{$READONLY = "";}
-					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"CENTER\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">&nbsp;<input type=\"checkbox\" NAME=\"files_status[".$ffile["id"][$key]."][perm]\" OnChange=\"document.getElementById('filestatus_d_".$LID."_".$key."').value=2;\" $CHECKED $READONLY>&nbsp;</DIV></TD>\n";
+					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"CENTER\"><DIV ID=\"td_".$key1."_".$key2."\" >&nbsp;<input type=\"checkbox\" NAME=\"files_status[".$ffile["id"][$key]."][perm]\" OnChange=\"document.getElementById('filestatus_d_".$LID."_".$key."').value=2;\" $CHECKED $READONLY>&nbsp;</DIV></TD>\n";
 					# LOCK
 				}elseif($gfile["name"][$gkey] == "LOCK"){
 					if($ffile[$gkey][$key]){$CHECKED = "CHECKED";}else{$CHECKED = "";}
 					if($filestruct["edit"][$LID]){$READONLY = "READONLY";}else{$READONLY = "";}
-					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"CENTER\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">&nbsp;<input type=\"checkbox\" NAME=\"files_status[".$ffile["id"][$key]."][lock]\" OnChange=\"document.getElementById('filestatus_d_".$LID."_".$key."').value=2;\" $CHECKED $READONLY>&nbsp;</DIV></TD>\n";
+					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"CENTER\"><DIV ID=\"td_".$key1."_".$key2."\" >&nbsp;<input type=\"checkbox\" NAME=\"files_status[".$ffile["id"][$key]."][lock]\" OnChange=\"document.getElementById('filestatus_d_".$LID."_".$key."').value=2;\" $CHECKED $READONLY>&nbsp;</DIV></TD>\n";
 					# all Boolean
 				}elseif($gfile['typ'][$key1] == 3){
-					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  ID=\"td_".$key1."_".$key2."\" VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">&nbsp;";
+					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  ID=\"td_".$key1."_".$key2."\" VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" >&nbsp;";
 					if($ffile[$gkey][$key]){echo "<i class=\"lmb-icon lmb-aktiv\"></i>";}
 					echo "&nbsp;</DIV></TD>";
 				}else{
 					if($key1 <= 10){$nowrap = "white-space:nowrap;";}else{$nowrap = "";}
-					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;width:".$ffilter["rowsize"][$LID][$key1]."px;$nowrap\">&nbsp;".htmlentities($ffile[$gkey][$key],ENT_QUOTES,$umgvar["charset"])."&nbsp;</DIV></TD>\n";
+					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"$nowrap\">&nbsp;".htmlentities($ffile[$gkey][$key],ENT_QUOTES,$umgvar["charset"])."&nbsp;</DIV></TD>\n";
 				}
 			}
 
@@ -556,39 +450,6 @@ function explFooter($LID,$fid,&$ffile,&$ffilter){
 }
 
 
-function explPicShow(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid,$picshow){
-	global $lang;
-	global $umgvar;
-
-	# show element
-	if(!$count = lmb_count($ffile["id"])){return false;}
-
-	if(!$picshow OR $picshow > $count OR $picshow < 1){$picshow = 1;}
-	for($i=1; $i<$picshow; $i++){
-		next($ffile["id"]);
-	}
-	if($cfid = current($ffile["id"])){
-		if($gformid AND $formid){
-			global $gform;
-			$width = ($gform[$gformid]["width"][$formid]-18);
-			$height = $gform[$gformid]["height"][$formid];
-		}else{
-			$size = explode("x",$umgvar["thumbsize3"]);
-			$width = $size[0];
-			$height = $size[1];
-		}
-		$pic = lmb_getThumbnail(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid],$ffile["mid"][$cfid]),$width,$height,1);
-	}
-
-	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',1,'".$formid."','','','')\"></i></TD>";
-	echo "<TD><i TITLE=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',".($i-1).",'".$formid."','','','')\"></i></TD>";
-	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"ExtFMPicShowCount_".$gtabid."_".$field_id."\" READONLY STYLE=\"width:60px;text-align:center\" VALUE=\"$i\"></TD>";
-	echo "<TD><i TITLE=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',".($i+1).",'".$formid."','','','')\"></i></TD>";
-	echo "<TD><i TITLE=\"$lang[858]\" class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','','$count','".$formid."','','','')\"></i></TD><TD width=90%></TD></TR></TABLE></TD></TR>";
-	echo "<TR><TD COLSPAN=\"6\" nowrap>&nbsp;<IMG SRC=\"".$pic."\" style=\"border:1px solid black;width:".$width."px;height:".$height."px;\" TITLE=\"".$ffile["name"][$cfid]."\"></TD></TR>";
-}
-
-
 
 function explPicSummery(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid){
 
@@ -616,54 +477,50 @@ function explPicSummery(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid){
 
 }
 
-
-
-function explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,&$ffile,&$ffilter){
-	global $gfile;
-	global $farbschema;
+function explPicShow(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid,$picshow,$edittype){
 	global $lang;
-	
-	if($typ){
-		echo "<table class=\"lmbfringeGtabBody\" id=\"GtabBodyTable\" cellpadding=\"0\" cellspacing=\"1\" border=\"0\">";
-		
-		explSearch($LID,$fid,$ffilter);
-		explHeader($LID,$fid,$ffilter);
-		explFolders($LID,$fid,$MID,$level,$ffilter);
-		# ---------------- Bildshow ------------------
-		#if($ffilter["viewmode"][$LID] == 4){
-		#	echo "<TR><TD COLSPAN=\"".count($gfile['show'][$LID])."\">";
-		#	explPicShow($ffile,0,0,0,0,0,0);
-		#	echo "</TD></TR></TABLE></TD></TR>";
-		if($ffilter["viewmode"][$LID] == 3){
-			echo "<TR><TD COLSPAN=\"".lmb_count($gfile['show'][$LID])."\">";
-			explPicSummery($ffile,0,0,0,0,0);
-			echo "</TD></TR>";
-		}else{
-			explFiles($LID,$fid,$level,$ffile,$ffilter);
-		}
-		echo "</table>";
-	
-		explFooter($LID,$fid,$ffile,$ffilter);
-	
-	}else{
-		if($level OR $level == '0'){
-			echo "<div STYLE=\"cursor:pointer;height:20px\" OnClick=\"document.form1.LID.value='$level';document.form1.submit();\" OnMouseOver=\"this.style.backgroundColor='{$farbschema['WEB8']}'\" OnMouseOut=\"this.style.backgroundColor='{$farbschema['WEB8']}'\"><B>..</B></div>";
-		}
-		echo "<div bgcolor=\"".$farbschema['WEB8']."\" style=\"height:20px\">&nbsp;<i class=\"lmb-icon lmb-reset\" STYLE=\"cursor:pointer;\" OnClick=\"document.form2.submit();\"></i>&nbsp;&nbsp;<span style=\"color:red;\">$lang[1472]</span></div>";
-	}
-	
+	global $farbschema;
+	global $umgvar;
 
+	if(!$ID){return;}
+
+	# show element
+	if(!$count = lmb_count($ffile["id"])){echo "no result for image!";return false;}
+
+	if(!$picshow OR $picshow > $count OR $picshow < 1){$picshow = 1;}
+	for($i=1; $i<$picshow; $i++){
+		next($ffile["id"]);
+	}
+	if($cfid = current($ffile["id"])){
+		if($gformid AND $formid){
+			global $gform;
+			$width = ($gform[$gformid]["width"][$formid]-18);
+			$height = $gform[$gformid]["height"][$formid];
+		}else{
+			$size = explode("x",$umgvar["thumbsize3"]);
+			$width = $size[0];
+			$height = $size[1];
+		}
+		$dest = lmb_getThumbnail(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid],$ffile["mid"][$cfid]),$width,$height,1);
+	}
+
+	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR BGCOLOR=\"".$farbschema['WEB3']."\"><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" ALT=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',1,'".$formid."','','','')\"></i></TD>";
+	echo "<TD><i TITLE=\"$lang[860]\" ALT=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',".($i-1).",'".$formid."','','','')\"></i></TD>";
+	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"ExtFMPicShowCount_".$gtabid."_".$field_id."\" READONLY STYLE=\"width:60px;text-align:center\" VALUE=\"$i\"></TD>";
+	echo "<TD><i TITLE=\"$lang[859]\" ALT=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',".($i+1).",'".$formid."','','','')\"></i></TD>";
+	echo "<TD><i TITLE=\"$lang[858]\" ALT=\"$lang[858]\" class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','','$count','".$formid."','','','')\"></i></TD><TD width=90%></TD></TR></TABLE></TD></TR>";
+	echo "<TR><TD COLSPAN=\"6\"><IMG SRC=\"".$dest."\" style=\"margin:5px;border:1px solid #CCCCCC;width:".$width."px;height:".$height."px;\" TITLE=\"".$ffile["name"][$cfid]."\"></TD></TR>";
 }
 
-function explMainContentBootstrap($ID,$LID,$MID,$fid,$typ,$level,$file_url,&$ffile,&$ffilter) {
+function explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,&$ffile,&$ffilter) {
 	global $gfile;
 	global $farbschema;
 	global $lang;
 
 	if($typ){
 		echo "<div class='table-responsive'><table class=\"table table-sm w-100 p-0 table-striped-columns table-hover border\" id=\"GtabBodyTable\"><thead>";
-		explSearchBootstrap($LID,$fid,$ffilter);
-		explHeaderBootstrap($LID,$fid,$ffilter);
+		explSearch($LID,$fid,$ffilter);
+		explHeader($LID,$fid,$ffilter);
 		echo "</thead><tbody>";
 		explFolders($LID,$fid,$MID,$level,$ffilter);
 		# ---------------- Bildshow ------------------

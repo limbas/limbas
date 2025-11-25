@@ -60,7 +60,7 @@ if ($gtab['params2'][$gtabid]['showactive']){
 
 
 <div class="p-3 d-flex flex-column">
-<nav class="navbar navbar-expand-sm navbar-light bg-nav mb-3 lmbGtabmenu lmbGtabmenu-list lmbGtabmenu-table-20">
+<nav class="navbar navbar-expand-sm center-navigation bg-nav mb-3 lmbGtabmenu lmbGtabmenu-list lmbGtabmenu-table-20">
 <div class="container-fluid">
     <a class="navbar-brand" href="#" onclick="kanban_reload()"><span nowrap="" class="lmbGtabTabmenuActive"><?= $gtab['desc'][$gtabid] ?></span></a>
 </div>
@@ -90,5 +90,5 @@ if ($gtab['params2'][$gtabid]['showactive']){
 <input type="hidden" name="use_record">
 <input type="hidden" name="snap_id">
 <input type="hidden" name="gfrist">
-<input type="hidden" name="verkn_addfrom" VALUE="<?=$verkn_addfrom;?>">
+<input type="hidden" name="verkn_relationpath" VALUE="<?=$verkn_relationpath;?>">
 </form>

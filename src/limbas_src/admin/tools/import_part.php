@@ -29,7 +29,7 @@ if(!$import_typ){$import_typ = 'atm';}
                         <div class="form-check">
                             <input class="form-check-input" type="radio" value="atm" id="import-typ" name="import_typ" <?=($import_typ=='atm')?'checked':''?>>
                             <label class="form-check-label" for="import-typ">
-                                <IMG SRC="assets/images/limbasicon.png" ALT="<?=$lang[995]?>" Border="0"> <?=$lang[998]?>
+                                <img src="assets/images/logo.svg" alt="<?=$lang[995]?>" style="height: 1em"> <?=$lang[998]?>
                             </label>
                         </div>
                     </div>

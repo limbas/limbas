@@ -7,10 +7,20 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\admin\setup\tinymce\TinyMceConfig;
 use Limbas\extra\form\TinyMce;
 use Limbas\extra\mail\LmbMail;
 use Limbas\extra\mail\MailAccount;
+use Limbas\extra\printer\PrinterOptions;
+use Limbas\gtab\lib\tables\TableFilter;
 use Limbas\lib\auth\Session;
+use Limbas\lib\db\functions\Dbf;
+use Limbas\lib\globals\Lang;
+use Limbas\Limbas;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\Generator\UrlGenerator;
+use Limbas\lib\general\Log\Log;
+use Limbas\lib\general\Log\LogLevel;
 
 
 # --- Zeitmessung ---------------------------------------------------
@@ -23,9 +33,14 @@ function gettime(){
 # remove directories recursiv
 function rmdirr($dir,$recursiv=1,$onlyfile=0,$self=0) {
 	if(!$recursiv AND $self){return;}
-	if ($handle = opendir($dir)) {
+    static $limbasrootpath;
+    if(!$limbasrootpath) {
+        $limbasrootpath = realpath(COREPATH . '..');
+    }
+
+	if (lmb_stristr(rtrim($dir,'/'),$limbasrootpath) !== false && $handle = opendir($dir)) {
 		while ($file = readdir($handle)) {
-			if ($file != "." && $file != ".." AND lmb_stristr($dir."/".$file,$GLOBALS["umgvar"]["pfad"])) {
+			if ($file != "." && $file != "..") {
 				$filepath = $dir."/".$file;
 				is_dir($filepath)? rmdirr($filepath,$recursiv,$onlyfile,1) : unlink($filepath);
 			}
@@ -163,13 +178,13 @@ function average_color($color_array)
 
 function parse_db_string($value,$length=null){
 	if($length){
-		return dbf_7(lmb_substr($value,0,$length));
+		return Dbf::parseString(lmb_substr($value,0,$length) ?? '');
 	}
-	return dbf_7($value);
+	return Dbf::parseString($value ?? '');
 }
 
 function parse_db_blob($value){
-	return dbf_6($value);
+	return Dbf::parseBlob($value ?? '');
 }
 
 function parse_db_int($value, $length=100) {
@@ -388,10 +403,10 @@ function next_db_id($tab,$field="ID",$sequence=null,$filter=null){
     }
 
 	if(LMB_DBFUNC_SEQUENCE AND $sequence){
-		return dbf_8("LMB_".$tab."_".$field);
+		return Dbf::getSequence("LMB_".$tab."_".$field);
 	}else{
 		#if(LMB_DBFUNC_MAXHANDLE){$isnn = " WHERE $field IS NOT NULL";}
-		$sqlquery = "SELECT MAX($field) AS NEXTID FROM ".dbf_4($tab);
+		$sqlquery = "SELECT MAX($field) AS NEXTID FROM ".Dbf::handleCaseSensitive($tab);
 		if($filter){$sqlquery .= " WHERE $filter";}
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 		$NEXTID = (lmbdb_result($rs,"NEXTID")+1);
@@ -486,9 +501,10 @@ function lmb_num_rows($rs,&$query=null,$counttype=null) {
 	global $db;
 	global $umgvar;
 	$ct = 0;
-	
+
 	$count = -1;
-	if(defined(LMB_DBFUNC_NUMROWS) AND !defined(LMB_DBFUNC_OFFSET)){
+    // not support with PDO / use Limit & Offset instead of Cursor
+	if(LMB_DBFUNC_NUMROWS && !defined('LMB_DBFUNC_OFFSET')){
 		$count = lmbdb_num_rows($rs);
 	}
 
@@ -563,15 +579,15 @@ function lmb_calculateChecksum($gtabid,$ID=null){
     }
 
     // default ID
-    $qu[] = dbf_12($keyfield,1);
+    $qu[] = Dbf::calculateChecksum($keyfield,1);
 
     foreach($gfield[$gtabid]['checksum'] as $fieldid => $value){
-        $qu[] = dbf_12($gfield[$gtabid]['field_name'][$fieldid],$gfield[$gtabid]['parse_type'][$fieldid]);
+        $qu[] = Dbf::calculateChecksum($gfield[$gtabid]['field_name'][$fieldid],$gfield[$gtabid]['parse_type'][$fieldid]);
     }
 
     $sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET LMB_CHECKSUM = MD5(".implode(' || ',$qu).")  ".($ID ? "WHERE ID = $ID" : '');
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-    #error_log($sqlquery);
+
     if(!$rs){
         return false;
     }
@@ -738,7 +754,7 @@ function error_showalert(&$alert)
         }
 
         if($GLOBALS['session']['debug']){
-            $alert[] = str_replace("\n","\\n",lmb_log::getLogMessage(true));
+            $alert[] = str_replace("\n","\\n",Log::getMessagesAsString(true));
         }
 
         $alert = array_unique($alert);
@@ -1229,55 +1245,35 @@ function lmbUserGroupTree($groupid,$direction=1,&$grplist=[]) {
 }
 
 
-
-
-
-
-
-
-# --- History List ---------
-function lhist($lhist){
-	foreach($lhist["linkid"] as $key => $value){
-		# --- History-Eintrag (history_action) ---------
-		$actionid = history_action($lhist["gtabid"][$key][0],$lhist["datid"][$key][0],$key,$lhist["level"][$key][0]);
-		if($actionid){
-			foreach($lhist['val'][$key] as $key1 => $value1){
-				$com = history_update($lhist["gtabid"][$key][0],$lhist["fieldid"][$key][0],$lhist["datid"][$key][0],$actionid,$value1,0);
-			}
-		}
-	}
-}
-
 /* --- History-Eintrag (LMB_HISTORY_ACTION) ---------------------------------------- */
-function history_action($tabid,$datid,$link_id,$level){
+function history_action($tabid,$datid,$link_id,$loglevel=1){
 	global $db;
 	global $session;
 	global $lwf_id;
 	global $lwf_inid;
 	global $lwf_prid;
-	
-	if($link_id){
-	
-		# workflow hack for new instances
-		if($lwf_inid == -1){$lwf_inid = $datid;}
-		
-		if(!$tabid){$tabid = 0;}
-		if(!$datid){$datid = 0;}
-		$level = parse_db_int($level,1);
-		$NEXTID = next_db_id('LMB_HISTORY_ACTION','ID',1);
-		$sqlquery1 = "INSERT INTO LMB_HISTORY_ACTION (ID,USERID,TAB,DATAID,ACTION,LOGLEVEL,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,16).",".parse_db_int($link_id,5).",".parse_db_int($level,5).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
-		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-		$GLOBALS["ltmp"]["history_action"] = 1;
 
-		return $NEXTID;
-	}else{
-		return false;
-	}
+    if(!$session["logging"] OR !$link_id){
+        return;
+    }
+
+    # workflow hack for new instances
+    if($lwf_inid == -1){$lwf_inid = $datid;}
+
+    if(!$tabid){$tabid = 0;}
+    if(!$datid){$datid = 0;}
+    $loglevel = parse_db_int($loglevel,1);
+    $NEXTID = next_db_id('LMB_HISTORY_ACTION','ID',1);
+    $sqlquery1 = "INSERT INTO LMB_HISTORY_ACTION (ID,USERID,TAB,DATAID,ACTION,LOGLEVEL,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,16).",".parse_db_int($link_id,5).",".parse_db_int($loglevel,5).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
+    $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
+    if(!$rs1) {$commit = 1;}
+
+    return $NEXTID;
+
 }
 
 /* --- History-Eintrag (LMB_HISTORY_UPDATE) ---------------------------------------- */
-function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
+function history_update($tabid,$fieldid,$datid,$link_id,$value,$oldvalue=null,){
 	global $db;
 	global $session;
 	global $umgvar;
@@ -1288,6 +1284,15 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 	global $lwf_id;
 	global $lwf_inid;
 	global $lwf_prid;
+
+
+    if(!$session["logging"]){
+        return;
+    }
+
+    if($link_id) {
+        $hist_action = history_action($tabid, $datid, $link_id);
+    }
 
 	$data_typ = $gfield[$tabid]["data_type"][$fieldid];
 	$field_typ = $gfield[$tabid]["field_type"][$fieldid];
@@ -1358,15 +1363,15 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 		if($value){$value = $lang[1506];}else{$value = $lang[1507];}
 	}
 	// user/Group
-	elseif($data_typ == 38){
-		$guid = lmb_substr($value,1,6);
-		if(lmb_substr($value,0,1) == "u"){
-			$guname = "U:".$userdat["bezeichnung"][$guid];
-			$value = $userdat['bezeichnung'][$guid];
-		}elseif(lmb_substr($value,0,1) == "g"){
-			$guname = "G:".$groupdat["beschreibung"][$guid];
-			$value = $groupdat['name'][$guid];
-		}
+	elseif($data_typ == 38) {
+        $guid = lmb_substr($value, 1, 6);
+        if (lmb_substr($value, 0, 1) == "u") {
+            $guname = "U:" . $userdat["bezeichnung"][$guid];
+            $value = $userdat['bezeichnung'][$guid];
+        } elseif (lmb_substr($value, 0, 1) == "g") {
+            $guname = "G:" . $groupdat["beschreibung"][$guid];
+            $value = $groupdat['name'][$guid];
+        }
     }
     // Validity
     elseif(is_array($value) && $data_typ == 53) {
@@ -1378,13 +1383,13 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
     }
     // multiselect
 	elseif(is_array($value) && ($data_typ == 31 OR $data_typ == 32 OR $data_typ == 18 OR $data_typ == 46)) {
-		$value_ = array();
-		foreach($value as $key => $val){
-			if($val)
-			$value_[] = $val;
-		}
+        $value_ = array();
+        foreach ($value as $key => $val) {
+            if ($val)
+                $value_[] = $val;
+        }
         if (is_array($value_)) {
-		$value = implode("\n",$value_);
+            $value = implode("\n", $value_);
         } else {
             $value = '';
         }
@@ -1396,10 +1401,10 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 			$value_[] = "> ".$val;
 		}
         if(is_array($value_)) {
-		$value = implode("\n",$value_);
+            $value = implode("\n", $value_);
         }else{
             $value = '';
-	}
+        }
 	}
 
 
@@ -1413,7 +1418,7 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 	# ---------- Max länge auf 250 Zeichen reduzieren -----------
 	if(lmb_strlen($value) > 990){$value = $value."...";}
 	$value = parse_db_string($value,990);
-	$sqlquery1 = "INSERT INTO LMB_HISTORY_UPDATE (ID,USERID,TAB,DATAID,FIELD,FIELDVALUE,ACTION_ID,LWF_ID,LWF_PRID,LWF_INID,LMB_MID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,18).",".parse_db_int($fieldid,5).",'".$value."',".parse_db_int($actionid,16).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).",".parse_db_int($GLOBALS['lmmultitenants']['mid'][$session['mid']],16).")";
+	$sqlquery1 = "INSERT INTO LMB_HISTORY_UPDATE (ID,USERID,TAB,DATAID,FIELD,FIELDVALUE,ACTION_ID,LWF_ID,LWF_PRID,LWF_INID,LMB_MID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,18).",".parse_db_int($fieldid,5).",'".$value."',".parse_db_int($hist_action,16).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).",".parse_db_int($GLOBALS['lmmultitenants']['mid'][$session['mid']],16).")";
 	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
 	if(!$rs1) {return false;}
 
@@ -2159,23 +2164,23 @@ function string_dispSubstr($string,$size)
  * Return the number of record for a specified snapshot
  *
  *
- * @param unknown_type $snapid the snapshot id that we want to have the count
+ * @param int $snapid the snapshot id that we want to have the count
  */
 function getCountForSnapshot($snapid){
 	global $gsr;
 	$null = null;
 
-	require_once(COREPATH . 'extra/snapshot/snapshot.lib');
 	require_once(COREPATH . 'gtab/gtab.lib');
+    
+    $tableFilter = TableFilter::get(intval($snapid));
+    if(!$tableFilter) {
+        return 0;
+    }
+    
+	$tabid = $tableFilter->tabId;
+	$mygsr[$tabid] = $tableFilter->content->gsr;
 
-	$snapdetail = SNAP_getParam($snapid);
-	$tabid = $snapdetail["tabid"];
-
-	$filter = unserialize($snapdetail["filter"]);
-
-	$mygsr[$tabid] = $filter["gsr"];
-
-	$gresult = get_gresult($gtabid,1,$null,$mygsr,$null);
+	$gresult = get_gresult($tabid,1,$null,$mygsr,$null);
 
 	return $gresult[$tabid]["res_count"];
 }
@@ -2183,23 +2188,23 @@ function getCountForSnapshot($snapid){
 /**
  * get an array of ids in a snapshot
  *
- * @param unknown_type $snapid
+ * @param int $snapid
  */
 function getAllIdFromSnapshot($snapid){
 	global $gsr;
 	$null = null;
 
-	require_once(COREPATH . 'extra/snapshot/snapshot.lib');
 	require_once(COREPATH . 'gtab/gtab.lib');
 
-	$snapdetail = SNAP_getParam($snapid);
-	$tabid = $snapdetail["tabid"];
+    $tableFilter = TableFilter::get(intval($snapid));
+    if(!$tableFilter) {
+        return [];
+    }
 
-	$filter = unserialize($snapdetail["filter"]);
+    $tabid = $tableFilter->tabId;
+    $mygsr[$tabid] = $tableFilter->content->gsr;
 
-	$mygsr[$tabid] = $filter["gsr"];
-
-	$gresult = get_gresult($gtabid,1,$null,$mygsr,$null);
+	$gresult = get_gresult($tabid,1,$null,$mygsr,$null);
 
 
 	return $gresult[$tabid]["id"];
@@ -2359,7 +2364,7 @@ function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
  * @param TinyMce|null $tinyMce
  * @return string
  */
-function lmbInitTinyMce(string $elementId, ?int $height = null, ?int $tabId = null, ?string $changeEvent = null, ?TinyMce $tinyMce = null): string
+function lmbInitTinyMce(string $elementId, ?int $height = null, ?int $tabId = null, ?string $changeEvent = null, ?TinyMce $tinyMce = null, int $tinyMceConfigId = null): string
 {
     if(empty($tinyMce)) {
         $tinyMce = new TinyMce($elementId, $tabId);    
@@ -2371,6 +2376,14 @@ function lmbInitTinyMce(string $elementId, ?int $height = null, ?int $tabId = nu
 
     if(!empty($changeEvent)) {
         $tinyMce->setOnChangeEvent($changeEvent);
+    }
+
+    
+    if(!empty($tinyMceConfigId)) {
+        $tinyMceConfig = TinyMceConfig::get($tinyMceConfigId);
+        if(!empty($tinyMceConfig)) {
+            $tinyMce->applyTinyMceConfig($tinyMceConfig);
+        }
     }
 
     return $tinyMce->getConfigurationScript();
@@ -2388,7 +2401,7 @@ function lmbInitTinyMce(string $elementId, ?int $height = null, ?int $tabId = nu
  * @return string JS initializing the wysiwyg editor
  *
  */
-function lmb_ini_wysiwyg(string $elementId, $params=null, ?string $changeEvent = null, $advanced=null, int $height = null, int $tabId = null): string
+function lmb_ini_wysiwyg(string $elementId, $params=null, ?string $changeEvent = null, $advanced=null, int $height = null, int $tabId = null, int $tinyMceConfigId = null): string
 {
     trigger_error('Method ' . __METHOD__ . ' is deprecated. Use lmbInitTinyMce or TinyMce class instead.', E_USER_DEPRECATED);
     
@@ -2402,19 +2415,22 @@ function lmb_ini_wysiwyg(string $elementId, $params=null, ?string $changeEvent =
         $tinyMce->setOnChangeEvent($changeEvent);
     }
 
-    return lmbInitTinyMce($elementId, $height, $tabId, $changeEvent);
+    return lmbInitTinyMce($elementId, $height, $tabId, $changeEvent, tinyMceConfigId: $tinyMceConfigId);
 }
 
 
 /**
  * log entry
  *
- * @param unknown_type $logfile
- * @param unknown_type $msg
+ * @param mixed $logfile
+ * @param mixed $msg
  * @param int $time
  */
 function lmb_loghandle($logfile,$msg,$time=null){
 	global $umgvar;
+    
+    
+    //TODO
     
     //error_log(print_r($umgvar,1));
 	
@@ -2438,7 +2454,6 @@ function lmb_loghandle($logfile,$msg,$time=null){
 	
     
 }
-
 
 function lmb_getRowColor(){
 	static $bzm;
@@ -2554,7 +2569,7 @@ function lmbGenerateAuthToken($lifespan=1) {
     $token = bin2hex(openssl_random_pseudo_bytes(32));
     $userID = parse_db_int($session['user_id']);
     $lifespan = parse_db_int($lifespan);
-    $expireStamp = dbf_1(time() + 60 * 5 /* expires in 5 minutes */);
+    $expireStamp = Dbf::convertToDbTimestamp(time() + 60 * 5 /* expires in 5 minutes */);
 
     # delete expired auth tokens
     $sqlquery = 'DELETE FROM LMB_AUTH_TOKEN WHERE EXPIRESTAMP < ' . LMB_DBDEF_TIMESTAMP;
@@ -2620,21 +2635,23 @@ function lmbGetAuthTokenUser($auth_token) {
  * @param $file string full path to a file
  * @return bool success
  */
-function lmbPrint($printerID, $file = null, $fileID = false, bool $forcePrint = false, array $printerOptions = []): bool
+function lmbPrint($printerID, $file = null, $fileID = false, bool $forcePrint = false, PrinterOptions $printerOptions = null): bool
 {
     global $gprinter;
     global $umgvar;
 
+    $printerID = $printerOptions?->printerId ?? $printerID;
+
     require_once(COREPATH.'extra/explorer/filestructure.lib');
 
     if(!$GLOBALS['LINK'][304]){
-        lmb_log::error('permission deny for printing documents');
+        Log::limbasError('permission deny for printing documents');
         return false;
     }
 
     # check if printer in session
     if (!array_key_exists($printerID, $gprinter)) {
-        lmb_log::error("Printer $printerID not valid!");
+        Log::limbasError("Printer $printerID not valid!");
         return false;
     }
 
@@ -2642,14 +2659,14 @@ function lmbPrint($printerID, $file = null, $fileID = false, bool $forcePrint = 
     if($forcePrint AND is_numeric($fileID)) {
         $file = file_download($fileID)['path'];
         if (!$file) {
-            lmb_log::error("File has no permission!");
+            Log::limbasError("File has no permission!");
             return false;
         }
     }
 
     # check if file exists
     if (!file_exists($file)) {
-        lmb_log::error("File does not exist!");
+        Log::limbasError("File does not exist!");
         return false;
     }
 
@@ -2665,13 +2682,9 @@ function lmbPrint($printerID, $file = null, $fileID = false, bool $forcePrint = 
     }
 
     // Standard Printing Options
-    if($printerOptions){
-        foreach($printerOptions as $option => $value){
-            // num-copies
-            if($option == 'pageCount' && is_numeric($value) && $value > 1){
-                $config .= " -n $value -o collate=true";
-            }
-        }
+    $pageCount = $printerOptions?->pageCount;
+    if ($pageCount && is_numeric($pageCount) && $pageCount > 1) {
+        $config .= " -n $pageCount -o collate=true";
     }
 
     # print
@@ -2686,13 +2699,16 @@ function lmbPrint($printerID, $file = null, $fileID = false, bool $forcePrint = 
 
     # handle errors
     if ($exitCode != 0) {
-        lmb_log::error("Could not print on printer {$printerID}: Exit code {$exitCode}, Output: " . print_r($outputLines, true));
+        Log::limbasError("Could not print on printer {$printerID}: Exit code {$exitCode}, Output: " . print_r($outputLines, true));
         return false;
     }
 
     return true;
 }
 
+/**
+ * @deprecated
+ */
 class lmb_log
 {
     /**
@@ -2720,56 +2736,8 @@ class lmb_log
      * @param number    $level          level - 3 = no error_log
      */
     public static function error($errorMessage, $userMessage=null, $tabid=null, $fieldid=null, $datid=null, int $level=E_ERROR) {
-        global $session;
-        global $lang;
-        global $gtab;
-        global $gfield;
-        global $umgvar;
-
-        // error log
-        if ($session['debug']) {
-            try {
-                throw new Exception();
-            } catch (Exception $e) {
-                $trace = str_replace(str_replace("/dependent", "", rtrim($umgvar['path'], "/")), "", $e->getTraceAsString());
-                error_log(/*local_date(0) .*/"$errorMessage (tabid: $tabid, fieldid: $fieldid, datid: $datid), at:\n$trace");
-            }
-        }
-
-        $error = false;
-        if($level === E_ERROR) {
-            // collect log messages as array
-            self::$log[] = array(
-                'message' => $errorMessage,
-                'tabid' => $tabid,
-                'fieldid' => $fieldid,
-                'datid' => $datid
-            );
-            $error = 1;
-        }
-
-        // user alert
-        if ($userMessage AND !defined('IS_SOAP') AND !defined('IS_CRON') AND !defined('LMB_SYNC_PROC')) {
-            // add table name
-            if ($tabid) {
-                if(is_numeric($tabid)) {
-                    $tabname = $gtab['table'][$tabid];
-                    $userMessage .= "\n - " . $lang[164] . ": " . $tabname;
-                }
-                if(is_numeric($fieldid)) {
-                    $fieldname = $gfield[$tabid]['spelling'][$fieldid];
-                    $userMessage .= "\n - " . $lang[168] . ": " . $fieldname;
-                }
-              
-                // add datid
-                if ($datid) {
-                    $userMessage .= "\n - " . $lang[722] . ": " . $datid;
-                }
-                $userMessage .= "\n";
-            }
-              
-            lmb_alert($userMessage,$error);
-        }
+        Log::deprecated('lmb_log is deprecated, use Limbas\lib\general\Log\Logger instead');
+        Log::limbasError($errorMessage, $userMessage, $tabid, $fieldid, $datid, LogLevel::tryFrom($level) ?? null);
     }
 
     /**
@@ -2778,11 +2746,8 @@ class lmb_log
      * @return array            [{'message', 'tabid', 'fieldid', 'datid'}]
      */
     public static function getLog($clearLog=false) {
-        $l = self::$log;
-        if ($clearLog) {
-            self::$log = array();
-        }
-        return $l;
+        Log::deprecated('lmb_log is deprecated, use Limbas\lib\general\Log\Logger instead');
+        return Log::getLogger()->getLog($clearLog);
     }
 
     /**
@@ -2792,14 +2757,8 @@ class lmb_log
      * @return string
      */
     public static function getLogMessage($clearLog=false,$delimiter="\n") {
-        $message = '';
-        foreach (self::$log as $entry){
-            $message .= $entry['message'].$delimiter;
-        }
-        if ($clearLog) {
-            self::$log = array();
-        }
-        return $message;
+        Log::deprecated('lmb_log is deprecated, use Limbas\lib\general\Log\Logger instead');
+        return Log::getMessagesAsString($clearLog,$delimiter);
     }
 
 
@@ -2808,7 +2767,8 @@ class lmb_log
      * Clears the $log array
      */
     public static function clearLog() {
-        self::$log = array();
+        Log::deprecated('lmb_log is deprecated, use Limbas\lib\general\Log\Logger instead');
+        Log::getLogger()->clear();
     }
 
 }
@@ -3006,5 +2966,51 @@ if (!function_exists('getenv_docker')) {
         else {
             return $default;
         }
+    }
+}
+
+if (!function_exists('route')) {
+
+    /**
+     * get a route by its name
+     * @param string $name
+     * @param array $parameters
+     * @param bool $schemeRelative
+     * @return string
+     * @throws Exception
+     */
+    function route(string $name, array $parameters = [], bool $schemeRelative = false): string
+    {
+        $route = Limbas::$routes->get($name);
+        if(empty($route)) {
+            throw new Exception("Route $name does not exist.");
+        }
+        
+        $routeParameters = [];
+        if(!empty($parameters)) {
+            $compiledRoute = $route->compile();
+            $variables = $compiledRoute->getVariables();
+            foreach($parameters as $key => $value) {
+                if(array_key_exists($key, $variables)) {
+                    $routeParameters[$variables[$key]] = $value;
+                }
+            }
+        }
+        
+        $urlGenerator = new UrlGenerator(Limbas::$routes, Limbas::$context);
+        return $urlGenerator->generate($name, $routeParameters, $schemeRelative ? UrlGeneratorInterface::RELATIVE_PATH : UrlGeneratorInterface::ABSOLUTE_URL);
+    }
+
+}
+
+if (! function_exists('lang')) {
+    /**
+     * Get a language entry by id
+     * @param int $id
+     * @return string
+     */
+    function lang(int $id): string
+    {
+        return Lang::get($id);
     }
 }

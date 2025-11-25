@@ -16,10 +16,6 @@ function newwin1(USERID) {
 	tracking = open("main_admin.php?action=setup_user_tracking&typ=1&userid=" + USERID ,"Tracking","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=600");
 }
 
-function newwin2(USERID) {
-	userstat = open("main.php?action=kalender&userstat=" + USERID ,"userstatistic","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=750,height=550");
-}
-
 function activate_user(USERID) {
 	document.location.href = "main_admin.php?action=setup_user_change_admin&reactivate=1&ID="+USERID;
 }
@@ -74,7 +70,6 @@ function select_all_user(el){
                 <th><?=$lang[657]?></th>
                 <th><?=$lang[911]?></th>
                 <th><?=$lang[1250]?></th>
-                <th><?=$lang[1791]?></th>
                 <th></th>
             </tr>
             </thead>
@@ -99,7 +94,6 @@ function select_all_user(el){
                                 <TD class="text-danger"><?=$result_user["erstdatum"][$bzm]?></TD>
                                 <TD COLSPAN="2"></TD>
                                 <TD><i class="lmb-icon lmb-history cursor-pointer" OnClick="newwin1('<?= $result_user["user_id"][$bzm] ?>')"></i></TD>
-                                <TD><i class="lmb-icon lmb-calendar-alt2 cursor-pointer" OnClick="newwin2('<?= $result_user["user_id"][$bzm] ?>')"></i></TD>
                                 <TD TITLE="<?=$lang[1728]?>"><i class="lmb-icon lmb-action cursor-pointer" OnClick="activate_user('<?=$result_user["user_id"][$bzm]?>')"></i></TD>
                             </TR>
             
@@ -142,7 +136,6 @@ function select_all_user(el){
                                     </TD>
                     
                                     <TD><i class="lmb-icon lmb-history cursor-pointer" OnClick="newwin1('<?= $result_user["user_id"][$bzm] ?>')"></i></TD>
-                                    <TD><i class="lmb-icon lmb-calendar-alt2 cursor-pointer" OnClick="newwin2('<?= $result_user["user_id"][$bzm] ?>')"></i></TD>
                                     <TD></TD>
                                 </TR>
                                 <?php

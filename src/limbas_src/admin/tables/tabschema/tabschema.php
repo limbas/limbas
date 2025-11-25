@@ -60,6 +60,7 @@ endif;
 
             $groupnamedrag = explode(":", $groupnamedrag);
             if($groupnamedrag[0] != 'group') {
+                $groupnamedrag = $groupnamedrag[0];
                 lmb_SetTabschemaPattern($setdrag, groupname: $groupname);
             } else {
                 $groupnamedrag = $groupnamedrag[1];

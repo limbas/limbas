@@ -20,6 +20,8 @@
 
 */
 
+use Limbas\lib\db\functions\Dbf;
+require_once(COREPATH . 'extra/snapshot/snapshot.lib');
 
 /**
  * check for dublicate names in db
@@ -70,18 +72,14 @@ function parse_db_syntax($name, $typ = 0, $i = 0, $rename=true)
     
     // check dublicate table
     if ($typ_ == 1) {
-        $odbc_res = dbf_20(array(
+        $odbc_res = Dbf::getTableList(
             $DBA["DBSCHEMA"],
             $name,
             "'TABLE','VIEW'"
-        ));
+        );
     // check dublicate field
     } elseif ($typ_ == 2) {
-        $odbc_res = dbf_5(array(
-            $DBA["DBSCHEMA"],
-            $table,
-            $name
-        ));
+        $odbc_res = Dbf::getColumns($DBA["DBSCHEMA"],$table ?? '',$name);
     }
     
     // if(!$sqlreserved[0] AND !is_numeric($typ)){
@@ -103,7 +101,7 @@ function parse_db_syntax($name, $typ = 0, $i = 0, $rename=true)
         $name = parse_db_syntax($name, $typ, $i);
     }
 
-    return dbf_4($name);
+    return Dbf::handleCaseSensitive($name);
 }
 
 function lmb_get_tablename($tabid){
@@ -114,7 +112,7 @@ function lmb_get_tablename($tabid){
     $sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if (lmbdb_fetch_row($rs)) {
-        return dbf_4(lmbdb_result($rs, "TABELLE"));
+        return Dbf::handleCaseSensitive(lmbdb_result($rs, "TABELLE"));
     }
 }
 
@@ -125,10 +123,10 @@ function lmb_get_relationFieldName($rfield,$tablename){
     global $DBA;
 
     // simple relation fieldname
-    $refieldname = dbf_4('LMB_' . substr($rfield['tabname'], 0, 10) . '_ID');
+    $refieldname = Dbf::handleCaseSensitive('LMB_' . substr($rfield['tabname'], 0, 10) . '_ID');
     if(parse_db_syntax($refieldname, $tablename, rename:false) === false){
         $refieldname = 'LMB_' . substr($rfield['tabname'], 0, 10) . '_' . substr($rfield['fieldname'], 0, 10) . '_ID';
-        $refieldname = dbf_4(parse_db_syntax($refieldname, $tablename));
+        $refieldname = Dbf::handleCaseSensitive(parse_db_syntax($refieldname, $tablename));
     }
 
     return $refieldname;
@@ -223,7 +221,7 @@ function lmb_convert_fieldtype($source_data_type, $source_parse_type, $source_fi
     }
 
     // try db-based modify
-    $sqlquery = parse_db_string(dbq_15(array($DBA["DBSCHEMA"],$table,$source_fieldname,$dest_type)));
+    $sqlquery = parse_db_string(Dbf::modifyColumnTypeSql($table,$source_fieldname,$dest_type));
     $sqlquery = "SELECT LMB_TRY_QUERY('$sqlquery')";
     $rs = lmbdb_exec($db, $sqlquery);
     $success = lmbdb_result($rs, 1);
@@ -242,7 +240,7 @@ function lmb_convert_fieldtype($source_data_type, $source_parse_type, $source_fi
         }
         
         // copy field to LMB_TEMP_CONVERT
-        $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,'LMB_TEMP_CONVERT',$dest_type));
+        $sqlquery = Dbf::addColumnSql($table ?? '','LMB_TEMP_CONVERT',$dest_type ?? '');
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if (!$rs) {
             lmb_alert("unable to create temporary field!\n conversion failed");
@@ -289,14 +287,14 @@ function lmb_convert_fieldtype($source_data_type, $source_parse_type, $source_fi
 
         if (! $commit) {
             // drop origin
-            $sqlquery = dbq_22(array($table,$source_fieldname));
+            $sqlquery = Dbf::dropColumnSql($table ?? '',$source_fieldname);
             $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             if (! $rs) {
                 lmb_alert("SQL Error in drop origin: " . lmbdb_errormsg($db));
                 $commit = 1;
             }
             // rename temp
-            $sqlquery = dbq_7(array($DBA["DBSCHEMA"],$table,"LMB_TEMP_CONVERT",$source_fieldname));
+            $sqlquery = Dbf::renameColumnSql($DBA["DBSCHEMA"],$table ?? '',"LMB_TEMP_CONVERT", $source_fieldname);
             $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             if (! $rs) {
                 lmb_alert("SQL Error in rename temp: " . lmbdb_errormsg($db));
@@ -490,7 +488,16 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		$sqlquery2 = "DELETE FROM LMB_SYNC_CONF WHERE TABID = $atid AND FIELDID = $column_id";
 		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
+		$sqlquery2 = "DELETE FROM LMB_FORMS WHERE (TYP = 'dbdat' OR TYP = 'dbdesc') AND TAB_ID = $atid AND FIELD_ID = $column_id";
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		if(!$rs2) {$commit = 1;}
 
+		$sqlquery3 = "SELECT ID FROM LMB_SNAP WHERE TABID = $atid";
+		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+		if(!$rs3) {$commit = 1;}
+		while(lmbdb_fetch_row($rs3)) {
+			SNAP_clean_up(lmbdb_result($rs3,'ID'));
+		}
 
 		$sqlquery3 = "SELECT ID FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid ORDER BY SORT";
 		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
@@ -506,7 +513,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 
 		/* --- Währungsfeld löschen -------------------------------------- */
 		if($data_type == 30 AND $drop_physical){
-			$sqlquery = dbq_22(array($del_tabelle,$field_name."_C"));
+			$sqlquery = Dbf::dropColumnSql($del_tabelle ?? '',$field_name."_C");
 			$rs3 = lmbdb_exec($db,$sqlquery);
 			if(!$rs3){
     			lmb_alert(lmbdb_errormsg($db));
@@ -526,13 +533,13 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 			// simple 1:n relation with relation field
 			if($data_type == 25 AND $md5tab) {
 			    // drop relation field
-                if(dbf_5(array($DBA["DBSCHEMA"],$verkntable,$md5tab))) {
-                    $sqlquery3 = dbq_22(array($verkntable, $md5tab));
+                if(Dbf::getColumns($DBA["DBSCHEMA"],$verkntable ?? '',$md5tab)) {
+                    $sqlquery3 = Dbf::dropColumnSql($verkntable ?? '', $md5tab);
                     $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
                 }
             // 1:n / n:m relation with relation table
             }elseif($md5tab){
-                $odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE','VIEW'"));
+                $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$md5tab,"'TABLE','VIEW'");
                 $md5tab = $odbc_table["table_name"][0];
                 if($md5tab) {
                     # --------- Verknüpfungstabelle löschen -------------
@@ -543,7 +550,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
                         } else {
                             # drop sequence
                             if (LMB_DBFUNC_SEQUENCE) {
-                                dbf_22(array("", dbf_4("LMB_" . dbf_4($md5tab) . "_KEYID")));
+                                Dbf::dropSequence(Dbf::handleCaseSensitive("LMB_" . Dbf::handleCaseSensitive($md5tab) . "_KEYID"));
                             }
                             # drop table
                             if (!lmb_dropTable($md5tab)) {
@@ -556,7 +563,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
                         if (!lmb_dropView($md5tab)) {
                             $commit = 2;
                         } else {
-                            lmb_deleteTriggerForTable($viewinfo);
+                            lmb_TriggerDropFromDefinition($viewinfo);
                         }
                     }
 
@@ -569,7 +576,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
                         }
                     }
 
-                    lmb_updateTrigger();
+                    lmb_TriggerSyncToDB();
                 }
 			}
 
@@ -588,7 +595,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		# --------- Feld löschen -------------
 		if($field_type != 14 AND $field_type != 15 AND $data_type != 22 AND $data_type != 43 AND $data_type != 51 AND $field_type != 24 AND $data_type < 100 AND $drop_physical){
 
-			$sqlquery1 = dbq_22(array($del_tabelle,$field_name));
+			$sqlquery1 = Dbf::dropColumnSql($del_tabelle ?? '',$field_name);
 			$rs1 = lmbdb_exec($db,$sqlquery1);
 
 			if(!$rs1){
@@ -604,7 +611,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
                 if($multilang){
                     $multi_language = $umgvar['multi_language'];
                     
-                    $fielddev = dbf_5(array($GLOBAL['DBA']['DBSCHEMA'],$del_tabelle));
+                    $fielddev = Dbf::getColumns($GLOBALS['DBA']['DBSCHEMA'],$del_tabelle ?? '',null);
                     foreach ($multi_language as $lkey => $langID) {
                         
                         // skip default language
@@ -615,7 +622,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
                         
                         // drop fields
                         if(in_array(lmb_strtolower($prefix.$field_name),$fielddev['columnname_lower'])){
-                            $sqlquery = dbq_22(array($del_tabelle,$prefix . $field_name));
+                            $sqlquery = Dbf::dropColumnSql($del_tabelle ?? '',$prefix . $field_name);
                             $rs = lmbdb_exec($db, $sqlquery);
                             if(!$rs){
                 			    $err = lmbdb_errormsg($db);
@@ -699,7 +706,7 @@ function delete_tab($tabid,$drop_physical=true) {
 			    if(lmbdb_result($rs,"VERKNTABLETYPE") == 1){
 			    	
 			    	// drop sequence
-    				if(LMB_DBFUNC_SEQUENCE){dbf_22(array("",dbf_4("LMB_".$md5tab."_KEYID")));}
+    				if(LMB_DBFUNC_SEQUENCE){Dbf::dropSequence(Dbf::handleCaseSensitive("LMB_".$md5tab."_KEYID"));}
 
     				// drop table
                     if(!lmb_dropTable($md5tab)){
@@ -710,9 +717,9 @@ function delete_tab($tabid,$drop_physical=true) {
 			    }elseif(lmbdb_result($rs,"VERKNTABLETYPE") == 2){
 					$viewinfo = lmb_getViewInfo($md5tab);
 					if(!lmb_dropView($md5tab)){$commit = 2;}
-					lmb_deleteTriggerForTable($viewinfo);
+					lmb_TriggerDropFromDefinition($viewinfo);
 				}
-				lmb_updateTrigger();
+				lmb_TriggerSyncToDB();
 			}
 		}
 		
@@ -731,7 +738,7 @@ function delete_tab($tabid,$drop_physical=true) {
 		if($drop_physical){
 		    
 			// drop sequence
-	        if(LMB_DBFUNC_SEQUENCE){dbf_22(array("",dbf_4("LMB_".$gtab."_ID")));}
+	        if(LMB_DBFUNC_SEQUENCE){Dbf::dropSequence(Dbf::handleCaseSensitive("LMB_".$gtab."_ID"));}
 
             // drop table
             if(!lmb_dropTable($gtab)){
@@ -905,7 +912,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 	if($import_typ == "convert"){
 
 		/* --- Systemfelder ergänzen ------------- */
-		if(!$existing_columns = dbf_5(array($DBA["DBSCHEMA"],$gtable))){
+		if(!$existing_columns = Dbf::getColumns($DBA["DBSCHEMA"],$gtable ?? '',null)){
 			return false;
 		}
 
@@ -922,7 +929,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		"SMALLINT");
 		
 		foreach ($sysfields as $key => $value){
-			if(!in_array(dbf_4($value),$existing_columns["columnname"])){
+			if(!in_array(Dbf::handleCaseSensitive($value),$existing_columns["columnname"])){
 				#$addfields[] = $value." ".$sysfieldtyp[$key];
 				$addfields[] = $value;
 				$addfieldstype[] = $sysfieldtyp[$key];
@@ -933,14 +940,14 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 
 		if($addfields){
 			#$sqlquery = "ALTER TABLE $gtable ".LMB_DBFUNC_ADD_COLUMN_FIRST." ".implode(",".LMB_DBFUNC_ADD_COLUMN_NEXT." ",$addfields);
-			$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$gtable,$addfields,$addfieldstype));
+			$sqlquery = Dbf::addColumnSql($gtable ?? '',$addfields,$addfieldstype ?? '');
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	
 
-		$pri_key = dbq_23(array($DBA["DBSCHEMA"]));
-		if(!$pri_key or !in_array(dbf_4("id"),$pri_key["COLUMN_NAME"])){
+        $pri_key = Dbf::getPrimaryKeys($DBA["DBSCHEMA"]);
+		if(!$pri_key or !in_array(Dbf::handleCaseSensitive("id"),$pri_key["COLUMN_NAME"])){
 			$GLOBALS["message"] .= "<br>Field (ID) defined but is not primary key!<br>";
 			$commit = 1;
 		}
@@ -1006,7 +1013,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 			}else{
 				$pid = LMB_DBTYPE_FIXED."(18) NOT NULL";
 			}
-			$sqlquery = "CREATE TABLE ".dbf_4($gtable)." (ID $pid, ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", EDITDATUM ".LMB_DBTYPE_TIMESTAMP.", EDITUSER SMALLINT, ERSTUSER SMALLINT DEFAULT 1, INUSE_TIME ".LMB_DBTYPE_TIMESTAMP.", INUSE_USER SMALLINT,LMB_STATUS ".LMB_DBTYPE_FIXED."(1) DEFAULT 0 ,DEL ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_FALSE.", $versioning_fields ".LMB_DBFUNC_PRIMARY_KEY." (ID))";
+			$sqlquery = "CREATE TABLE ".Dbf::handleCaseSensitive($gtable)." (ID $pid, ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", EDITDATUM ".LMB_DBTYPE_TIMESTAMP.", EDITUSER SMALLINT, ERSTUSER SMALLINT DEFAULT 1, INUSE_TIME ".LMB_DBTYPE_TIMESTAMP.", INUSE_USER SMALLINT,LMB_STATUS ".LMB_DBTYPE_FIXED."(1) DEFAULT 0 ,DEL ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_FALSE.", $versioning_fields ".LMB_DBFUNC_PRIMARY_KEY." (ID))";
 			$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;return false;}
 		}
@@ -1102,7 +1109,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 	if($typ != 5 and LMB_DBFUNC_SEQUENCE){
 		# create sequence
 		$lastid = next_db_id($gtable);
-		dbf_21(array("",dbf_4("LMB_".$gtable."_ID"),$lastid));
+		Dbf::createSequence(Dbf::handleCaseSensitive("LMB_".$gtable."_ID"),$lastid);
 	}
 
     // default ID
@@ -1116,17 +1123,19 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		$nfield = extended_fields_cal();
 		add_extended_fields($nfield,$max_tabid,$add_permission);
 		# kalendar trigger lastmodified
-		lmb_addTrigger("LMB_LASTMODIFIED_".$max_tabid,"UPDATE",$gtable,dbq_27(array($DBA["DBSCHEMA"],$max_tabid)),0,0,1);
+		lmb_TriggerAdd("LMB_LASTMODIFIED_".$max_tabid,"UPDATE",$gtable,Dbf::lastModifiedTriggerFunctionSql($max_tabid),1,0,1,1);
 		# add default options
 		
-		$params2 = serialize(array('firstHour'=>$umgvar['calendar_firsthour'],
-		'slotMinutes'=>$umgvar['calendar_slotminutes'],
-		'firstDay'=>$umgvar['calendar_firstday'],
-		'weekends'=>$umgvar['calendar_weekends'],
-		'viewmode'=>$umgvar['calendar_viewmode'],
-		'editable'=>1,
-		'selectable'=>1
-		));
+		$params2 = serialize([
+            'firstHour'=>$umgvar['calendar_firsthour'],
+            'slotMinutes'=>$umgvar['calendar_slotminutes'],
+            'firstDay'=>$umgvar['calendar_firstday'],
+            'weekends'=>$umgvar['calendar_weekends'],
+            'viewmode'=>$umgvar['calendar_viewmode'],
+            'editable'=>1,
+            'selectable'=>1,
+            'resourcecalendar'=>1
+		]);
 		
 		$sqlquery = "UPDATE LMB_CONF_TABLES SET PARAMS2 = '".parse_db_string($params2)."' WHERE TAB_ID = ".$max_tabid;
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -1232,7 +1241,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		$inherit_table = lmbdb_result($rs, "TABELLE");
 
 		/* --- echte Feldgröße --------------------------------------------- */
-		$rs = dbf_5(array($DBA["DBSCHEMA"],dbf_4($inherit_table),dbf_4($inherit_fieldname),1));
+		$rs = Dbf::getColumns($DBA["DBSCHEMA"],Dbf::handleCaseSensitive($inherit_table),Dbf::handleCaseSensitive($inherit_fieldname),true);
 		if(lmbdb_fetch_row($rs)) {
 			$inherit_precision = lmbdb_result($rs, "PRECISION");
 			$inherit_scale = lmbdb_result($rs, "SCALE");
@@ -1355,8 +1364,8 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	if($fieldtyp != 14 AND $fieldtyp != 15 AND $fieldtyp != 17 AND $datatyp != 22 AND $datatyp != 41 AND $datatyp != 51 AND $datatyp != 52 AND $parsetype != 100){
 		if(!$datentyp){return false;}
 		if($import_typ != "convert" AND $import_typ != 'no_physical'){
-		    if (!dbf_5(array($DBA['DBSCHEMA'], $table, $field))) {
-                $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $table, $field, $datentyp, $default));
+		    if (!Dbf::getColumns($DBA['DBSCHEMA'], $table, $field)) {
+                $sqlquery = Dbf::addColumnSql($table, $field ?? '', $datentyp, $default);
                 $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                 if (!$rs) {
                     $commit = 1;
@@ -1366,7 +1375,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	}
 	/* --- Boolean Defaultwerte setzen --------------------------------------------- */
 	if($datentyp == "BOOLEAN"){
-		if($sqlquery = dbq_9(array($DBA["DBSCHEMA"],$table,$field,LMB_DBDEF_FALSE))){
+		if($sqlquery = Dbf::setColumnDefaultSql($DBA["DBSCHEMA"],$table ?? '',$field ?? '',LMB_DBDEF_FALSE)){
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
@@ -1435,18 +1444,27 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		$insv .= ",".LMB_DBDEF_TRUE;
     }
 
-	$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,BESCHREIBUNG,FIELD_TYPE,DATA_TYPE,NEED,SPELLING,FIELDKEY,ARGUMENT,SELECT_SORT,NFORMAT,INHERIT_TAB,INHERIT_FIELD,ARGUMENT_TYP,EXT_TYPE,SELECT_POOL $insd) VALUES
-	($new_id,$field_id,$gtabid,$groupid,$new_sort,'".lmb_strtoupper($field)."','$description_id',$fieldtyp,$datatyp,".LMB_DBDEF_FALSE.",'$spellingf_id',$fieldkey,'$argument','$select_sort','$nformat',$inherit_tab,$inherit_field,$argument_typ,'$extension',".parse_db_int($inherit_pool)." $insv)";
+	$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,BESCHREIBUNG,FIELD_TYPE,DATA_TYPE,NEED,SPELLING,FIELDKEY,ARGUMENT,SELECT_SORT,NFORMAT,INHERIT_TAB,INHERIT_FIELD,ARGUMENT_TYP,EXT_TYPE,SELECT_POOL,TABLESEARCH,DETAILSEARCH $insd) VALUES
+	($new_id,$field_id,$gtabid,$groupid,$new_sort,'".lmb_strtoupper($field)."','$description_id',$fieldtyp,$datatyp,".LMB_DBDEF_FALSE.",'$spellingf_id',$fieldkey,'$argument','$select_sort','$nformat',$inherit_tab,$inherit_field,$argument_typ,'$extension',".parse_db_int($inherit_pool).",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE." $insv)";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	/* --- Currency -------- */
 	if($datatyp == 30){
 		#$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD ".$field."_C ".LMB_DBTYPE_VARCHAR."(5)";
-		$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field.'_C',LMB_DBTYPE_VARCHAR.'(5)'));
+		$sqlquery = Dbf::addColumnSql($table,$field.'_C',LMB_DBTYPE_VARCHAR.'(5)');
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
+
+    /**
+    UPLOAD - deprecated
+	elseif($datatyp == 13){
+		require_once(COREPATH . 'admin/tools/add_filestruct.lib');
+		require_once(COREPATH . 'extra/explorer/filestructure.lib');
+		create_fs_tab_dir($gtabid,$groupid,$field_id,$spellingf,3);
+	}
+    **/
 
     // add DMS relation 1:n / n:m
     if($original_fieldtypeID == 73 OR $original_fieldtypeID == 74) {
@@ -1503,14 +1521,14 @@ function lmb_renameTable($tabid,$tabname){
 
         # drop sequence
         if ($typ != 5 AND LMB_DBFUNC_SEQUENCE) {
-            dbf_22(array("",dbf_4("LMB_".lmbdb_result($rs,"TABELLE")."_ID")));
+            Dbf::dropSequence(Dbf::handleCaseSensitive("LMB_".lmbdb_result($rs,"TABELLE")."_ID"));
         }
 		# rename view
 		if($typ == 5){
-			$sqlquery = dbf_24(array(lmbdb_result($rs,"TABELLE"),$tabname));
+            $sqlquery = Dbf::renameViewSql(lmbdb_result($rs,"TABELLE") ?? '',$tabname);
 		# rename table
 		}else{
-			$sqlquery = dbf_17(array(lmbdb_result($rs,"TABELLE"),$tabname));
+            $sqlquery = Dbf::renameTableSql(lmbdb_result($rs,"TABELLE") ?? '',$tabname);
 		}
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
@@ -1519,7 +1537,7 @@ function lmb_renameTable($tabid,$tabname){
             if($typ != 5 AND LMB_DBFUNC_SEQUENCE){
                 # create sequence
                 $lastid = next_db_id($tabname);
-                dbf_21(array("",dbf_4("LMB_".$tabname."_ID"),$lastid));
+                Dbf::createSequence(Dbf::handleCaseSensitive("LMB_".$tabname."_ID"),$lastid);
             }
 
 			$sqlquery = "UPDATE LMB_CONF_TABLES SET TABELLE = '$tabname' WHERE TAB_ID = $tabid";
@@ -1570,13 +1588,13 @@ function lmb_renameField($tabid,$fieldid,$fieldname){
 
 			# currency
 			if($datatype == 30){
-				$sqlquery = dbq_7(array($DBA["DBSCHEMA"],$tablename,$old_fieldname.'_C',$fieldname.'_C'));
+				$sqlquery = Dbf::renameColumnSql($DBA["DBSCHEMA"],$tablename ?? '',$old_fieldname.'_C',$fieldname.'_C');
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
 			
 			if(!$commit){
-				$sqlquery = dbq_7(array($DBA["DBSCHEMA"],$tablename,$old_fieldname,$fieldname));
+				$sqlquery = Dbf::renameColumnSql($DBA["DBSCHEMA"],$tablename ?? '',$old_fieldname,$fieldname);
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
@@ -1603,6 +1621,7 @@ function lmb_renameField($tabid,$fieldid,$fieldname){
  */
 function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 	global $db;
+    global $DBA;
 	global $session;
 	global $lang;
 	
@@ -1715,17 +1734,16 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {return 1;}
 
-		//adding primary key
-        $sqlquery1 = dbq_17(array($tabname,'ID'));
+        $sqlquery1 = Dbf::createPrimaryKeySql($tabname,'ID');
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {return 1;}
 		
 		// default settings
-		$sqlquery1 = dbq_9(array($DBA["DBSCHEMA"],$tabname,'DEL','FALSE'));
+		$sqlquery1 = Dbf::setColumnDefaultSql($DBA["DBSCHEMA"],$tabname ?? '','DEL','FALSE');
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		$sqlquery1 = dbq_9(array($DBA["DBSCHEMA"],$tabname,'ERSTDATUM',LMB_DBDEF_TIMESTAMP));
+		$sqlquery1 = Dbf::setColumnDefaultSql($DBA["DBSCHEMA"],$tabname ?? '','ERSTDATUM',LMB_DBDEF_TIMESTAMP);
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		$sqlquery1 = dbq_9(array($DBA["DBSCHEMA"],$tabname,'ERSTUSER',1));
+		$sqlquery1 = Dbf::setColumnDefaultSql($DBA["DBSCHEMA"],$tabname ?? '','ERSTUSER',1);
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		
 		# LMB_CONF_FIELDS
@@ -1807,15 +1825,15 @@ function lmb_set_multi_language($atid,$fieldid,$add,$langid=null){
     if($field_type == 4 AND $add AND !$alter_lmb_select){
 
         // check for pool for needed fields
-        $selectdev = dbf_5(array($DBA['DBSCHEMA'],'LMB_SELECT_W','LANG'.$langID.'%'));
+        $selectdev = Dbf::getColumns($DBA['DBSCHEMA'],'LMB_SELECT_W','LANG'.$langID.'%');
 
         foreach ($multi_language as $lkey => $langID) {
             // skip default language
             if($langID == $umgvar['default_language']){continue;}
             
-            if (!in_array(dbf_4('LANG' . $langID . '_WERT'), $selectdev['columnname_lower'])) {
+            if (!in_array(Dbf::handleCaseSensitive('LANG' . $langID . '_WERT'), $selectdev['columnname_lower'])) {
                 $alter_lmb_select = 1;
-                $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],'LMB_SELECT_W','LANG'.$langID.'_WERT',LMB_DBTYPE_VARCHAR.'(255)'));
+                $sqlquery = Dbf::addColumnSql('LMB_SELECT_W','LANG'.$langID.'_WERT',LMB_DBTYPE_VARCHAR.'(255)');
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             }
         }
@@ -1825,9 +1843,9 @@ function lmb_set_multi_language($atid,$fieldid,$add,$langid=null){
     if($data_type != 32 AND $data_type != 31 AND $data_type != 18){
 
         // check for existing fields
-        $existing_fiels = dbf_5(array($DBA['DBSCHEMA'],$table_name,'LANG%'));
+        $existing_fiels = Dbf::getColumns($DBA['DBSCHEMA'],$table_name ?? '','LANG%');
 
-        $fielddev = dbf_5(array($DBA['DBSCHEMA'],$table_name,$field_name));
+        $fielddev = Dbf::getColumns($DBA['DBSCHEMA'],$table_name ?? '',$field_name);
         foreach($multi_language as $lkey => $langID){
 
             // skip default language
@@ -1838,23 +1856,25 @@ function lmb_set_multi_language($atid,$fieldid,$add,$langid=null){
     
             // add fields
             if($add){
-                if(in_array(lmb_strtolower($prefix.$field_name),$existing_fiels['columnname_lower'])) {continue;}
+
+                // field already exists
+                if($existing_fiels['columnname_lower'] && in_array(lmb_strtolower($prefix.$field_name),$existing_fiels['columnname_lower'])) {continue;}
                 // long
                 if($data_type == 39){
                     #$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0];
-                    $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table_name,$prefix.$field_name,$fielddev['datatype'][0]));
+                    $sqlquery = Dbf::addColumnSql($table_name ?? '',$prefix.$field_name,$fielddev['datatype'][0] ?? '');
                 //varchar
                 }else{
                     #$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0]."(".$fielddev['length'][0].")";
-                    $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table_name,$prefix.$field_name,$fielddev['datatype'][0]."(".$fielddev['length'][0].")"));
+                    $sqlquery = Dbf::addColumnSql($table_name ?? '',$prefix.$field_name,$fielddev['datatype'][0]."(".$fielddev['length'][0].")");
                 }
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     		
             // drop fields
-            }else{
-                if(!in_array(lmb_strtolower($prefix.$field_name),$existing_fiels['columnname_lower'])) {continue;}
-                $sqlquery = dbq_22(array($table_name, $prefix . $field_name));
-                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            }else{ // todo
+                //if(!in_array(lmb_strtolower($prefix.$field_name),$existing_fiels['columnname_lower'])) {continue;}
+                //$sqlquery = dbq_22(array($table_name, $prefix . $field_name));
+                //$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             }
         }
     }
@@ -2187,7 +2207,7 @@ function add_extended_fields_sys($table,$fields){
 		$default[] = $value[2];
 	}
 
-    $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field,$type,$default));
+    $sqlquery = Dbf::addColumnSql($table ?? '',$field ?? '',$type ?? '',$default);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
@@ -2258,23 +2278,22 @@ function lmb_set_uniquefield($atid,$fieldid,$unique,&$rfield){
     $table = lmbdb_result($rs, "TABELLE");
 
 	$field_ = get_fieldname($atid,$fieldid);
-	$field_name = dbf_4($field_[0]);
+	$field_name = Dbf::handleCaseSensitive($field_[0]);
 	$field_type = $field_[1];
 
     // get contraints
-    $contraints = dbq_26(array($DBA["DBSCHEMA"],$table,$field_name));
+    $contraints = Dbf::getUniqueConstraints($DBA["DBSCHEMA"],$table,$field_name);
     $contraint = $contraints['PK_NAME'][0];
 
 	if($field_type != 11 AND $field_type != 4 AND $field_type != 6){
         $constrname = lmb_getConstraintName('LMB_CONSTR',$table,$field_name);
 		if($unique == LMB_DBDEF_TRUE AND !$contraint){
 			# add constraint
-			$sqlquery =  dbq_24(array(dbf_4($table),$field_name,$constrname));
+            $sqlquery = Dbf::createConstraintSql(Dbf::handleCaseSensitive($table),$field_name,$constrname);
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             if(!$rs){$commit = 1;}
 		}elseif($contraint){
-			# drop constraint
-			$sqlquery =  dbq_25(array(dbf_4($table),$field_name,$contraint));
+            $sqlquery = Dbf::dropConstraintSql(Dbf::handleCaseSensitive($table), $contraint);
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             if(!$rs){$commit = 1;}
 		}
@@ -2331,7 +2350,7 @@ function lmb_get_relation_setting($tabid,$fieldid){
 	$rfield['veknfieldid'] = lmbdb_result($rs, "VERKNFIELDID");
     $rfield['verknparams'] = lmbdb_result($rs, "VERKNPARAMS");
     $rfield['verkntabname'] = lmb_get_tablename($rfield['verkntabid']);
-    $rfield['hasrecverkn'] = dbf_4('HASRECVERKN');
+    $rfield['hasrecverkn'] = Dbf::handleCaseSensitive('HASRECVERKN');
     $rfield['verkntabletype'] = lmbdb_result($rs, "VERKNTABLETYPE");
 	$rfield['verknparams'] = lmbdb_result($rs, "VERKNPARAMS");
 	$rfield['md5tab'] = lmbdb_result($rs, "MD5TAB");
@@ -2341,7 +2360,7 @@ function lmb_get_relation_setting($tabid,$fieldid){
 	$rfield['fieldspelling'] = $lang[lmbdb_result($rs, "SPELLING")];
 	$rfield['groupid'] = lmbdb_result($rs, "TAB_GROUP");
 	$rfield['relext'] = lmbdb_result($rs, "RELEXT");
-	$rfield['fieldname'] = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+	$rfield['fieldname'] = Dbf::handleCaseSensitive(lmbdb_result($rs, "FIELD_NAME"));
 	$rfield['verkntree'] = lmbdb_result($rs, "VERKNTREE");
     $rfield['tabname'] = lmb_get_tablename($tabid);
     $rfield['relparams'] = lmbdb_result($rs, "RELPARAMS");
@@ -2368,35 +2387,24 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
 	$sqlquery =  "SELECT TAB_ID,TABELLE,TYP FROM LMB_CONF_TABLES WHERE TAB_ID = $new_verkntabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$verkntabname = dbf_4(lmbdb_result($rs, "TABELLE"));
+	$verkntabname = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABELLE"));
 	$tabtyp = lmbdb_result($rs, "TYP");
 	$datatype = $rfield['datatype'];
 
     // new md5tab tablename
-    $new_md5tab = dbf_4("VERK_" . lmb_substr(md5(lmb_strtoupper($rfield['tabname']) . lmb_strtoupper($rfield['fieldname']) . time()), 0, 13));
+    $new_md5tab = Dbf::handleCaseSensitive("VERK_" . lmb_substr(md5(lmb_strtoupper($rfield['tabname']) . lmb_strtoupper($rfield['fieldname']) . time()), 0, 13));
 
-    // adding module extensions
-    if($datatype == 24 OR $datatype == 27) {
-        if ($tabtyp == 2) {
-            $insv[] = "EXT_TYPE = 'extendedCalender'";
-        } elseif ($tabtyp == 3) {
-            $insv[] = "EXT_TYPE = 'extendedFileManager'";
-        } elseif ($tabtyp == 6) {
-            #$insv[] = "EXT_TYPE = 'extendedMessages'"; // todo
-        }
-    }
-
-    // add simple 1:n relation - add ID field in relation table
+        // add simple 1:n relation - add ID field in relation table
     if ($datatype == 25) {
         $refieldname = lmb_get_relationFieldName($rfield,$verkntabname);
 
-        if (!dbf_5(array($DBA["DBSCHEMA"], $verkntabname, $refieldname))) {
-            $sqlquery = dbq_29(array($DBA["DBSCHEMA"], $verkntabname, $refieldname, LMB_DBTYPE_FIXED . '(18)'));
+        if (!Dbf::getColumns($DBA["DBSCHEMA"], $verkntabname, $refieldname)) {
+            $sqlquery = Dbf::addColumnSql($verkntabname ?? '', $refieldname ?? '', LMB_DBTYPE_FIXED . '(18)');
             $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             if ($rs) {
                 // create index
                 $indname = lmb_getConstraintName('LMB_INDV', $verkntabname, $refieldname);
-                $sqlquery1 = dbq_4(array($DBA["DBSCHEMA"], $indname, $verkntabname, $refieldname));
+                $sqlquery1 = Dbf::createIndexSql($indname, $verkntabname, $refieldname);
                 $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
             }else{$commit = 1;}
         }
@@ -2405,7 +2413,7 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
         $rfield['md5tab'] = $refieldname;
         lmb_set_relation_foreignkey($fieldid,$tabid,1,$rfield);
 
-    // add new n:m relation table
+        // add new n:m relation table
     } elseif ($datatype == 24) {
         $sqlquery = "CREATE TABLE " . $new_md5tab . " (KEYID " . LMB_DBTYPE_FIXED . "(18) NOT NULL,ERSTDATUM " . LMB_DBTYPE_TIMESTAMP . " DEFAULT " . LMB_DBDEF_TIMESTAMP . ", ERSTUSER " . LMB_DBTYPE_SMALLINT . ", ID " . LMB_DBTYPE_FIXED . "(18),VERKN_ID " . LMB_DBTYPE_FIXED . "(18)," . LMB_DBFUNC_PRIMARY_KEY . " (KEYID),SORT SMALLINT)";
         $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
@@ -2413,12 +2421,12 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
             $commit = 1;
         }
         lmb_rebuildSequences($new_md5tab, 'KEYID');
-        $insv[] = "MD5TAB = '" . dbf_4($new_md5tab) . "'";
-        $rfield['md5tab'] = dbf_4($new_md5tab);
+        $insv[] = "MD5TAB = '" . Dbf::handleCaseSensitive($new_md5tab) . "'";
+        $rfield['md5tab'] = Dbf::handleCaseSensitive($new_md5tab);
 
         # trigger count value
-        lmb_relationTrigger($new_md5tab, $rfield['tabname'], $rfield['fieldname'],0,0,0);
-        lmb_updateTrigger();
+        lmb_TriggerGetRelationTrigger($new_md5tab, $rfield['tabname'], $rfield['fieldname'],0,0,0);
+        lmb_TriggerSyncToDB();
         lmb_set_relation_foreignkey($fieldid,$tabid,1,$rfield);
 
         // add new 1:n relation table
@@ -2429,12 +2437,12 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
             $commit = 1;
         }
         lmb_rebuildSequences($new_md5tab, 'KEYID');
-        $insv[] = "MD5TAB = '" . dbf_4($new_md5tab) . "'";
-        $rfield['md5tab'] = dbf_4($new_md5tab);
+        $insv[] = "MD5TAB = '" . Dbf::handleCaseSensitive($new_md5tab) . "'";
+        $rfield['md5tab'] = Dbf::handleCaseSensitive($new_md5tab);
 
         # trigger count value
-        lmb_relationTrigger($new_md5tab, $rfield['tabname'], $rfield['fieldname'],0,0,0);
-        lmb_updateTrigger();
+        lmb_TriggerGetRelationTrigger($new_md5tab, $rfield['tabname'], $rfield['fieldname'],0,0,0);
+        lmb_TriggerSyncToDB();
         lmb_set_relation_foreignkey($fieldid,$tabid,1,$rfield);
 
         // add new back view relation
@@ -2469,7 +2477,7 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
         }
 
         if ($backview_datatype == 24 OR $backview_datatype == 27) {
-            if (lmb_createView("SELECT KEYID,ERSTDATUM,ERSTUSER,ID AS VERKN_ID,VERKN_ID AS ID,SORT FROM " . dbf_4($origin_md5tab), dbf_4($new_md5tab))) {
+            if (lmb_createView("SELECT KEYID,ERSTDATUM,ERSTUSER,ID AS VERKN_ID,VERKN_ID AS ID,SORT FROM " . Dbf::handleCaseSensitive($origin_md5tab), Dbf::handleCaseSensitive($new_md5tab))) {
                 if ($backview_datatype == 27) {
                     $unique = ",ISUNIQUE = " . LMB_DBDEF_TRUE;
                 }
@@ -2481,13 +2489,13 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
                 $rfield['verkntabletype'] = 2;
 
                 # trigger count value
-                lmb_relationTrigger($origin_md5tab, $origin_tabname, $origin_fieldname, $rfield['tabname'], $rfield['fieldname']);
-                lmb_updateTrigger();
+                lmb_TriggerGetRelationTrigger($origin_md5tab, $origin_tabname, $origin_fieldname, $rfield['tabname'], $rfield['fieldname']);
+                lmb_TriggerSyncToDB();
             } else {
                 $commit = 1;
             }
-            $insv[] = "MD5TAB = '" . dbf_4($new_md5tab) . "'";
-            $rfield['md5tab'] = dbf_4($new_md5tab);
+            $insv[] = "MD5TAB = '" . Dbf::handleCaseSensitive($new_md5tab) . "'";
+            $rfield['md5tab'] = Dbf::handleCaseSensitive($new_md5tab);
 
         }elseif($backview_datatype == 25){
             $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $new_verknfieldid, VERKNTABLETYPE = 2 $unique WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
@@ -2496,7 +2504,7 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
             $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
 
             #$refieldname = 'LMB_' . substr($rfield['tabname'], 0, 12) . '_' . substr($rfield['fieldname'], 0, 12) . '_ID';
-            #$insv[] = "MD5TAB = '" . dbf_4($refieldname) . "'";
+            #$insv[] = "MD5TAB = '" . Dbf::handleCaseSensitive($refieldname) . "'";
             #$insv[] = "MD5TAB = NULL";
 
 
@@ -2511,14 +2519,14 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
     if ($datatype == 24 OR $datatype == 27) {
         # ID - Index
         $indname = lmb_getConstraintName('LMB_INDV',$new_md5tab,'ID');
-        $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indname, $new_md5tab, 'ID'));
+        $sqlquery = Dbf::createIndexSql($indname, $new_md5tab, 'ID');
         $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if (!$rs3) {
             $commit = 1;
         }
         # SORT - Index
         $indname = lmb_getConstraintName('LMB_INDV',$new_md5tab,'SORT');
-        $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indname, $new_md5tab, "SORT"));
+        $sqlquery = Dbf::createIndexSql($indname, $new_md5tab, "SORT");
         $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if (!$rs3) {
             $commit = 1;
@@ -2527,7 +2535,7 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
         # n:m VERKN_ID - Index
         if ($datatype == 24) {
             $indname = lmb_getConstraintName('LMB_INDV',$new_md5tab,'VERKN_ID');
-            $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indname, $new_md5tab, "VERKN_ID"));
+            $sqlquery = Dbf::createIndexSql($indname, $new_md5tab, "VERKN_ID");
             $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             if (!$rs3) {
                 $commit = 1;
@@ -2535,8 +2543,11 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
         # 1:m VERKN_ID - unique constraint
         } else {
             $indname = lmb_getConstraintName('LMB_CONSTR',$new_md5tab,'VERKN_ID');
-            $sqlquery = dbq_24(array($new_md5tab, 'VERKN_ID', $indname));
+            $sqlquery = Dbf::createConstraintSql($new_md5tab, 'VERKN_ID', $indname);
             $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs3) {
+                $commit = 1;
+            }
         }
 
     }
@@ -2553,7 +2564,7 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
     // add relation ID field in relation table
     // TODO Axel
     if($gfield[16]['data_type'][4] == 25){
-        $sqlquery = dbq_29(array($DBA["DBSCHEMA"],dbf_4($verkntabname),dbf_4('LMB_'.substr($tabname,0,12).'_'.substr($gfield[16]['field_name'][4],0,12).'_ID'),LMB_DBTYPE_FIXED.'(18)'));
+        $sqlquery = Dbf::addColumnSql(Dbf::handleCaseSensitive($verkntabname),Dbf::handleCaseSensitive('LMB_'.substr($tabname,0,12).'_'.substr($gfield[16]['field_name'][4],0,12).'_ID'),LMB_DBTYPE_FIXED.'(18)');
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
     }
@@ -2566,7 +2577,7 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
 		create_fs_tab_dir($tabid,$rfield['groupid'],$fieldid,$rfield['fieldspelling'],7);
 
 		# ---- md5tab ändern -----------------
-		$sqlquery1 = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$rfield['md5tab'],'LID',LMB_DBTYPE_FIXED.'(10)'));
+		$sqlquery1 = Dbf::addColumnSql($rfield['md5tab'] ?? '','LID',LMB_DBTYPE_FIXED.'(10)');
 		$rs1 = lmbdb_exec($db,$sqlquery1);
 	}
 
@@ -2629,7 +2640,7 @@ function lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfi
 				$vviewid[] = $new_verknviewid[$key];
 			}
 		}
-		$new_verknviewid = implode(",",$vviewid).'?'.$viewidcut;
+		$new_verknviewid = implode(",",$vviewid)."?$viewidcut";
 	}
 
 	if(is_array($new_verknfindid)){
@@ -2639,10 +2650,15 @@ function lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfi
 				$vfiewid[] = $new_verknfindid[$key];
 			}
 		}
-		$new_verknfindid = implode(",",$vfiewid).'?'.$findidcut;
+		$new_verknfindid = implode(",",$vfiewid)."?$findidcut";
 	}
 
-	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNSEARCH = '".parse_db_string($new_verknsearchid,50)."',VERKNVIEW = '".parse_db_string($new_verknviewid,50)."',VERKNFIND = '".parse_db_string($new_verknfindid,50)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET 
+	VERKNSEARCH = '".parse_db_string($new_verknsearchid,50)."',
+	VERKNVIEW = '".parse_db_string($new_verknviewid,50)."',
+	VERKNFIND = '".parse_db_string($new_verknfindid,50)."' 
+	WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}else{
         $rfield['verknsearchid'] = explode(",",$new_verknsearchid);
@@ -2823,13 +2839,14 @@ function createRecRelation($tabid,$fieldid,$relationtree,&$rfield){
 
 	# drop TABLE
     $md5tab = $rfield['md5tab'];
-    if($odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE'"))){
+
+    if($odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$md5tab,"'TABLE'")){
 	    if(!lmb_dropTable($md5tab)){
 		    echo lmbdb_errormsg($db).'<br>';
 	    }
 	}
 	# drop VIEW
-	elseif($odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'VIEW'"))){
+	elseif($odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],$md5tab,"'VIEW'")){
 	    if($md5tab and !lmb_dropView($md5tab)){
 		    echo lmbdb_errormsg($db).'<br>';
 	    }
@@ -2928,7 +2945,7 @@ function getRelationParameter($tabid,$fieldid){
     if($relparams) {
         $params = lmb_eval($relparams . ";");
 
-        $evalparams = array('showfields','readonly','width','order');
+        $evalparams = array('showfields','readonly','width','order','names');
         foreach ($evalparams as $key => $value) {
             if ($params[$value]) {
                 $params[$value] = var_export($params[$value],1);
@@ -2956,7 +2973,7 @@ function setRelationParameter($tabid,$fieldid,$params){
     $params['show_inframe_tag'] = null;
     $params = array_filter($params);
 
-    $evalparams = array('showfields','readonly','width','order');
+    $evalparams = array('showfields','readonly','width','order','names');
     foreach ($evalparams as $key => $value) {
         if ($params[$value]) {
             $params[$value] = lmb_eval('return ' . $params[$value] . ";");

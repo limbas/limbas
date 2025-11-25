@@ -1,7 +1,6 @@
 <?php
 
 namespace Limbas\gtab\export;
-
 use Limbas\gtab\export\filetypes\FiletypeExporter;
 
 /**
@@ -12,7 +11,7 @@ class TableExport
 {
     private int $gtabid;
     private FiletypeExporter $filetypeExporter;
-    private bool $onlyGetVisibleRows;
+    private array $selectedRecords;
 
     private ?array $relations;
 
@@ -20,10 +19,10 @@ class TableExport
      * Construct the TableExport, use export function to output the file
      * @param int $gtabid
      * @param TableExportTypes $exportFileType
-     * @param bool $onlyGetVisibleRows / only get currently visible rows
+     * @param array $selectedRecords
      * @param array|null $relations
      */
-    public function __construct(int $gtabid, TableExportTypes $exportFileType, bool $onlyGetVisibleRows = false, ?array $relations = [])
+    public function __construct(int $gtabid, TableExportTypes $exportFileType, array $selectedRecords = [], ?array $relations = [])
     {
         $this->gtabid = $gtabid;
 
@@ -31,7 +30,7 @@ class TableExport
 
         $this->relations = $relations;
 
-        $this->onlyGetVisibleRows = $onlyGetVisibleRows;
+        $this->selectedRecords = $selectedRecords;
     }
 
     /**
@@ -41,14 +40,21 @@ class TableExport
     private function getData(): array
     {
         global $filter;
+        global $gtab;
         global $gsr;
 
         $modifiedFilter = $filter;
         $modifiedFilter["getlongval"][$this->gtabid] = 1;
-        if (!$this->onlyGetVisibleRows) {
-            $modifiedFilter["anzahl"][$this->gtabid] = 'all';
+        $modifiedFilter["anzahl"][$this->gtabid] = 'all';
+
+        if ($this->selectedRecords && $tableName = $gtab['table'][$this->gtabid]) {
+            $selectedRecords = implode(',', $this->selectedRecords);
+            $extension['where'][0] = "($tableName.ID IN ($selectedRecords))";
+        } else {
+            $extension = null;
         }
-        return get_gresult($this->gtabid, 1, $modifiedFilter, $gsr, $this->relations);
+
+        return get_gresult($this->gtabid, 1, $modifiedFilter, $gsr, $this->relations, extension: $extension);
     }
 
     private function getHeaders(): void
@@ -63,7 +69,6 @@ class TableExport
         header('Content-Type: ' . $this->filetypeExporter->getMimeType());
         header('Content-Disposition: attachment;filename="' . $fileName . '"');
         header('Cache-Control: max-age=0');
-
     }
 
     /**
@@ -76,7 +81,13 @@ class TableExport
 
         $this->getHeaders();
 
-        $this->filetypeExporter->export($gresult, $this->gtabid, $this->onlyGetVisibleRows);
+        $this->filetypeExporter->export($gresult, $this->gtabid);
+
         exit(1);
+    }
+
+    public static function useRecordToSelectedRecords(string $useRecord): array
+    {
+        return $useRecord ? array_map(fn($pair) => (int)explode('_', $pair)[0],explode(';', $useRecord)) : [];
     }
 }

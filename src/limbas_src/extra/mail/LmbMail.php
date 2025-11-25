@@ -14,6 +14,7 @@ require_once(COREPATH . 'gtab/gtab.lib');
 use Limbas\admin\mailTemplates\MailTemplate;
 use Limbas\extra\mail\attachments\DmsMailAttachment;
 use Limbas\extra\mail\attachments\MailAttachment;
+use Limbas\lib\general\Log\Log;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
@@ -68,11 +69,11 @@ class LmbMail
      * @param MailTable|null $mailTable
      * @return bool
      */
-    public function sendFromDefault(string|array $to, string $subject, string $message, ?array $attachments = null, string|array $cc = null, string|array $bcc = null, MailTable $mailTable = null): bool
+    public function sendFromDefault(string|array $to, string $subject, string $message, ?array $attachments = null, string|array $cc = null, string|array $bcc = null, MailTable $mailTable = null, string|MailSignature|null $mailSignature = null): bool
     {
         $defaultAccount = MailAccount::getSystemDefaultAccount();
         if ($defaultAccount) {
-            return $this->send($defaultAccount, $to, $subject, $message, $attachments, $cc, $bcc, $mailTable);
+            return $this->send($defaultAccount, $to, $subject, $message, $attachments, $cc, $bcc, $mailTable, $mailSignature);
         }
         return false;
     }
@@ -90,8 +91,22 @@ class LmbMail
      * @param int|null $mailTableDatId
      * @return bool
      */
-    public function send(MailAccount $fromAccount, string|array $to, string $subject, string $message, ?array $attachments = null, string|array $cc = null, string|array $bcc = null, MailTable $mailTable = null, int $mailTableDatId = null): bool
+    public function send(MailAccount $fromAccount, string|array $to, string $subject, string $message, ?array $attachments = null, string|array $cc = null, string|array $bcc = null, MailTable $mailTable = null, int $mailTableDatId = null, string|MailSignature|null $mailSignature = null): bool
     {
+
+        if(empty($mailSignature)) {
+            $mailSignature = MailSignature::getSystemDefaultMailSignature();
+        }
+        
+        if(!empty($mailSignature)) {
+            if($mailSignature instanceof MailSignature) {
+                $message .= '<br><br>' . $mailSignature->renderedContent;
+            }
+            else {
+                $message .= '<br><br>' . $mailSignature;
+            }
+        }
+        
         
         if ($mailTableDatId === null) {
 
@@ -165,7 +180,7 @@ class LmbMail
             foreach($contentImages['images'] as $cid => $attachment) {
                 $filePath = $attachment->getPath();
                 if(!empty($filePath) && file_exists($filePath)) {
-                    $email->addPart((new DataPart(new File($filePath), $cid))->asInline());
+                    $email->addPart((new DataPart(new File($filePath)))->setContentId($cid)->asInline());
                 }
             }
         }
@@ -181,6 +196,7 @@ class LmbMail
             $mailer->send($email);
             $this->saveMailToImap($fromAccount, $email);
         } catch (Throwable $t) {
+            Log::warning($t);
             $status = false;
         }
 
@@ -209,7 +225,7 @@ class LmbMail
      * @param MailTable|null $mailTable
      * @return bool
      */
-    public function sendMailToRecord(MailAccount $fromAccount, int $gtabid, int $id, string|array $to = '', string $subject = '', string $message = '', ?array $attachments = null, string|array $cc = null, string|array $bcc = null, MailTemplate $mailTemplate = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], MailTable $mailTable = null): bool
+    public function sendMailToRecord(MailAccount $fromAccount, int $gtabid, int $id, string|array $to = '', string $subject = '', string $message = '', ?array $attachments = null, string|array $cc = null, string|array $bcc = null, MailTemplate $mailTemplate = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], MailTable $mailTable = null, string|MailSignature|null $mailSignature = null): bool
     {
         
         if(empty($to)) {
@@ -246,7 +262,7 @@ class LmbMail
             lmbMailSendToRecord($fromAccount, $gtabid, $id, $to, $subject, $message, $attachments, $cc, $bcc, $mailTable);
         }
 
-        return $this->send($fromAccount, $to, $subject, $message, $attachments, $cc, $bcc, $mailTable);
+        return $this->send($fromAccount, $to, $subject, $message, $attachments, $cc, $bcc, $mailTable, mailSignature:$mailSignature);
     }
 
 
@@ -265,10 +281,10 @@ class LmbMail
      * @param MailTable|null $mailTable
      * @return bool
      */
-    public function sendMailToRecords(MailAccount $fromAccount, int $gtabid, array $ids, MailTemplate $mailTemplate, string $subject = '', ?array $attachments = null, string|array $cc = null, string|array $bcc = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], MailTable $mailTable = null): bool
+    public function sendMailToRecords(MailAccount $fromAccount, int $gtabid, array $ids, MailTemplate $mailTemplate, string $subject = '', ?array $attachments = null, string|array $cc = null, string|array $bcc = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], MailTable $mailTable = null, string|MailSignature|null $mailSignature = null): bool
     {
         foreach($ids as $id) {
-            $this->sendMailToRecord($fromAccount, $gtabid,$id,[], $subject, '', $attachments, $cc, $bcc, $mailTemplate, $resolvedTemplateGroups, $resolvedDynamicData, $mailTable);
+            $this->sendMailToRecord($fromAccount, $gtabid,$id,[], $subject, '', $attachments, $cc, $bcc, $mailTemplate, $resolvedTemplateGroups, $resolvedDynamicData, $mailTable, $mailSignature);
         }
         return true;
     }

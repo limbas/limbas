@@ -188,7 +188,7 @@ function mysql_dbf_7($p){
 function mysql_dbf_8($p){
 	global $db;
 
-	$rs = lmbdb_exec($db,"SELECT seq_nextval('".dbf_4($p)."') AS NEXTSEQ") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
+	$rs = lmbdb_exec($db,"SELECT seq_nextval('".mysql_dbf_4($p)."') AS NEXTSEQ") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
 	return lmbdb_result($rs,"NEXTSEQ");
 }
 

@@ -8,40 +8,44 @@
  */
 
 
+use Limbas\lib\db\functions\Dbf;
+
+global $DBA;
 
 if($trigger_typ == 2){
-	$intern = 1;
+	$sqltrigger = 0; // php
 }else{
-	$trigger_typ = 1;
-	$intern = 0;
+	$trigger_typ = 1; // SQL
+	$sqltrigger = 1;
 }
-
 
 if($sortup_definition OR $sortdown_definition){
 
-	$sqlquery = "SELECT ID,SORT FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT ";
+	$sqlquery = "SELECT ID,SORT FROM LMB_TRIGGER WHERE SQLTRIGGER = ".parse_db_bool($sqltrigger)." AND INTERN = ".LMB_DBDEF_FALSE." ORDER BY TABLE_NAME,SORT";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
 	while(lmbdb_fetch_row($rs)) {
-
-		if($sortup_definition == lmbdb_result($rs,"ID")){
-			$orderres[lmbdb_result($rs,"ID")] = ($bzm-1.1);
-		}elseif($sortdown_definition == lmbdb_result($rs,"ID")){
-			$orderres[lmbdb_result($rs,"ID")] = ($bzm+1.1);
-		}else{
-			$orderres[lmbdb_result($rs,"ID")] = $bzm;
-		}
-
+        $orderres[$bzm] = lmbdb_result($rs,"ID");
 		$bzm++;
 	}
-	
-	asort($orderres);
-	
-	$bzm = 1;
-	foreach ($orderres as $key => $value){
-		$sqlquery = "UPDATE LMB_TRIGGER SET SORT = $bzm WHERE ID = ".$key." AND INTERN = ".parse_db_bool($intern);
+
+    foreach ($orderres as $key => $id) {
+        if($continue){$continue = 0; continue;}
+        if($id == $sortup_definition) {
+            $orderres[$key] = $orderres[$key - 1];
+            $orderres[$key - 1] = $id;
+        }elseif($id == $sortdown_definition){
+            $orderres[$key] = $orderres[$key + 1];
+            $orderres[$key + 1] = $id;
+            $continue = 1;
+        }else{
+            $orderres[$key] = $id;
+        }
+    }
+
+	foreach ($orderres as $key => $id){
+		$sqlquery = "UPDATE LMB_TRIGGER SET SORT = $key WHERE ID = ".$id." AND SQLTRIGGER = ".parse_db_bool($sqltrigger);
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$bzm++;
 	}
 
 }
@@ -50,26 +54,26 @@ if($sortup_definition OR $sortdown_definition){
 if($change AND $trigger_definition){
 	foreach ($trigger_definition as $key => $value){
 		if(${"definition_change_$key"} == 1){
-			$sqlquery = "UPDATE LMB_TRIGGER SET TRIGGER_VALUE = '".parse_db_string($value,4000)."',ACTIVE = " . ($active[$key]=="on"?LMB_DBDEF_TRUE:LMB_DBDEF_FALSE) . "  WHERE ID = $key AND INTERN = ".parse_db_bool($intern);
+			$sqlquery = "UPDATE LMB_TRIGGER SET TRIGGER_VALUE = '".parse_db_string($value,4000)."',ACTIVE = " . ($active[$key]=="on"?LMB_DBDEF_TRUE:LMB_DBDEF_FALSE) . "  WHERE ID = $key AND SQLTRIGGER = ".parse_db_bool($sqltrigger);
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}elseif(${"definition_change_$key"} == 2){
-			$sqlquery = "DELETE FROM LMB_TRIGGER WHERE ID = $key AND INTERN = ".parse_db_bool($intern);
+			$sqlquery = "DELETE FROM LMB_TRIGGER WHERE ID = $key AND SQLTRIGGER = ".parse_db_bool($sqltrigger);
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 	}
 	
 	if($trigger_typ == 1){
-		lmb_updateTrigger();
+		lmb_TriggerSyncToDB();
 	}
 
 }
 
 if($add AND $add_trigger_table AND $add_trigger_name){
 	
-	lmb_addTrigger($add_trigger_name,$add_trigger_type,$add_trigger_table,'',$intern,$add_trigger_pos);
+	lmb_TriggerAdd($add_trigger_name,$add_trigger_type,$add_trigger_table,'',$sqltrigger,$add_trigger_pos);
 	
 	$nextid = next_db_id("LMB_TRIGGER");
-	if($intern){
+	if(!$sqltrigger){
 		$key = $nextid;
 		$tabid = $gtab["argresult_id"][$add_trigger_table];
 		$gtrigger[$tabid]["id"][$key] = $nextid;
@@ -81,8 +85,9 @@ if($add AND $add_trigger_table AND $add_trigger_name){
 
 if($syncronize){
 	$nextId = next_db_id("LMB_TRIGGER");
-	
-	if($triggerlist = dbf_3(array($DBA["DBSCHEMA"]))){
+
+
+	if($triggerlist = Dbf::getTriggerInformation($DBA["DBSCHEMA"])){
 
 	foreach ($triggerlist["triggername"] as $tkey => $tname){
 	
@@ -98,18 +103,17 @@ if($syncronize){
 		
 		$rs0 = lmbdb_exec($db,$sqlquery0);
 		if(!lmbdb_fetch_row($rs0)){
-			$sqlquery1 = "INSERT INTO LMB_TRIGGER(ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,ACTIVE,DESCRIPTION) VALUES(" . $nextId++ . ",".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".parse_db_int($session["user_id"]).",".parse_db_int($session["user_id"]).",'".parse_db_string($trigerName,25)."','".$triggerlist["tablename"][$tkey]."','INSERT','" . ltrim(rtrim(parse_db_string($definition,4000),")"),"(") .  "',".LMB_DBDEF_TRUE.",'".parse_db_string($desc,50)."')";
+			$sqlquery1 = "INSERT INTO LMB_TRIGGER(ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,ACTIVE,DESCRIPTION,SQLTRIGGER) 
+			VALUES(" . $nextId++ . ",".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".parse_db_int($session["user_id"]).",".parse_db_int($session["user_id"]).",'".parse_db_string($trigerName,25)."','".$triggerlist["tablename"][$tkey]."','INSERT','" . ltrim(rtrim(parse_db_string($definition,4000),")"),"(") .  "',".LMB_DBDEF_TRUE.",'".parse_db_string($desc,50)."',".LMB_DBDEF_TRUE.")";
 			lmbdb_exec($db,$sqlquery1);
 		}
 	}}
-
-	lmb_updateTrigger();
 }
 
 
 $result_trigger = array();
 
-$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT,ERSTDATUM";
+$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE SQLTRIGGER = ".parse_db_bool($sqltrigger)." AND INTERN = ".parse_db_bool($showsystr)." ORDER BY TABLE_NAME,SORT";
 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 while(lmbdb_fetch_row($rs)) {
 	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["id"][] = lmbdb_result($rs, "ID");

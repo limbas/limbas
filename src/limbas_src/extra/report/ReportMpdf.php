@@ -11,7 +11,6 @@ namespace Limbas\extra\report;
 
 use Limbas\admin\report\PdfStandard;
 use Limbas\extra\template\report\ReportTemplateRender;
-use lmb_log;
 use Mpdf\MpdfException;
 use setasign\Fpdi\PdfParser\CrossReference\CrossReferenceException;
 use setasign\Fpdi\PdfParser\PdfParserException;
