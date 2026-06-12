@@ -8,7 +8,7 @@
  */
 
 use Limbas\lib\db\functions\Dbf;
-
+use Limbas\lib\general\Log\Log;
 
 /*
  * Create exiftool specific config file
@@ -27,13 +27,15 @@ function create_exif_conf() {
     'Image::ExifTool::XMP::xmp' => {
 ";
 
-	$sysfields = array('id','del');
+	$sysfields = array('ID','ERSTDATUM','EDITDATUM','EDITUSER','ERSTUSER','ERSTGROUP','INUSE_TIME','INUSE_USER','DEL',
+        'VID','VACT','VDESC','VPID','LMB_MID','LMB_VALIDFROM','LMB_VALIDTO','LMB_CHECKSUM','LMB_STATUS','LMB_SYNC_ID','LMB_SYNC_SLAVE',
+        'LID','IND','INDD','INDT','INDM','INDC','OCR','OCRD','OCRT','OCRS');
 	
 	#$gtabid = $gtab['argresult_id']['LDMS_META'];
 	if($fields = Dbf::getColumns($DBA['DBSCHEMA'],'LDMS_META', null)){
 	    foreach($fields['columnname'] as $key => $value){
 	        
-	        if(in_array(lmb_strtolower($value),$sysfields)){continue;}
+	        if(in_array(lmb_strtoupper($value),$sysfields)){continue;}
 	        
 	        $val .= "           ".$value."=> {},\n";
 	    }
@@ -90,7 +92,14 @@ function putmeta_exif($absfile,$meta){
 	$cmd = "exiftool -config ". TEMPPATH ."conf/exiftool.conf -P -overwrite_original $val $absfile";
 	$result = exec($cmd, $retval);
 
-	if($retval){return false;}
+    if(is_array($retval)){
+        $retval = implode(', ',$retval);
+    }
+
+	if($retval){
+        Log::notice("exiftool output: ".$retval);
+    }
+
     return true;
 }
 
@@ -156,9 +165,9 @@ function getmeta_from_file($absfile,$mimetype,$detaillevel=1){
 
 	$mime = explode("/",$mimetype);
 
-	# get basic metatada
-	if($mime[0] == "image" OR ($mime[1] == "pdf" AND ($umgvar["imagemagickpdf"] OR $detaillevel == 3))){
-		if($mime[1] == "pdf"){$page = "'[0]'";}else{$page = "";}
+	# get basic image metadada with imagemagick
+	if($umgvar["read_metadata"] && $umgvar["imagemagickpdf"] && $mime[0] == "image"){
+		#if($mime[1] == "pdf"){$page = "'[0]'";}else{$page = "";}
 		if($umgvar["ext_im_analyse"]){$ex = ",%k";}
 		$cmd = $umgvar["imagemagick"]."/identify -format %C,%g,%xx%y,%z-bit,%r,%Q\%,%b,$ex ".$umgvar["imagemagicklimit"]." ".$absfile.$page;
 		$picinf = explode(",",`$cmd`);
@@ -176,10 +185,10 @@ function getmeta_from_file($absfile,$mimetype,$detaillevel=1){
 		}
 	}
 
-    // exiftool
-	if($detaillevel >= 2) {
-        // ignore metadata
-        if ($umgvar["read_metadata"] && (is_array($umgvar["read_metadata"]) && (in_array($mime[1], $umgvar["update_metadata"])))) {
+    // get full metadada with exiftool
+	if($umgvar["read_metadata"] && $detaillevel >= 2) {
+        // check mimetype (tiff/jpg/pdf)
+        if (is_array($umgvar["read_metadata"]) && (in_array($mime[1], $umgvar["update_metadata"]))) {
             if ($meta_ = getmeta_raw($absfile)) {
                 if (is_array($meta)) {
                     $meta = array_merge($meta, $meta_);

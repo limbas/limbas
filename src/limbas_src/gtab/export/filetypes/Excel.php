@@ -7,6 +7,7 @@ use OpenSpout\Common\Entity\Row;
 use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Common\Exception\IOException;
 use OpenSpout\Writer\Exception\WriterNotOpenedException;
+use OpenSpout\Writer\XLSX\Options;
 use OpenSpout\Writer\XLSX\Writer;
 
 class Excel extends FiletypeExporter
@@ -27,11 +28,14 @@ class Excel extends FiletypeExporter
 
         $sortKeys = array_keys($gfield[$gtabid]["key"]);
 
-        $writer = new Writer();
+        $options = new Options();
+        $writer = new Writer($options);
 
         $writer->openToFile("php://output");
 
         $titles = [];
+
+        $columnCounter = 1;
 
         // Set the column titles in the top row
         foreach ($sortKeys as $fieldId) {
@@ -51,6 +55,10 @@ class Excel extends FiletypeExporter
                     $titles[] = $gfield[$gtabid]['spelling'][$fieldId];
                 }
             }
+
+            $colWidth = $gfield[$gtabid]['rowsize'][$fieldId];
+            $colWidth = is_numeric($colWidth) ? $colWidth : 100;
+            $options->setColumnWidth($colWidth / 8, $columnCounter++);
         }
 
         $writer->addRow(Row::fromValues($titles));
@@ -162,8 +170,20 @@ class Excel extends FiletypeExporter
                 }
             }
 
+            $backgroundColorRow = '';
+            if(is_array($gresult[$gtabid]["indicator"]["color"][$resultCounter])){
+                # indicator color
+                $backgroundColorRow = average_color($gresult[$gtabid]["indicator"]["color"][$resultCounter]);
+            }elseif($gresult[$gtabid]["color"][$resultCounter]){
+                # user color
+                $backgroundColorRow = $gresult[$gtabid]["color"][$resultCounter];
+            }
 
-            $writer->addRow(Row::fromValuesWithStyles($row, columnStyles: $styles));
+            $backgroundColorRow = strtoupper(str_replace('#', '', $backgroundColorRow));
+
+            $rowStyle = (new Style())->setBackgroundColor($backgroundColorRow);
+
+            $writer->addRow(Row::fromValuesWithStyles($row, rowStyle: $rowStyle, columnStyles: $styles));
         }
 
         $writer->close();

@@ -351,7 +351,7 @@ const LimbasUtils = {
      */
     getFetchResources(gsObject = null) {
         return (calendar) => {
-            let resources = {};
+            let resources = new Map();
 
             let inputData = {
                 action: 'get_resources',
@@ -371,7 +371,9 @@ const LimbasUtils = {
                 async: false, // Make the request synchronous
                 success: (data) => {
                     if (data.success) {
-                        resources = data.resources ?? [];
+                        const resourcesResponse = data.resources ?? [];                        
+                        resources = new Map(resourcesResponse.map(item => [item.id, item.content]));                      
+                        
                     } else {
                         console.error('Failed to fetch initial data');
                     }
@@ -978,7 +980,7 @@ class ResourceCalendar {
     }
 
     updateResources() {
-        this.resources = new Map(Object.entries(this.fetchResources()));
+        this.resources = this.fetchResources();
     }
 
     verifyResource(resourceId) {

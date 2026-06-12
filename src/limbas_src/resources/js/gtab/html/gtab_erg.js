@@ -1177,11 +1177,16 @@ function set_color(COLOR) {
 		ajaxGet(null,'main_dyns.php','lmbSetGtabColor&td_color=td_'+line[2]+'_'+line[3]+'_'+COLOR);
 	}
 
-
 }
 
 // --- Sortierfunktion ----------
 function lmbFieldSort(evt,VAL,TYP){
+
+    // move to first page
+    if(document.form1.elements['filter_page[' + jsvar["gtabid"] + ']']) {
+        document.form1.elements['filter_page[' + jsvar["gtabid"] + ']'].value = '1';
+    }
+
 	if(evt.shiftKey){
 		document.form1.order.value = VAL+TYP+'#+';
 		send_form(1,2,1,1,1,0);

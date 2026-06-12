@@ -178,6 +178,12 @@ html, body.nav {
 
 .lmbMenuProfileDropdown {
   white-space: nowrap;
+  
+  .dropdown-menu {
+    right: 0;
+    left: auto;
+  }
+  
 }
 
 .lmbMenuProfileDropdown img {

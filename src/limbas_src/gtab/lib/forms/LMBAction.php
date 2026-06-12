@@ -62,7 +62,7 @@ class LMBAction
         
         $icon = $LINK['icon_url'][$this->actionId];
 
-        return '<a ' . $event . ' class="' . $class . ' ' . (($active) ? 'active' : '') . '" href="#" title="' . $lang[$LINK['desc'][$this->actionId]] . '"><i class="lmb-icon ' . $icon . '"></i></a>';
+        return iconButton($icon . ' lmb-icon ', $event, label: $lang[$LINK['desc'][$this->actionId]], buttonClasses: $class . ' ' . (($active) ? 'active' : ''));
     }
 
     private function renderDropdown($active=false,$event=null,$class='nav-link') {

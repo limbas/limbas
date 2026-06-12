@@ -361,8 +361,11 @@ if($newsystem){
 	# Dateisystem neu anlegen für User 1
 	createDefaultDirs();
 
-    # Eigene globale Variablen Tabelle anlegen
-    create_custvar_table();
+    # crate published cusvar table
+    create_publishedSystemTable('LMB_CUSTVAR_DEPEND','Custom Vars',3,'custvar');
+
+    # crate published template table
+    create_publishedSystemTable('LMB_DEFAULT_TEMPLATES','Default Templates',8);
 
 	# Menürechte neu einlesen für User 1
 	#$check_all = 1;
@@ -456,26 +459,26 @@ function get_lockmessage(){
 	}
 }
 
-function create_custvar_table(){
+function create_publishedSystemTable($table,$description,$type,$template=null){
     global $db;
 
     require_once(COREPATH . 'admin/tables/tab.lib');
 
-    lmb_dropTable('LMB_CUSTVAR_DEPEND');
+    lmb_dropTable($table);
 
-    $tab_group = 0;
+    // get system tabgroup
+    $tab_group = 1;
     $sqlquery = "SELECT TAB_GROUP FROM LMB_CONF_TABLES WHERE UPPER(TABELLE) LIKE 'LDMS_%' LIMIT 1";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     while(lmbdb_fetch_row($rs)){
         $tab_group = lmbdb_result($rs,"TAB_GROUP");
     }
 
-    if($tab_group){
-        # Tabelle LMB_CUSTVAR_DEPEND anlegen
-        if($tab_id = add_tab("LMB_CUSTVAR_DEPEND",$tab_group,"Custom Vars",0,3,1)){
-            # Felder anlegen
-            $nfield = extended_fields_custvar();
-            add_extended_fields($nfield,$tab_id[0],1);
+    if($tab_id = add_tab($table,$tab_group,$description,0,$type,1)){
+        if($template) {
+            $fieldtempl = 'extended_fields_' . $template;
+            $nfield = $fieldtempl();
+            add_extended_fields($nfield, $tab_id[0], 1);
         }
     }
 

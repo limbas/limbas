@@ -54,7 +54,19 @@ img {
 
 /* Sonstiges */
 
+.icon-button {
+  all: unset;
+  display: inline-block;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
 
+}
 
 
 /*ajax container*/

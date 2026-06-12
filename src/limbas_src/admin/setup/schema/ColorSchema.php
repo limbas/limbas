@@ -67,7 +67,7 @@ class ColorSchema extends LimbasModel
         while (lmbdb_fetch_row($rs)) {
             $output[] = new self(
                 intval(lmbdb_result($rs, 'ID')),
-                lmbdb_result($rs, 'NAME'),
+                lmbdb_result($rs, 'NAME') ?? '',
                 lmbdb_result($rs, 'LAYOUT'),
                 lmbdb_result($rs, 'THEME') ?? 'light',
             );

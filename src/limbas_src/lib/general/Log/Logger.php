@@ -60,6 +60,12 @@ class Logger
             }
         }
     }
+    
+    public function close(): void
+    {
+        @fclose($this->handle);
+        unset(self::$instances[$this->name]);
+    }
 
 
     /**

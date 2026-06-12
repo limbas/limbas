@@ -12,24 +12,34 @@ use Limbas\admin\tools\datasync\DatasyncClientHandler;
 use Limbas\admin\tools\update\Updater;
 
 function runlmb($lmpar){
+    global $session;
+
     if($GLOBALS['umgvar']['soap_base64']) {
         $lmpar = unserialize(base64_decode($lmpar));
     }else{
         $lmpar = unserialize($lmpar);
     }
-	if($lmpar['use_noids']){
-		$GLOBALS['lmpar']['use_noids'] = $lmpar['use_noids'];
-		$lmpar = translateAssoziativeArray($lmpar);
-	}
-	if($lmb = parse_action($lmpar)){
-	    if($GLOBALS['umgvar']['soap_base64']) {
+    if($lmpar['use_noids']){
+	$GLOBALS['lmpar']['use_noids'] = $lmpar['use_noids'];
+	$lmpar = translateAssoziativeArray($lmpar);
+    }
+    if($lmb = parse_action($lmpar)){
+
+        // include php session
+        if(is_object($lmb) && !$lmb->session){
+            $lmb->session = array('s_name'=>$session['s_name'],'s_id'=>$session['s_id']);
+        }else if(is_array($lmb) && !$lmb['session']){
+            $lmb['session'] = array('s_name'=>$session['s_name'],'s_id'=>$session['s_id']);
+        }
+
+        if($GLOBALS['umgvar']['soap_base64']) {
             return base64_encode(serialize($lmb));
         }else{
-	        return serialize($lmb);
+            return serialize($lmb);
         }
-	}else{
-		return array();
-	}
+    }else{
+	    return array();
+    }
 }
 
 function translateArrayRecursive(&$arr){

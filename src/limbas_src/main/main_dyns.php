@@ -263,11 +263,7 @@ function dyns_extRelationFields($params){
             if (($params["ExtAction"] == 'trash' OR $params["ExtAction"] == 'archive') AND $params["relationid"]) {
                 $trashlist = explode(',', $params["relationid"]);
                 foreach ($trashlist as $dkey => $did) {
-                    if (hide_data($vgtabid, $did, $params["ExtAction"])) {
-                        lmb_EndTransaction(1);
-                    } else {
-                        lmb_EndTransaction(0);
-                    }
+                    hide_data($vgtabid, $did, $params["ExtAction"]);
                 }
             }
 
@@ -277,13 +273,8 @@ function dyns_extRelationFields($params){
                 $dellist = explode(',', $params["relationid"]);
                 foreach ($dellist as $dkey => $did) {
                     $verkn = set_verknpf($gtabid, $field_id, $ID, 0, $did, 0, 0);
-                    lmb_StartTransaction();
                     if (set_joins($gtabid, $verkn)) {
-                        if(del_data($vgtabid, $did, "delete")){
-                            lmb_EndTransaction(1);
-                        }else{
-                            lmb_EndTransaction(0);
-                        }
+                        del_data($vgtabid, $did, "delete");
                     }
                 }
             }
@@ -564,6 +555,7 @@ function dyns_14_b($params){
     $gformid = $params['gformid'];
     $formid = $params['formid'];
     $nextpage = $params['nextpage'];
+    $search = $params['search'];
     $gsr = null;
     $gresult = null;
 
@@ -588,7 +580,7 @@ function dyns_14_b($params){
     }
 
     # --- Liste aller zu durchsuchenden Verknüpfungsfelder ---
-    if($searchvalue != "*"){
+    if($searchvalue && $searchvalue != "*" && $search){
         $where_ = array();
         $aval_ = array();
         $from_ = array();
@@ -622,8 +614,6 @@ function dyns_14_b($params){
         }
     }
 
-
-
     # finde verknüpften Datensatz
     # (theoretisch auch über if($gresult[$gtabid]["verkn_id"][$bzm]) möglich aber in gtab.lib für unique ausgeschaltet)
     #$verkn = set_verknpf($gtabid,$fieldid,$ID,0,0,1,1);
@@ -652,17 +642,23 @@ function dyns_14_b($params){
 
     if($gresult[$vgtabid]['res_count'] > 0) {
         if ($nextpage > 1) {
-            $scroll = "<div style=\"float:left;width:48%\"><i title=\"{$lang[1296]}\" class=\"lmb-icon lmb-previous\" style=\"cursor:pointer;font-size:1.5em;\" border=\"0\" OnClick=\"lmbAjax_dynsearch(event,null,'14_b','$form_name','$vgtabid','$vfieldid','$gtabid','$fieldid','$ID','$typ','$gformid','$formid','','" . ($nextpage - 1) . "')\"></i></div>";
+            $scroll = "<div 
+            style=\"float:left;width:48%\"><i title=\"{$lang[1296]}\" class=\"lmb-icon lmb-previous cursor-pointer\"  border=\"0\" 
+            OnClick=\"lmbAjax_dynsearch(event,null,'14_b','$form_name','$vgtabid','$vfieldid','$gtabid','$fieldid','$ID','$typ','$gformid','$formid','','" . ($nextpage - 1) . "',$search)\">
+            </i></div>";
         }
         if ($gresult[$vgtabid]['res_count'] > ($filter['anzahl'][$vgtabid]*$nextpage)) {
-            $scroll .= "<div style=\"float:right;\"><i title=\"{$lang[1297]}\" class=\"lmb-icon lmb-next\" border=\"0\" OnClick=\"lmbAjax_dynsearch(event,null,'14_b','$form_name','$vgtabid','$vfieldid','$gtabid','$fieldid','$ID','$typ','$gformid','$formid','','" . ($nextpage + 1) . "')\"></i></div>";
+            $scroll .= "<div style=\"float:right;\">
+            <i title=\"{$lang[1297]}\" class=\"lmb-icon lmb-next cursor-pointer\" border=\"0\" 
+            OnClick=\"lmbAjax_dynsearch(event,null,'14_b','$form_name','$vgtabid','$vfieldid','$gtabid','$fieldid','$ID','$typ','$gformid','$formid','','" . ($nextpage + 1) . "',$search)\"></i></div>";
         }
-        if($scroll) {
-            pop_left();
-            echo $scroll;
-            pop_right();
-            pop_line();
-        }
+    }
+
+    if($scroll) {
+        pop_left();
+        echo $scroll;
+        pop_right();
+        pop_line();
     }
 
     if($gresult[$vgtabid]["id"][0]){
@@ -709,16 +705,8 @@ function dyns_14_b($params){
                 }
             }
 
-            pop_menu2($path.$retrn, "", "", $icon, "", $func);
+            pop_menu2($path.$retrn, "", "", $icon, "min-width:250px", $func);
         }
-
-        if($scroll) {
-            pop_line();
-            pop_left();
-            echo $scroll;
-            pop_right();
-        }
-
 
     }else{
         echo $lang[98];
@@ -727,7 +715,14 @@ function dyns_14_b($params){
     # Verknüpfung löschen
     pop_line();
     $func = "LmExt_RelationFields(null,'$gtabid','$fieldid','','$typ','$ID','','','unlinkall','','$gformid','$formid','".$gfield[$gtabid]["ajaxpost"][$fieldid]."',event);";
-    pop_menu2($lang[1283], "", "", "lmb-icon-cus lmb-rel-del", "", $func);
+    pop_menu2($lang[1283], "", "", "lmb-icon-cus lmb-rel-del text-warning", "clear:left;", $func);
+
+    if($scroll) {
+        pop_line();
+        pop_left();
+        echo $scroll;
+        pop_right();
+    }
 
 }
 
@@ -764,6 +759,8 @@ function dyns_extRelationList($params){
 function dyns_gresultPreView($params){
     global $farbschema;
     global $gfield;
+    global $filter;
+    global $gsr;
 
     require_once(COREPATH . 'gtab/gtab.lib');
     require_once(COREPATH . 'gtab/gtab_type_erg.lib');
@@ -773,7 +770,7 @@ function dyns_gresultPreView($params){
     $ID = $params["ID"];
 
     $onlyfield[$gtabid][] = $fieldid;
-    $gresult = get_gresult($gtabid,1,null,null,null,$onlyfield,$ID);
+    $gresult = get_gresult($gtabid,1,$filter,$gsr,null,$onlyfield,$ID);
     # Ausgabe
     if($gresult){
         $fname = "cftyp_".$gfield[$gtabid]["funcid"][$fieldid];
@@ -1107,14 +1104,14 @@ function dyns_11_a($params){
 
     $value = $params['form_value'];
     $form_name = $params['form_name'];
-    $page = $params['par1'];
-    $null = $params['par2'];
+    $search = $params['search'];
     $gtabid = $params['par3'];
     $fieldid = $params['par4'];
     $ID = $params['par5'];
     $typ = $params['par6'];
     $gformid = $params['gformid']; //level
     $exclude = $params['formid'];
+    $page = $params['nextpage'];
 
     if(!$gformid){$gformid = 0;}
     if(!$exclude){$exclude = array();}
@@ -1168,7 +1165,7 @@ function dyns_11_a($params){
 
     $sqlsel = implode(",",array_unique($sqlsel));
 
-    if($value AND $value != "*"){
+    if($value && $search && $value != "*"){
         $where = "AND (LOWER(".$tabtyp."_W.$field_name) LIKE '%".parse_db_string(lmb_strtolower($value),255)."%' OR LOWER(".$tabtyp."_W.KEYWORDS) LIKE '%".parse_db_string(lmb_strtolower($value),255)."%')";
     }
 
@@ -1223,9 +1220,9 @@ function dyns_11_a($params){
 	$bzm2 = 1;
 
     if($gformid){
-        echo "<div id=\"{$form_name}_{$gformid}_dsl\">";
+        echo "<div style=\"min-width:250px\" id=\"{$form_name}_{$gformid}_dsl\">";
     }else{
-        echo "<div id=\"{$form_name}_dsl\">";
+        echo "<div style=\"min-width:250px\" id=\"{$form_name}_dsl\">";
     }
 
     echo '<table style="width: 100%; border-collapse: collapse;">';
@@ -1241,10 +1238,12 @@ function dyns_11_a($params){
     }
 
     if ($page > 1) {
-        $scroll = "<div style=\"float:left;width:48%\"><i title=\"{$lang[1296]}\" class=\"lmb-icon lmb-previous\" style=\"cursor:pointer;font-size:1.5em;\" border=\"0\" OnClick=\"var element=document.getElementsByName('".$form_name."_ds'); lmbAjax_dynsearch(null,element[0],'11_a','".$gfield[$gtabid]["form_name"][$fieldid]."',".($page-1).",0,'$gtabid','$fieldid','$ID','$typ')\"></i></div>";
+        $scroll = "<div style=\"float:left;width:48%\"><i title=\"{$lang[1296]}\" class=\"lmb-icon lmb-previous cursor-pointer\" border=\"0\" 
+        OnClick=\"lmbAjax_dynsearch(event,null,'11_a','".$gfield[$gtabid]["form_name"][$fieldid]."','','','$gtabid','$fieldid','$ID','$typ','','','".$gfield[$gtabid]["data_type"][$fieldid]."',".($page-1).",$search)\"></i></div>";
     }
     if (lmb_count($id_) > $maxresult) {
-        $scroll .= "<div style=\"float:right;\"><i title=\"{$lang[1297]}\" class=\"lmb-icon lmb-next\" border=\"0\" OnClick=\"var element=document.getElementsByName('".$form_name."_ds'); lmbAjax_dynsearch(null,element[0],'11_a','".$gfield[$gtabid]["form_name"][$fieldid]."',".($page+1).",0,'$gtabid','$fieldid','$ID','$typ')\"></i></div>";
+        $scroll .= "<div style=\"float:right;\"><i title=\"{$lang[1297]}\" class=\"lmb-icon lmb-next cursor-pointer\" border=\"0\" 
+        OnClick=\"lmbAjax_dynsearch(event,null,'11_a','".$gfield[$gtabid]["form_name"][$fieldid]."','','','$gtabid','$fieldid','$ID','$typ','','','".$gfield[$gtabid]["data_type"][$fieldid]."',".($page+1).",$search)\"></i></div>";
     }
     if($scroll) {
         echo '<tr><td></td><td>'.$scroll.'</td>';
@@ -1291,14 +1290,6 @@ EOD;
         echo "<tr><td></td><td><hr></td></tr>";
         echo '<tr><td></td><td>'.$scroll.'</td>';
     }
-
-
-
-
-    #if($bzm > $maxresult){echo "<tr><td colspan=\"2\"><hr></td></tr><tr><td></td><td>
-    #<i class=\"lmb-icon lmb-previous\" style=\"cursor:pointer;font-size:1.5em;\" border=\"0\" OnClick=\"var element=document.getElementsByName('".$form_name."_ds'); lmbAjax_dynsearch(null,element[0],'11_a','".$gfield[$gtabid]["form_name"][$fieldid]."',".($page-1).",0,'$gtabid','$fieldid','$ID','$typ')\"></i>
-    #<i class=\"lmb-icon lmb-next\" style=\"cursor:pointer;font-size:1.5em;\" border=\"0\" OnClick=\"var element=document.getElementsByName('".$form_name."_ds'); lmbAjax_dynsearch(null,element[0],'11_a','".$gfield[$gtabid]["form_name"][$fieldid]."',".($page+1).",0,'$gtabid','$fieldid','$ID','$typ')\"></i>
-    #</td></tr>";}
 
     echo '</table>';
     echo "</div>";
@@ -2118,9 +2109,16 @@ function dyns_fileUploadCheck($params){
     $files = explode(";",$params["name"]);
     $size = explode(";",$params["size"]);
 
+    $maxSize = min(
+        file_size_convert(ini_get('post_max_size')),
+        file_size_convert(ini_get('upload_max_filesize')),
+        $session["uploadsize"],
+    );
+
     foreach ($files as $key => $filename){
         # check for mimetype
         $ext = lmb_strtolower(trim(lmb_substr($filename,lmb_strrpos($filename,'.')+1,4)));
+        $fileSize = $size[$key];
         if(!$gmimetypes['active'][array_search($ext,$gmimetypes["ext"])]){
             lmb_alert($lang[133]."\\n- ".$filename." (.".$ext.")");
             $commit = 1;
@@ -2130,14 +2128,14 @@ function dyns_fileUploadCheck($params){
             sort($maxs);
             lmb_alert($lang[716]." ".file_size($maxs[0])."\\n- ".$filename." (".file_size($size[$key]).")");
             $commit = 1;
-            # check for dublicates
-        }else{
-            if($dublicateFile = check_duplicateFile($filename,$params["level"],$params["ID"])){
-                $existingFile["id"][] = $dublicateFile["id"];
-                $existingFile["name"][] = $dublicateFile["name"];
-                $existingFile["vid"][] = $dublicateFile["vid"];
+            # check for duplicates
+        } else {
+            if($duplicateFile = check_duplicateFile($filename, $params["level"], $params["ID"])){
+                $existingFile["id"][] = $duplicateFile["id"];
+                $existingFile["name"][] = $duplicateFile["name"];
+                $existingFile["vid"][] = $duplicateFile["vid"];
                 $existingFile["typ"][] = "d";
-            }else{
+            } else {
                 $existingFile["name"][] = null;
                 $existingFile["id"][] = null;
                 $existingFile["vid"][] = null;
@@ -3576,8 +3574,9 @@ function dyns_showUserGroupsSearch($params){
 
 function dyns_handleUserGroup($params): void {
     $userGroupController = new UserGroupController();
+    $request = Request::createFromGlobals();
     echo json_encode(
-        $userGroupController->handleRequest($params)
+        $userGroupController->handleRequest($request)
     );
 }
 
@@ -3856,7 +3855,7 @@ function dyns_manageTableTree(): void
  * @param unknown_type $gtabid
  */
 function dyns_colorSelect($params){
-    pop_color("limbasColorSelectSet","'".$params["formname"]."','".$params["gtabid"]."','".$params["fieldid"]."','".$params["id"]."'",$params["container"]);
+    pop_color("limbasColorSelectSet","'".$params["formname"]."','".$params["gtabid"]."','".$params["fieldid"]."','".$params["id"]."'");
 }
 
 

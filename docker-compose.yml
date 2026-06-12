@@ -17,6 +17,7 @@ services:
       retries: 5
   
   limbas_web:
+    
     depends_on:
       limbas_pgsql:
         condition: service_healthy
@@ -35,8 +36,8 @@ services:
     environment:
         LIMBAS_DB_HOST: limbas_pgsql
         LIMBAS_AUTO_INSTALL: 1
-        LIMBAS_USERNAME: limbas
-        LIMBAS_PASSWORD: 12345
+        LIMBAS_USERNAME: admin
+        LIMBAS_PASSWORD: limbas
         LIMBAS_PACKAGE: 'demo.tar.gz'
 
 volumes:

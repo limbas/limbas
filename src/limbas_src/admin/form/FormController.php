@@ -39,6 +39,7 @@ class FormController extends LimbasController
         global $lang;
         global $umgvar;
         global $tabgroup;
+        global $gtab;
         
         $forms = Form::all();
         

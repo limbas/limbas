@@ -601,7 +601,7 @@ function lmbLoadGroupSettings(int $groupId): array
     
     $settings = [];
     while($data = lmbdb_fetch_object($rs)) {
-        $settings[$data->KEY] = $data->VALUE;
+        $settings[$data->SETTING] = $data->VALUE;
     }
     return $settings;
 }

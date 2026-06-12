@@ -16,11 +16,11 @@ use Limbas\lib\db\Database;
 function get_group_settings($group_id) : array {
     if (!isset($group_id)) {return [];}
 
-    $rs = Database::select('lmb_rules_settings',['key','value'],['group_id' => $group_id]);
+    $rs = Database::select('LMB_RULES_SETTINGS',['SETTING','VALUE'],['GROUP_ID' => $group_id]);
 
     $values = [];
     while (lmbdb_fetch_row($rs)) {
-        $values[lmbdb_result($rs, 'key')] = lmbdb_result($rs, 'value');
+        $values[lmbdb_result($rs, 'SETTING')] = lmbdb_result($rs, 'VALUE');
     }
 
     return $values;
@@ -35,8 +35,8 @@ function set_rights(array $ids,$kvs): void
 {
     global $db;
 
-    $deleteSql = 'DELETE FROM LMB_RULES_SETTINGS WHERE group_id = ? AND key = ?';
-    $insertSql = 'INSERT INTO LMB_RULES_SETTINGS (id, group_id, key, value) VALUES (?, ?, ?, ?)';
+    $deleteSql = 'DELETE FROM LMB_RULES_SETTINGS WHERE GROUP_ID = ? AND SETTING = ?';
+    $insertSql = 'INSERT INTO LMB_RULES_SETTINGS (ID, GROUP_ID, SETTING, VALUE) VALUES (?, ?, ?, ?)';
 
     $deleteStmt = lmbdb_prepare($db, $deleteSql);
     $insertStatement = lmbdb_prepare($db, $insertSql);

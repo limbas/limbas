@@ -47,7 +47,15 @@ use Limbas\admin\tools\datasync\DatasyncClient;
         <div class="col-md-4">
             <div class="card h-100">
                 <div class="card-body text-center">
-                    <!--<button class="btn btn-primary">Alle resetten</button>-->
+                    <?php if(!empty($status->currentClient)): ?>
+                        <p class="mb-2">Runden verbleibend:</p>
+                        <p class="fa-3x mb-2"> <?=$status->currentClient->syncCounter + 1 ?></p>
+                        <p><?=$status->currentClient->name?></p>
+                    <?php elseif (!empty($status->nextClient)): ?>
+                        <p class="mb-2">Runden verbleibend:</p>
+                        <p class="fa-3x mb-2"> <?=$status->nextClient->syncCounter + 1 ?></p>
+                        <p><?=$status->nextClient->name?></p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -116,7 +124,7 @@ use Limbas\admin\tools\datasync\DatasyncClient;
 
                                 <div class="accordion">
 
-                                    <?php foreach($clientHistory as $histEntry): ?>
+                                    <?php foreach($clientHistory as $key => $histEntry): ?>
 
                                         <div class="accordion-item mb-2 border-0">
                                             <div class="card cursor-pointer" data-bs-toggle="collapse" data-bs-target="#collapseHist<?=$histEntry->id?>">
@@ -166,7 +174,11 @@ use Limbas\admin\tools\datasync\DatasyncClient;
                                             </div>
                                             <div id="collapseHist<?=$histEntry->id?>" class="accordion-collapse collapse">
                                                 <div class="accordion-body bg-contrast border border-top-0">
-                                                    <?=nl2br($histEntry->log)?>
+                                                    <?php if($key === 0): ?>
+                                                        <?=nl2br($client->getLastestLog())?>
+                                                    <?php else: ?>
+                                                        <?=nl2br($histEntry->log)?>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
                                         </div>

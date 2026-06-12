@@ -39,10 +39,10 @@ if($kategorie AND $req){
 # -------- Interaktiver Job --------
 if($run_job){
 	$job = $run_job;
-	$sqlquery = "SELECT ID,VAL FROM LMB_CRONTAB WHERE ID = $run_job";
+	$sqlquery = "SELECT ID,CONFIG FROM LMB_CRONTAB WHERE ID = $run_job";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if($cronval = lmbdb_result($rs,"VAL")){
+	if($cronval = lmbdb_result($rs,"CONFIG")){
 		lmb_loghandle(lmb_strtolower($kategoriedesc).".log","starting job \t(".lmbdb_result($rs,"ID").")");
 		periodic_job($cronval);
 		lmb_loghandle(lmb_strtolower($kategoriedesc).".log","ending job \t(".lmbdb_result($rs,"ID").")");
@@ -101,7 +101,7 @@ if($refresh_index){
 
 # ---- Cron Job löschen ----
 if($del_job){
-	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = $del_job AND KATEGORY = '$kategoriedesc'";
+	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = $del_job AND TYPE = '$kategoriedesc'";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	#if(!update_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
@@ -109,11 +109,11 @@ if($del_job){
 
 # ---- Cron Job deactivate / activate ----
 if($activate_job){
-	$sqlquery = "SELECT ACTIV FROM LMB_CRONTAB WHERE ID = $activate_job AND KATEGORY = '$kategoriedesc'";
+	$sqlquery = "SELECT ACTIVE FROM LMB_CRONTAB WHERE ID = $activate_job AND TYPE = '$kategoriedesc'";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(lmbdb_result($rs,"ACTIV")){$bool = LMB_DBDEF_FALSE;}else{$bool = LMB_DBDEF_TRUE;}
-	$sqlquery = "UPDATE LMB_CRONTAB SET ACTIV = $bool WHERE ID = $activate_job AND KATEGORY = '$kategoriedesc'";
+	if(lmbdb_result($rs,"ACTIVE")){$bool = LMB_DBDEF_FALSE;}else{$bool = LMB_DBDEF_TRUE;}
+	$sqlquery = "UPDATE LMB_CRONTAB SET ACTIVE = $bool WHERE ID = $activate_job AND TYPE = '$kategoriedesc'";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	#if(!update_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};

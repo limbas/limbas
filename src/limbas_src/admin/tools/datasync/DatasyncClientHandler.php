@@ -139,7 +139,9 @@ class DatasyncClientHandler extends Datasync
     {
         $result = false;
         try {
+            $this->cacheTimestamp = $datasyncData->timestamp;
             $this->writeErrorsToSyncLog($datasyncData->errors);
+            $this->setRecordsDone();
             $result = $this->resetCache($datasyncData->timestamp);
         } catch (Throwable $t) {
             DatasyncLog::error('Reset cache error: ' . $t->getMessage() . ' -- ' . $t->getFile() . ' -- ' . $t->getLine());

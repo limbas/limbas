@@ -1232,6 +1232,22 @@ class importSync
                 }
             }
 
+            if (in_array('funcchecksum', $types) && $GLOBALS['gtab']['checksum']) {
+                $success = 1;
+                foreach ($GLOBALS['gtab']['checksum'] as $tabid => $value) {
+                    if (!lmb_calculateChecksum($tabid)) {
+                        $success = 0;
+                    }
+                }
+                if ($success) {
+                    $this->logger->notice("function : rebuild md5 checksums");
+                } else {
+                    $this->logger->error("function : rebuild md5 checksums failed ");
+                    return false;
+                }
+            }
+
+
             if (in_array('functmpfields', $types)) {
                 require_once(COREPATH . 'admin/tools/multiselect_refresh.lib');
                 multiselectRefreshCount();

@@ -7,10 +7,12 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\Controllers\Admin\JobController;
 use Limbas\lib\http\Route;
 
-$routes = Route::getRoutes();
-$routes->addNamePrefix('admin.');
-$routes->addPrefix('admin');
+Route::group(['prefix' => 'admin', 'name' => 'admin.'], function () {
+    Route::resource('jobs', JobController::class, 'jobs', options: ['exclude' => ['show']]);
+    Route::get('jobs/{id}/run', [JobController::class, 'run'])->name('jobs.run');
+});
 
-return $routes;
+return Route::getRoutes();

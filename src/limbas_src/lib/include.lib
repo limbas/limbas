@@ -16,11 +16,10 @@ use Limbas\gtab\lib\tables\TableFilter;
 use Limbas\lib\auth\Session;
 use Limbas\lib\db\functions\Dbf;
 use Limbas\lib\globals\Lang;
-use Limbas\Limbas;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Routing\Generator\UrlGenerator;
+use Limbas\lib\http\Route;
 use Limbas\lib\general\Log\Log;
 use Limbas\lib\general\Log\LogLevel;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 
 # --- Zeitmessung ---------------------------------------------------
@@ -251,6 +250,9 @@ function convert_Checkbox($value){
 }
 
 function convert_NumberFormat($value,$format){
+    if($value === '' || $value === null) {
+        return '';
+    }
     if (!$value) {
         $value = 0;
     }
@@ -402,7 +404,7 @@ function next_db_id($tab,$field="ID",$sequence=null,$filter=null){
 	    $tab = $GLOBALS['gtab']['table'][$tab];
     }
 
-	if(LMB_DBFUNC_SEQUENCE AND $sequence){
+	if($sequence && LMB_DBFUNC_SEQUENCE == 1){
 		return Dbf::getSequence("LMB_".$tab."_".$field);
 	}else{
 		#if(LMB_DBFUNC_MAXHANDLE){$isnn = " WHERE $field IS NOT NULL";}
@@ -578,6 +580,14 @@ function lmb_calculateChecksum($gtabid,$ID=null){
         $keyfield = 'LMB_SYNC_ID';
     }
 
+    $sqlquery = "SELECT LMB_CALCULATE_CHECKSUM('$keyfield',$gtabid,'{$gtab["table"][$gtabid]}' ".($ID ? ",$ID" : '').")";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if($rs){
+        return true;
+    }
+
+    return false;
+    /*
     // default ID
     $qu[] = Dbf::calculateChecksum($keyfield,1);
 
@@ -587,18 +597,13 @@ function lmb_calculateChecksum($gtabid,$ID=null){
 
     $sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET LMB_CHECKSUM = MD5(".implode(' || ',$qu).")  ".($ID ? "WHERE ID = $ID" : '');
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-
-    if(!$rs){
-        return false;
-    }
+    */
 
     /*
     select
     sum(('x' || substring(LMB_CHECKSUM, 1, 8))::bit(32)::bigint) as ZAHL
     from ebene1
      */
-
-    return true;
 
 }
 
@@ -1509,7 +1514,7 @@ function tableDiff($target1,$target2,$name=null,$vcount1=null,$vcount2=null,$for
 				
 				if($coloring){
 				    if($diff = textDiff($value_[0],$value_[1])){
-				        $out .= "<TR><TD STYLE=\"border:1px solid #CCCCCC\">".textDiff($value_[0],$value_[1])."</td></tr>";
+				        $out .= "<TR><TD STYLE=\"border:1px solid #CCCCCC\">".$diff."</td></tr>";
 				    }
 				}else{
 				    if($vcount1){$out .= "<TR BGCOLOR=\"{$farbschema['WEB7']}\"><TD STYLE=\"border:1px solid #CCCCCC;color:blue;\">$lang[1784] <B>$vcount2</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD STYLE=\"border:1px solid #CCCCCC;color:blue;\">$lang[1784] <B>$vcount1</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD></tr>";}
@@ -1562,6 +1567,13 @@ function textDiff($result1,$result2,$format=null){
     include_once LEGACYPATH . 'pear/Text/Diff/Op/Copy.php';
 
     $nl = '#**#';
+
+    if(is_array($result1)){
+        $result1 = implode(' ',$result1);
+    }
+    if(is_array($result2)){
+        $result2 = implode(' ',$result2);
+    }
 
 	$hlines1 = explode(" ", str_replace("\n"," ".$nl,$result1));
 	$hlines2 = explode(" ", str_replace("\n"," ".$nl,$result2));
@@ -2939,12 +2951,17 @@ if (! function_exists('e')) {
     /**
      * Encode HTML special characters in a string.
      *
-     * @param string|null $value
+     * @param string|BackedEnum|null $value
+     * @param bool $doubleEncode
      * @return string
      */
-    function e(?string $value)
+    function e(string|BackedEnum|null $value, bool $doubleEncode = false): string
     {
-        return htmlentities($value ?? '', encoding: 'UTF-8');
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
+        return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', $doubleEncode);
     }
 }
 
@@ -2981,24 +2998,7 @@ if (!function_exists('route')) {
      */
     function route(string $name, array $parameters = [], bool $schemeRelative = false): string
     {
-        $route = Limbas::$routes->get($name);
-        if(empty($route)) {
-            throw new Exception("Route $name does not exist.");
-        }
-        
-        $routeParameters = [];
-        if(!empty($parameters)) {
-            $compiledRoute = $route->compile();
-            $variables = $compiledRoute->getVariables();
-            foreach($parameters as $key => $value) {
-                if(array_key_exists($key, $variables)) {
-                    $routeParameters[$variables[$key]] = $value;
-                }
-            }
-        }
-        
-        $urlGenerator = new UrlGenerator(Limbas::$routes, Limbas::$context);
-        return $urlGenerator->generate($name, $routeParameters, $schemeRelative ? UrlGeneratorInterface::RELATIVE_PATH : UrlGeneratorInterface::ABSOLUTE_URL);
+        return Route::url($name, $parameters, $schemeRelative);
     }
 
 }
@@ -3012,5 +3012,42 @@ if (! function_exists('lang')) {
     function lang(int $id): string
     {
         return Lang::get($id);
+    }
+}
+
+
+if (! function_exists('iconButton')) {
+    /**
+     * Return a html button with icon => replace by blade component in the future
+     * @param string $class
+     * @param string $onclick
+     * @param string $attributes
+     * @param string $label
+     * @return string
+     */
+    function iconButton(string $class, string $onclick, string $attributes = '', string $label = '', string $buttonClasses = ''): string
+    {
+        
+        if(!str_contains($onclick,'onclick')) {
+            $onclick = 'onclick="' . $onclick . '"';
+        }
+        return '<button type="button" class="icon-button ' . $buttonClasses . '" ' . (!empty($label) ? 'title="' . $label . '" aria-label="' . $label . '"' : '') . '>' . 
+                    '<i class="' . $class . '" ' . $attributes . ' ' . $onclick . ' aria-hidden="true"></i>' . 
+                '</button>';
+    }
+}
+
+
+if (! function_exists('abort')) {
+    /**
+     * Throw an HttpException with the given data.
+     * @param int $code
+     * @param string $message
+     * @param array $headers
+     * @throws HttpException
+     */
+    function abort(int $code, string $message = '', array $headers = [])
+    {
+        throw HttpException::fromStatusCode($code, $message, headers: $headers);
     }
 }

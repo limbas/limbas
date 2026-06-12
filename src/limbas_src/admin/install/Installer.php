@@ -212,7 +212,7 @@ class Installer
         // php-ini - defaultlrl
         $odbcDefaultLrl = get_cfg_var('odbc.defaultlrl');
         if ($odbcDefaultLrl) {
-            $messages[] = new InstallMessage('odbc.defaultlrl',InstallMessage::OK, $odbcDefaultLrl . ' bytes');
+            $messages[] = new InstallMessage('odbc.defaultlrl',InstallMessage::OK, $odbcDefaultLrl . ' bytes (only needed for odbc database connections)');
         } else {
             $messages[] = new InstallMessage('odbc.defaultlrl',InstallMessage::OKWARN);
         }
@@ -466,6 +466,13 @@ class Installer
             $messages[] = new InstallMessage('zip',InstallMessage::OK);
         } else {
             $messages[] = new InstallMessage('zip',InstallMessage::WARN);
+        }
+
+        // php-zip
+        if (class_exists('ZipArchive')) {
+            $messages[] = new InstallMessage('php-zip',InstallMessage::OK);
+        } else {
+            $messages[] = new InstallMessage('php-zip',InstallMessage::WARN);
         }
         
 

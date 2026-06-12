@@ -13,6 +13,7 @@ use Limbas\admin\setup\fonts\FontController;
 use Limbas\admin\setup\tinymce\TinyMceController;
 use Limbas\admin\setup\umgvar\UmgVarController;
 use Limbas\admin\tools\datasync\DataSyncController;
+use Limbas\Controllers\Admin\JobController;
 use Limbas\layout\Layout;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
@@ -201,11 +202,6 @@ elseif ($action == "setup_backup_hist" AND $LINK[$action] == 1) {
 	$require2 = "admin/tools/backup_hist.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
-elseif ($action == "setup_backup_cron" AND $LINK[$action] == 1) {
-	$require1 = "admin/tools/backup.dao";
-	$require2 = "admin/tools/backup_cron.php";
-	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
-}
 elseif ($action == "setup_backup_man" AND $LINK[$action] == 1) {
 	$require1 = "admin/tools/backup.dao";
 	$require2 = "admin/tools/backup_man.php";
@@ -241,10 +237,11 @@ elseif ($action == "setup_currency" AND $LINK[$action] == 1) {
 }
 /*-------------- intern jobs -----------------------*/
 elseif ($action == "setup_indize_db" AND $LINK[$action] == 1) {
-	$require1 = "admin/tools/jobs_ext.lib";
-	$require2 = "admin/tools/jobs_ext.dao";
-	$require3 = "admin/tools/jobs_ext.php";
-	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+    #$require1 = "admin/tools/jobs_ext.lib";
+    #$require2 = "admin/tools/jobs_ext.dao";
+    #$require3 = "admin/tools/jobs_ext.php";
+    $controllerAction = [JobController::class, 'index', []];
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == "setup_indize_hist" AND $LINK[$action] == 1) {
 	$require1 = "extra/explorer/metadata.lib";
@@ -255,12 +252,6 @@ elseif ($action == "setup_indize_hist" AND $LINK[$action] == 1) {
 elseif ($action == "setup_index" AND $LINK[$action] == 1) {
 	$require1 = "admin/tools/index.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
-}
-elseif ($action == "setup_jobs_cron" AND $LINK[$action] == 1) {
-    $require1 = "admin/tools/jobs_ext.lib";
-    $require2 = "admin/tools/jobs_ext.dao";
-    $require3 = "admin/tools/jobs_cron.php";
-    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 /* ------------------ setup ------------------------ */
 elseif ($action == "setup_umgvar" AND $LINK[$action] == 1) {

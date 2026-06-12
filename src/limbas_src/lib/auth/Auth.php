@@ -10,6 +10,7 @@
 namespace Limbas\lib\auth;
 
 use Limbas\lib\db\Database;
+use Symfony\Component\HttpFoundation\Request;
 
 abstract class Auth
 {
@@ -127,6 +128,18 @@ abstract class Auth
             self::deny();
         }
     }
+    
+    public static function logout(bool $keepSessionStored = false): void
+    {
+        if($keepSessionStored) {
+            Session::saveSessionForUser();
+            Session::close();
+        }
+        else {
+            Session::destroy();
+        }
+    }
+    
 
     /**
      * Hook for actions that should be executed before exiting the script
@@ -246,6 +259,35 @@ abstract class Auth
         return password_hash($password, $hashFunc);
     }
 
+    
+    public static function loginUsingId(int $userId, bool $useSavedSessions = false): bool
+    {
+        if($useSavedSessions) {
+            $loaded = Session::loadSessionForUser($userId);
+            if($loaded) {
+                return true;
+            }
+        }
+
+        $sessionId = 'cli-' . bin2hex(random_bytes(12));
+        Session::start($sessionId);
+
+        $rs = Database::select('LMB_USERDB',['USERNAME'],['ID'=>$userId]);
+        $user = lmbdb_fetch_object($rs);
+        if(empty($user)) {
+            return false;
+        }
+
+        $_SESSION['authenticated'] = true;
+        $_SESSION['authId'] = $userId;
+        $_SESSION['authUser'] = $user->USERNAME;
+
+        $request = Request::createFromGlobals();
+
+        Session::load($request);
+        return true;
+    }
+    
     /**
      * returns the hash function to use
      *

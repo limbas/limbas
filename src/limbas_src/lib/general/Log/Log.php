@@ -14,15 +14,21 @@ use Throwable;
 abstract class Log implements LogInterface
 {
     
-    protected static Logger $logger;
+    protected static ?Logger $logger;
 
     protected static string $logFile;
     
     protected static function init(): void
     {
-        if(!isset(static::$logger)) {
+        if(!isset(static::$logger) || !static::$logger instanceof Logger) {
             static::$logger = Logger::get('limbas', true, static::$logFile ?? null);
         }
+    }
+
+    public static function close(): void
+    {
+        static::$logger->close();
+        static::$logger = null;
     }
 
     public static function getLogger(): Logger

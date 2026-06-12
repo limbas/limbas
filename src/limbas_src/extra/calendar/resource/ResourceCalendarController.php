@@ -272,7 +272,10 @@ class ResourceCalendarController extends LimbasController
                 $retrn[] = $fname($vkey, $ffieldid, $rgtabid, 3, $gresult, 0);
             }
 
-            $resources[$resourceId] = implode($gfield[$gtabid]["verknviewcut"][$recsfield], $retrn);
+            $resources[] = [
+                'id' => $resourceId,
+                'content' => implode($gfield[$gtabid]["verknviewcut"][$recsfield], $retrn)
+            ];
         }
 
         if (method_exists($this, 'lmb_getResourcesExtend')) {

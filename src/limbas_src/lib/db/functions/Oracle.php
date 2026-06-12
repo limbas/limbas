@@ -477,7 +477,7 @@ class Oracle extends DbFunction
             $col["length"][] = lmbdb_result($rs, "LEN");
             $col["scale"][] = trim(lmbdb_result($rs, "DEC"));
             $col["default"][] = lmbdb_result($rs, "DEFAULT");
-            $col["mode"][] = lmbdb_result($rs, "MODE");
+            $col["mode"][] = lmbdb_result($rs, "MODE"); # todo translate to "PRIMARY KEY"
         }
 
         if (!empty($col)) {

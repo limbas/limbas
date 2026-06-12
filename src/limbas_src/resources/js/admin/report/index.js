@@ -53,7 +53,7 @@ function saveReport() {
     }).then(function (data) {
         if (data.success) {
             let $html = $(data.html);
-            $html.find('[data-delete]').on('click', deleteReport);
+            $('[data-delete]').on('click', function() {confirmDelete($(this), deleteReport)});
             $html.find('[data-update]').on('change', updateReport);
 
             let $table = $('#table-' + tabId);
@@ -131,7 +131,7 @@ function loadReportSettings(event) {
     }).then(function (data) {
         if (data.success) {
             let $html = $(data.html);
-            $html.find('[data-delete]').on('click', deleteReport);
+            $('[data-delete]').on('click', function() {confirmDelete($(this), deleteReport)});
             $html.find('[data-update]').on('change', updateReport);
             $('#table-report-templates').html($html);
             $('#btn-add-report-template').data('id', reportId)
@@ -156,7 +156,7 @@ function addTemplate() {
     }).then(function (data) {
         if (data.success) {
             let $html = $(data.html);
-            $html.find('[data-delete]').on('click', deleteReport);
+            $('[data-delete]').on('click', function() {confirmDelete($(this), deleteReport)});
             $html.find('[data-update]').on('change', updateReport);
             $('#table-report-templates').append($html);
         }

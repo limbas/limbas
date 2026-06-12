@@ -512,8 +512,8 @@ function gtabSetTablePosition(reset,scrolltoY){
 	}
 
 	// show save&close button for open in iframe
-	// if((jsvar['verknpf'] > 0 || !parent.main) && parent.window.location.href.indexOf("redirect") < 1) {
-    if((jsvar['detail_isopenas'] == 'iframe' || jsvar['detail_isopenas'] == 'div') && parent.window.location.href.indexOf("redirect") < 1) {
+	// if((jsvar['verknpf'] > 0 || !parent.main) && parent.window.location.href.indexOf('"redirect") < 1) {
+    if((jsvar['detail_isopenas'] == 'iframe' || jsvar['detail_isopenas'] == 'div')) {
 		$("#lmbSbmClose_" + jsvar['gtabid'] + "_" + jsvar['ID']).show();
 	}
 	
@@ -741,7 +741,6 @@ function limbasSetNewCurrency(formname,value,crurency,fieldid){
 function limbasChangeCurrency(el,formname,fieldid){
     var value = $('#'+formname).val().replace(",",".");
 	if(!value){return;}
-    limbasDivShow(el,null,'lmbAjaxContainer','','',1);
 
     const numbval = value.split(' ');
     var curr = jsvar["default_currency"];
@@ -773,7 +772,20 @@ function limbasChangeCurrency(el,formname,fieldid){
         newHtml = jsvar['lng_2979'];
 	}
 
-    $("#lmbAjaxContainer").html(newHtml);
+	$('<div>').html('<div id="lmb_changecurrency">' + newHtml + '</div>').children('div').css('width', '100%').css({
+		'position': 'relative',
+		'left': '0',
+		'top': '0',
+		'width': '100%'
+	}).dialog({
+		appendTo: "#form1",
+		resizable: true,
+		modal: true,
+		width: '600',
+		close: function () {
+			$(this).dialog('destroy').remove();
+		}
+	});
 }
 
 

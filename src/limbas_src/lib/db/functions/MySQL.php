@@ -141,7 +141,7 @@ class MySQL extends DbFunction
      * @param string $value
      * @return string
      */
-    public function handleCaseSensitive(string $value): string
+    public function handleCaseSensitive(?string $value): string
     {
         return lmb_strtoupper($value);
     }
@@ -257,11 +257,12 @@ class MySQL extends DbFunction
         if($table){$sql .= " AND TABLE_NAME = '".$this->handleCaseSensitive($table)."'";}
         if($column){$sql .= " AND COLUMN_NAME = '".$this->handleCaseSensitive($column)."'";}
 
+        $constraint = [];
         $rs = Database::query($sql);
         while(lmbdb_fetch_row($rs)){
-            $constraint["TABLE_NAME"][] = lmbdb_result($rs,"TABLE_NAME");
-            $constraint["COLUMN_NAME"][] = lmbdb_result($rs,"COLUMN_NAME");
-            $constraint["PK_NAME"][] = lmbdb_result($rs,"CONSTRAINT_NAME");
+            $constraint["TABLE_NAME"][] = $this->handleCaseSensitive(lmbdb_result($rs,"TABLE_NAME"));
+            $constraint["COLUMN_NAME"][] = $this->handleCaseSensitive(lmbdb_result($rs,"COLUMN_NAME"));
+            $constraint["PK_NAME"][] = $this->handleCaseSensitive(lmbdb_result($rs,"CONSTRAINT_NAME"));
         }
         return  $constraint;
     }
@@ -269,25 +270,32 @@ class MySQL extends DbFunction
     public function getUniqueConstraints(string $schema, ?string $table = null, ?string $column = null): array
     {
         $sql = "SELECT
-	    KEY_COLUMN_USAGE.CONSTRAINT_NAME, KEY_COLUMN_USAGE.TABLE_NAME, KEY_COLUMN_USAGE.COLUMN_NAME, 
-	    KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME AS FOREIGN_TABLE_NAME,
-	    KEY_COLUMN_USAGE.REFERENCED_COLUMN_NAME AS FOREIGN_COLUMN_NAME
-	FROM 
-		INFORMATION_SCHEMA.KEY_COLUMN_USAGE, INFORMATION_SCHEMA.TABLE_CONSTRAINTS
-	WHERE 
-		KEY_COLUMN_USAGE.CONSTRAINT_SCHEMA = '".$this->handleCaseSensitive($schema)."'
-		AND KEY_COLUMN_USAGE.CONSTRAINT_NAME = TABLE_CONSTRAINTS.CONSTRAINT_NAME
-		AND TABLE_CONSTRAINTS.CONSTRAINT_TYPE = 'UNIQUE'
-		" ;
+          tc.CONSTRAINT_NAME,
+          tc.TABLE_NAME,
+          kcu.COLUMN_NAME,
+          kcu.REFERENCED_TABLE_NAME AS FOREIGN_TABLE_NAME,
+          kcu.REFERENCED_COLUMN_NAME AS FOREIGN_COLUMN_NAME,
+          tc.CONSTRAINT_TYPE
+        FROM
+          INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS tc
+        JOIN
+          INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS kcu
+          ON tc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
+          AND tc.TABLE_SCHEMA = kcu.TABLE_SCHEMA
+          AND tc.TABLE_NAME = kcu.TABLE_NAME
+        WHERE
+          tc.CONSTRAINT_TYPE = 'UNIQUE'";
+
 
         if($table){$sql .= " AND TABLE_NAME = '".$this->handleCaseSensitive($table)."'";}
         if($column){$sql .= " AND COLUMN_NAME = '".$this->handleCaseSensitive($column)."'";}
 
+        $constraint = [];
         $rs = Database::query($sql);
         while(lmbdb_fetch_row($rs)){
-            $constraint["TABLE_NAME"][] = lmbdb_result($rs,"TABLE_NAME");
-            $constraint["COLUMN_NAME"][] = lmbdb_result($rs,"COLUMN_NAME");
-            $constraint["PK_NAME"][] = lmbdb_result($rs,"CONSTRAINT_NAME");
+            $constraint["TABLE_NAME"][] = $this->handleCaseSensitive(lmbdb_result($rs,"TABLE_NAME"));
+            $constraint["COLUMN_NAME"][] = $this->handleCaseSensitive(lmbdb_result($rs,"COLUMN_NAME"));
+            $constraint["PK_NAME"][] = $this->handleCaseSensitive(lmbdb_result($rs,"CONSTRAINT_NAME"));
         }
         return  $constraint;
     }
@@ -309,8 +317,7 @@ class MySQL extends DbFunction
 
     public function dropConstraintSql(string $table, string $constraintName): string
     {
-        // TODO: Implement dropConstraintSql() method.
-        return '';
+        return 'ALTER TABLE ' . $this->handleCaseSensitive($table) . ' DROP CONSTRAINT ' . $this->handleCaseSensitive($constraintName);
     }
 
     public function getForeignKeySql(string $schema, ?string $table, ?string $column = null): string
@@ -320,7 +327,7 @@ class MySQL extends DbFunction
 				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME REFTABLENAME,
 				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_COLUMN_NAME REFCOLUMNNAME,
 				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME FKEYNAME,
-				INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.DELETE_RULE RULE
+				INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.DELETE_RULE ON_DELETE_RULE
 			FROM 
 				INFORMATION_SCHEMA.KEY_COLUMN_USAGE,
 				 INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
@@ -359,9 +366,10 @@ class MySQL extends DbFunction
             $sql .= " WHERE LOWER(TRIGGER_NAME) LIKE '" . lmb_strtolower($triggerName) . "'";
         }
 
+        $res = [];
         $rs = Database::query($sql);
         while(lmbdb_fetch_row($rs)){
-            $res["triggername"][] = lmbdb_result($rs,"TRIGGER_NAME");
+            $res["triggername"][] = $this->handleCaseSensitive(lmbdb_result($rs,"TRIGGER_NAME"));
             $res["definition"][] = lmbdb_result($rs,"ACTION_STATEMENT");
             $res["tablename"][] = lmbdb_result($rs,"EVENT_OBJECT_TABLE");
             $res["event"][] = lmbdb_result($rs,"EVENT_MANIPULATION");
@@ -482,14 +490,14 @@ class MySQL extends DbFunction
         if($table){$name = $this->handleCaseSensitive($table);}
         if($types){$type = $types;}
 
+        $odbc_table = [];
         $rs = lmbdb_tables($db,null,null,$name,$type);
-
         while(lmbdb_fetch_row($rs)){
             $odbc_table["table_name"][] = lmbdb_result($rs,"TABLE_NAME");
             if(stripos(lmbdb_result($rs,"TABLE_TYPE"),'TABLE') !== false){
                 $odbc_table["table_type"][] = 'TABLE';
             }else{
-                $odbc_table["table_type"][] = lmbdb_result($rs,"TABLE_TYPE");
+                $odbc_table["table_type"][] = strtoupper(lmbdb_result($rs,"TABLE_TYPE"));
             }
         }
 
@@ -572,13 +580,13 @@ class MySQL extends DbFunction
         }
 
         while(lmbdb_fetch_row($rs)) {
-            $col["tablename"][] = lmbdb_result($rs, "TABLE_NAME");
-            $col["columnname"][] = lmbdb_result($rs, "COLUMN_NAME");
-            $col["columnname_lower"][] = $this->handleCaseSensitive(trim(lmbdb_result($rs, "COLUMN_NAME")));
-            $col["datatype"][] = lmbdb_result($rs, "TYPE_NAME");
-            $col["length"][] = lmbdb_result($rs, "PRECISION");
-            $col["default"][] = lmbdb_result($rs, "COLUMN_DEFAULT");
-            $col["scale"][] = trim(lmbdb_result($rs, "SCALE"));
+            $col["tablename"][] = $this->handleCaseSensitive(lmbdb_result($rs, "TABLE_NAME"));
+            $col["columnname"][] = $this->handleCaseSensitive(lmbdb_result($rs, "COLUMN_NAME"));
+            $col["columnname_lower"][] = trim($this->handleCaseSensitive(lmbdb_result($rs, "COLUMN_NAME")));
+            $col["datatype"][] = $this->handleCaseSensitive(lmbdb_result($rs, "TYPE_NAME"));
+            $col["length"][] = $this->handleCaseSensitive(lmbdb_result($rs, "PRECISION"));
+            $col["default"][] = $this->handleCaseSensitive(lmbdb_result($rs, "COLUMN_DEFAULT"));
+            $col["scale"][] = trim($this->handleCaseSensitive(lmbdb_result($rs, "SCALE")));
             if(lmbdb_result($rs, "COLUMN_KEY") == 'PRI') {
                 $col["mode"][] = 'PRIMARY KEY';
             }
@@ -647,6 +655,7 @@ class MySQL extends DbFunction
 
     public function addColumnSql(string $table, array|string $column, array|string $type, array|string $default = null): string
     {
+
         if(is_array($column)) {
             foreach($column as $key => $field){
                 $qu = LMB_DBFUNC_ADD_COLUMN_FIRST . ' ' . $this->handleCaseSensitive($field) . ' ' . $type[$key];
@@ -663,7 +672,7 @@ class MySQL extends DbFunction
             $adf[] = $qu;
         }
 
-        return "ALTER TABLE " . $this->handleCaseSensitive($type) . " " . implode(',',$adf);
+        return "ALTER TABLE " . $this->handleCaseSensitive($table) . " " . implode(',',$adf);
     }
 
     public function createLimbasVknFunction(string $schema, bool $dropOldProcedure = false): bool
@@ -678,9 +687,9 @@ class MySQL extends DbFunction
         }
 
         // seq_nextval
-        $this->dropLimbasVknFunction(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_nextval');
+        $this->dropLimbasVknFunction($GLOBALS['DBA']['DBSCHEMA'],'function','seq_nextval');
         $sqlquery = "
-        CREATE FUNCTION `SEQ_NEXTVAL`(SEQNAME VARCHAR(100)) RETURNS INT(11) 
+        CREATE OR REPLACE FUNCTION `SEQ_NEXTVAL`(SEQNAME VARCHAR(100)) RETURNS INT(11) 
         BEGIN UPDATE LMB_SEQUENCES SET CURRENT_VALUE=(@RET:=CURRENT_VALUE)+INCREMENT WHERE SEQUENCE_NAME=SEQNAME;
         RETURN @RET; 
         END;";
@@ -689,16 +698,64 @@ class MySQL extends DbFunction
 
         // seq_set
         $this->dropLimbasVknFunction($GLOBALS['DBA']['DBSCHEMA'],'function','seq_set');
-        $sqlquery = "CREATE FUNCTION SEQ_SET(SEQNAME VARCHAR(100), CVAL INT(11), INC INT(11)) RETURNS INT(11) 
+        $sqlquery = "CREATE OR REPLACE FUNCTION SEQ_SET(SEQNAME VARCHAR(100), CVAL INT(11), INC INT(11)) RETURNS INT(11) 
         BEGIN REPLACE INTO LMB_SEQUENCES(SEQUENCE_NAME, CURRENT_VALUE, INCREMENT) VALUES(SEQNAME, CVAL, INC);
          RETURN CVAL; 
          END;";
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure seq_set",__FILE__,__LINE__);
         if(!$rs){$commit = 1;}
 
-        // lmb_try_query // todo
-        $sqlquery = "";
 
+
+        // lmb_try_query // todo
+
+/**
+        $sqlquery = "
+CREATE PROCEDURE LMB_TRY_QUERY(IN p_query TEXT, OUT p_success BOOLEAN)
+BEGIN
+
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET p_success = FALSE;
+    
+    SET p_success = TRUE;
+
+    SET @sql = p_query;
+    PREPARE stmt FROM @sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+END
+";
+
+CALL LMB_TRY_QUERY ('update feldtypen set zahl = 22', @success);
+select @success as erg;
+         */
+        $sqlquery = "
+CREATE OR REPLACE FUNCTION LMB_TRY_QUERY (p_query TEXT) RETURNS BOOLEAN DETERMINISTIC BEGIN
+RETURN FALSE;
+
+END
+";
+
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure LMB_TRY_QUERY", __FILE__, __LINE__);
+        if (!$rs) {
+            return false;
+        }
+
+
+        $sqlquery = "
+CREATE OR REPLACE FUNCTION LMB_CALCULATE_CHECKSUM(
+    p_key_field TEXT,
+    p_tab_id INTEGER,
+    p_tab_name TEXT,
+    p_dat_id INTEGER) RETURNS BOOLEAN DETERMINISTIC BEGIN
+
+RETURN TRUE;
+END
+";
+
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure LMB_TRY_QUERY", __FILE__, __LINE__);
+        if (!$rs) {
+            return false;
+        }
         // lmb_lastmodified // todo
         $sqlquery = "";
 

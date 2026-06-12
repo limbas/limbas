@@ -102,6 +102,32 @@ function gftype_date($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
         }else{
             $whr = $like_neg." " . $field_condition . " $like_sens_b '".$convertedDate."' ";
         }
+    } else if (preg_match('/^([+-]?)(\d+)\s*(d|t|w|m|y|j|ho|st|mi)$/i', $gsrres, $matches)) {
+        # Dynamic dates using current date
+        $sign  = $matches[1];
+        $value = $matches[2];
+        $unit  = $matches[3];
+
+        $unitKey = strtolower($unit);
+
+        $unitName = match($unitKey) {
+            'd', 't'   => 'days',
+            'w'        => 'weeks',
+            'm'        => 'months',
+            'y', 'j'   => 'years',
+            'ho', 'st' => 'hours',
+            'mi'       => 'minutes',
+            default    => 'days',
+        };
+
+        $operator = ($sign === '-') ? '-' : '+';
+
+        $date = new DateTime();
+        $date->modify("{$operator}{$value} {$unitName}");
+
+        $timestamp = $date->format('Y-m-d H:i:s');
+
+        $whr = "$like_neg $field_condition $like_sens_b '$timestamp'";
     }
 
     return $whr;
@@ -171,25 +197,47 @@ function gftype_boolean($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
     return $whr;
 }
 
-function gftype_string($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
-
+function gftype_string($gtabid, $fieldid, $field_condition, $gsparams, &$gsrres)
+{
     global $gtab;
     global $gfield;
 
-    $like_neg = $gsparams['like_neg'];
-    $style_sens_b = $gsparams['style_sens_b'];
-    $style_sens_e = $gsparams['style_sens_e'];
-    $case_sens_b = $gsparams['case_sens_b'];
-    $case_sens_e = $gsparams['case_sens_e'];
+    [
+        'like_neg' => $like_neg,
+        'style_sens_b' => $style_sens_b,
+        'style_sens_e' => $style_sens_e,
+        'case_sens_b' => $case_sens_b,
+        'case_sens_e' => $case_sens_e,
+        'gsstxt' => $gsstxt,
+    ] = $gsparams;
 
-    if($gsrres === "#NULL#"){
-        $whr = "(" . $field_condition . " IS NULL OR " . $field_condition . " = '')";
-    }elseif($gsrres=="#NOTNULL#"){
-        $whr = "(" . $field_condition . " IS NOT NULL AND " . $field_condition . " != '')";
-    }else{
-        $whr = $style_sens_b.$field_condition.$style_sens_e." $like_neg LIKE $style_sens_b'$case_sens_b".ltrim(parse_db_string($gsrres,250))."$case_sens_e'$style_sens_e ";
+    $gsrresClean = ltrim(parse_db_string($gsrres, 250));
+
+    $compOp = match ($like_neg . $gsstxt) {
+        '12', 'NOT15' => '>',
+        '13', 'NOT14' => '<',
+        '14', 'NOT13' => '>=',
+        '15', 'NOT12' => '<=',
+        default       => '',
+    };
+
+    if ($compOp) {
+        if ($compOp === '<=' && $gsrresClean !== '') {
+            $compOp = '<';
+            # use unicode to avoid problems with Z turning into AA, which happens when using string increment
+            $lastChar = mb_substr($gsrresClean, -1);
+            $rest = mb_substr($gsrresClean, 0, -1);
+            $nextChar = mb_chr(mb_ord($lastChar) + 1);
+            $gsrresClean = $rest . $nextChar;
+        }
+        $whr = "$style_sens_b$field_condition$style_sens_e $compOp $style_sens_b'$gsrresClean'$style_sens_e ";
+    } elseif ($gsrres === '#NULL#') {
+        $whr = "($field_condition IS NULL OR $field_condition = '')";
+    } elseif ($gsrres === '#NOTNULL#') {
+        $whr = "($field_condition IS NOT NULL AND $field_condition != '')";
+    } else {
+        $whr = "$style_sens_b$field_condition$style_sens_e $like_neg LIKE $style_sens_b'$case_sens_b$gsrresClean$case_sens_e'$style_sens_e ";
     }
-
     return $whr;
 }
 

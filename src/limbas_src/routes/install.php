@@ -10,8 +10,8 @@
 use Limbas\Controllers\InstallationController;
 use Limbas\lib\http\Route;
 
-Route::get('install/', [InstallationController::class, 'index'], 'install.index');
-Route::post('install/', [InstallationController::class, 'index'], 'install.post');
-Route::get('install', [InstallationController::class, 'redirectToTrailingSlash'], 'install.redirect');
+Route::get('install/', [InstallationController::class, 'index'])->name('install.index');
+Route::post('install/', [InstallationController::class, 'index'])->name('install.post');
+Route::get('install', [InstallationController::class, 'redirectToTrailingSlash'])->name('install.redirect');
 
 return Route::getRoutes();

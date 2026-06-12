@@ -135,7 +135,7 @@ class Postgres extends DbFunction
      * @param string $value
      * @return string
      */
-    public function handleCaseSensitive(string $value): string
+    public function handleCaseSensitive(?string $value): string
     { // $this->handleCaseSensitive
         return lmb_strtolower($value);
     }
@@ -303,14 +303,14 @@ WHERE t.schemaname='" . $schema . "'
             $sql .= " AND KCU.COLUMN_NAME = '" . $this->handleCaseSensitive($column) . "'";
         }
 
-        $contraint = [];
+        $constraint = [];
         $rs = lmbdb_exec($db, $sql);
         while (lmbdb_fetch_row($rs)) {
-            $contraint["TABLE_NAME"][] = lmbdb_result($rs, "TABLE_NAME");
-            $contraint["COLUMN_NAME"][] = lmbdb_result($rs, "COLUMN_NAME");
-            $contraint["PK_NAME"][] = lmbdb_result($rs, "CONSTRAINT_NAME");
+            $constraint["TABLE_NAME"][] = lmbdb_result($rs, "TABLE_NAME");
+            $constraint["COLUMN_NAME"][] = lmbdb_result($rs, "COLUMN_NAME");
+            $constraint["PK_NAME"][] = lmbdb_result($rs, "CONSTRAINT_NAME");
         }
-        return $contraint;
+        return $constraint;
     }
 
     public function getUniqueConstraints(string $schema, ?string $table = null, ?string $column = null): array
@@ -335,14 +335,14 @@ WHERE t.schemaname='" . $schema . "'
             $sql .= " AND KCU.COLUMN_NAME = '" . $this->handleCaseSensitive($column) . "'";
         }
 
-        $contraint = [];
+        $constraint = [];
         $rs = lmbdb_exec($db, $sql);
         while (lmbdb_fetch_row($rs)) {
-            $contraint["TABLE_NAME"][] = lmbdb_result($rs, "TABLE_NAME");
-            $contraint["COLUMN_NAME"][] = lmbdb_result($rs, "COLUMN_NAME");
-            $contraint["PK_NAME"][] = lmbdb_result($rs, "CONSTRAINT_NAME");
+            $constraint["TABLE_NAME"][] = lmbdb_result($rs, "TABLE_NAME");
+            $constraint["COLUMN_NAME"][] = lmbdb_result($rs, "COLUMN_NAME");
+            $constraint["PK_NAME"][] = lmbdb_result($rs, "CONSTRAINT_NAME");
         }
-        return $contraint;
+        return $constraint;
     }
 
     public function createPrimaryKeySql(string $table, string $column): string
@@ -367,25 +367,31 @@ WHERE t.schemaname='" . $schema . "'
 
     public function getForeignKeySql(string $schema, ?string $table, ?string $column = null): string
     {
+
         $sql = "SELECT
-	    TC.CONSTRAINT_NAME AS FKEYNAME, TC.TABLE_NAME AS TABLENAME, KCU.COLUMN_NAME AS COLUMNNAME, 
-	    CCU.TABLE_NAME AS REFTABLENAME,
-	    CCU.COLUMN_NAME AS REFCOLUMNNAME,
-	    CONSTRAINT_TYPE 
+          KCU.CONSTRAINT_NAME AS FKEYNAME,
+          KCU.TABLE_NAME AS TABLENAME,
+          KCU.COLUMN_NAME AS COLUMNNAME,
+          REL.TABLE_NAME AS REFTABLENAME,
+          REL.COLUMN_NAME AS REFCOLUMNNAME,
+          RC.DELETE_RULE AS ON_DELETE_RULE,
+          'FOREIGN KEY' AS CONSTRAINT_TYPE 
 	FROM 
-	    INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS TC 
-	    JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS KCU ON TC.CONSTRAINT_NAME = KCU.CONSTRAINT_NAME
-	    JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE AS CCU ON CCU.CONSTRAINT_NAME = TC.CONSTRAINT_NAME
-	WHERE CONSTRAINT_TYPE = 'FOREIGN KEY'";
+          INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS KCU
+          JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS AS RC ON KCU.CONSTRAINT_NAME = RC.CONSTRAINT_NAME
+          AND KCU.CONSTRAINT_SCHEMA = RC.CONSTRAINT_SCHEMA
+          JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS REL ON RC.UNIQUE_CONSTRAINT_NAME = REL.CONSTRAINT_NAME
+          AND RC.UNIQUE_CONSTRAINT_SCHEMA = REL.CONSTRAINT_SCHEMA
+          AND KCU.ORDINAL_POSITION = REL.ORDINAL_POSITION";
 
         if ($table) {
-            $sql .= " AND TC.TABLE_NAME = '" . $this->handleCaseSensitive($table) . "'";
+            $sql .= " AND KCU.TABLE_NAME = '" . $this->handleCaseSensitive($table) . "'";
         }
         if ($column) {
             $sql .= " AND KCU.COLUMN_NAME = '" . $this->handleCaseSensitive($column) . "'";
         }
 
-        $sql .= " ORDER BY TC.TABLE_NAME, KCU.COLUMN_NAME";
+        $sql .= " ORDER BY KCU.TABLE_NAME, KCU.COLUMN_NAME";
 
         return $sql;
     }
@@ -659,20 +665,40 @@ WHERE t.schemaname='" . $schema . "'
             $col["scale"][] = trim(lmbdb_result($rs, "SCALE"));
             $col["default"][] = trim(lmbdb_result($rs, "COLUMN_DEF"));
 
-            #$sql = "SELECT scc.column_name as \"Field\", udt_name as \"UDT\", data_type as \"Type\", is_nullable as \"Is Nullable\",keys.key as \"Key\", column_default as \"Default\"
+/*
+           'c' = 'CHECK'
+           'f' = 'FOREIGN KEY'
+           'p' = 'PRIMARY KEY'
+           'u' = 'UNIQUE'
+           'n' = 'NOT NULL'
+ */
 
             if ($mode) {
                 $sql = "SELECT keys.key as \"Key\"
 	        FROM INFORMATION_SCHEMA.COLUMNS scc LEFT JOIN
-	           (SELECT table_schema, table_name, column_name, (CASE WHEN (c.contype = 'c') THEN 'CHECK'
-	               WHEN (c.contype = 'f') THEN 'FOREIGN KEY'
+	           (SELECT table_schema, table_name, column_name, 
+	           (CASE
 	               WHEN (c.contype = 'p') THEN 'PRIMARY KEY'
 	               WHEN (c.contype = 'u') THEN 'UNIQUE'
-	               ELSE NULL END)  as key
+	               WHEN (c.contype = 'n') THEN 'NOT NULL'
+	               ELSE NULL 
+	             END
+	           )  as key,
+               (CASE
+                  WHEN (c.contype = 'p') THEN 1
+                  WHEN (c.contype = 'u') THEN 2
+                  WHEN (c.contype = 'n') THEN 3
+                  ELSE 3
+                END
+              ) as pri
 	           FROM information_schema.constraint_column_usage col, pg_constraint c
 	           WHERE table_schema = '$schema' AND table_name = '$table'
 	               AND c.conname = col.constraint_name) as keys  ON scc.column_name = keys.column_name
-	        WHERE scc.table_name = '$table' AND scc.column_name = '" . lmbdb_result($rs, "COLUMN_NAME") . "'";
+	        WHERE 
+	            scc.table_name = '$table' 
+	            AND scc.column_name = '" . lmbdb_result($rs, "COLUMN_NAME") . "'
+	            ORDER BY pri
+	            ";
                 if ($rs1 = lmbdb_exec($db, $sql)) {
                     $col["mode"][] = lmbdb_result($rs1, "Key");
                 } else {
@@ -847,7 +873,7 @@ END; $$
 LANGUAGE PLPGSQL;
 	";
 
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure lmb_lastmodified", __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure YEAR", __FILE__, __LINE__);
         if (!$rs) {
             return false;
         }
@@ -864,7 +890,7 @@ END; $$
 LANGUAGE PLPGSQL;
 	";
 
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure lmb_lastmodified", __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure MONTH", __FILE__, __LINE__);
         if (!$rs) {
             return false;
         }
@@ -880,7 +906,7 @@ END; $$
 LANGUAGE PLPGSQL;
 	";
 
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure lmb_lastmodified", __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure DAY", __FILE__, __LINE__);
         if (!$rs) {
             return false;
         }
@@ -948,6 +974,74 @@ LANGUAGE PLPGSQL;
         if (!$rs) {
             return false;
         }
+
+
+
+
+
+
+$sqlquery = "
+CREATE OR REPLACE FUNCTION LMB_CALCULATE_CHECKSUM(
+    p_key_field TEXT,
+    p_tab_id INTEGER,
+    p_tab_name TEXT,
+    p_dat_id INTEGER DEFAULT NULL
+)
+    RETURNS TEXT
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    v_parts      TEXT[] := ARRAY []::TEXT[];
+    v_sql        TEXT;
+    v_result     TEXT;
+    r_field      RECORD;
+BEGIN
+    v_parts := array_append(v_parts, format('coalesce(%I::text, '''')', lower(p_key_field)));
+
+    FOR r_field IN
+        SELECT f.field_name, ft.parse_type
+        FROM lmb_conf_fields f
+                 JOIN lmb_field_types ft ON ft.field_type = f.field_type and ft.data_type = f.data_type
+        WHERE f.tab_id = p_tab_id
+          AND f.checksum = TRUE
+        ORDER BY f.field_id
+        LOOP
+            v_parts := array_append(v_parts,
+                                    CASE r_field.parse_type
+                                        WHEN 4 THEN
+                                            format('coalesce(floor(extract(epoch from %I))::text, '''')', lower(r_field.field_name))
+                                        WHEN 3 THEN
+                                            format('coalesce(%I::integer::text, '''')', lower(r_field.field_name))
+                                        ELSE
+                                            format('coalesce(%I::text, '''')', lower(r_field.field_name))
+                                        END
+                       );
+        END LOOP;
+
+    v_sql := format(
+            'UPDATE %I SET LMB_CHECKSUM = MD5(ROW(%s)::TEXT) %s RETURNING LMB_CHECKSUM',
+            lower(p_tab_name),
+            array_to_string(v_parts, ', '),
+            CASE
+                WHEN p_dat_id IS NOT NULL
+                    THEN format('WHERE ID = %L', p_dat_id)
+                ELSE ''
+                END
+             );
+
+    EXECUTE v_sql INTO v_result;
+
+    RETURN v_result;
+END;
+$$;
+";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, "create procedure LMB_CALCULATE_CHECKSUM", __FILE__, __LINE__);
+        if (!$rs) {
+            return false;
+        }
+
+
 
 
         return true;

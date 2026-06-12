@@ -20,7 +20,7 @@ class Session {
     public static array $globvars = array('session','umgvar','custvar','userdat','groupdat','user_colors','lmcurrency','lmfieldtype','LINK','LINK_ID','LINK_ACTION','farbschema','lang','gsr','filter','mfilter','ffilter','popc','popg','gsnap','gsnapgroup','gform','gformlist','greportlist','gdiaglist','gtabletree','tabgroup','gtab','grule','gfield','gverkn','gfile','ufile','filestruct','verknpool','gmimetypes','gselectpool','gtrigger','greminder','gwfl','gLmbExt','externalStorage','gprinter','lmmultitenants','gcustmenu');
     
     
-    public static function start($sess_id = null, $use_cookies = null): void
+    public static function start($sess_id = null, $use_cookies = null, mixed $sessionData = null): void
     {
         
         session_name('LMB_SESS_ID');
@@ -45,6 +45,17 @@ class Session {
         }
         
         session_start();
+        
+        if(!empty($sessionData)) {
+            $_SESSION = $sessionData;
+        }
+    }
+    
+    public static function close(): void
+    {
+        if(session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
     }
     
     public static function destroy(): void
@@ -101,11 +112,11 @@ class Session {
     
     
     
-    public static function load(Request $request, bool $refresh = false): void
+    public static function load(Request $request = null, bool $refresh = false, string $useSessionId = null): void
     {
         global $session;
 
-        $action = self::setAction($request);
+        $action = $request !== null ? self::setAction($request) : null;
         
         self::assignSessionVars();
 
@@ -119,7 +130,7 @@ class Session {
         if (empty($session)) {
             self::init();
         } else {
-            if (!self::loadSessionFromDB()) {
+            if (!self::loadSessionFromDB($useSessionId)) {
                 Auth::deny();
             }
             self::loadExisting();
@@ -132,7 +143,7 @@ class Session {
         }
         
 
-        if ($action !== 'setup_update' && $action !== 'maintenance' && !defined('LIMBAS_INSTALL') AND !defined('IS_CRON')) {
+        if ($action !== 'setup_update' && $action !== 'maintenance' && !defined('LIMBAS_INSTALL') && !defined('IS_CRON')) {
             Updater::checkVersion();
             if(!$wasReset) {
                 Updater::checkNewVersionAvailable();
@@ -279,13 +290,18 @@ class Session {
     }
 
     
-    private static function loadSessionFromDB()
+    private static function loadSessionFromDB(string $useSessionId = null)
     {
         global $gsnap;
         
         $db = Database::get();
         
-        $session_id = session_id();
+        if(!empty($useSessionId)){
+            $session_id = $useSessionId;
+        }
+        else {
+            $session_id = session_id();
+        }
         
         $sqlquery = "SELECT ID,IP,FILESTRUCT_CHANGED,TABLE_CHANGED,SNAP_CHANGED FROM LMB_SESSION WHERE ID = '".parse_db_string($session_id)."'";
         $rs = lmbdb_exec($db,$sqlquery);
@@ -312,6 +328,60 @@ class Session {
 
         if(!empty($userId)){
             return true;
+        }
+        
+        return false;
+    }
+
+
+    public static function saveSessionForUser(int $userId = null): void
+    {
+        if($userId === null){
+            $userId = $_SESSION['authId'];
+        }
+        
+        if(self::loadSessionForUser($userId, false)){
+            return;
+        }
+        
+        $sessionPath = TEMPPATH . 'session/';
+        if(!file_exists($sessionPath)) {
+            mkdir($sessionPath,0755);
+        }
+        
+        $sessionFile = $sessionPath . 'session-' . $userId;
+        
+        $sessionId = session_id();
+        if(empty($sessionId)){
+            return;
+        }
+        $sessionData = serialize($_SESSION);
+        $sessionString = json_encode(['time'=>time(),'sessionId'=>$sessionId,'sessionData'=>$sessionData]);
+        file_put_contents($sessionFile, $sessionString);
+    }
+
+    public static function loadSessionForUser(int $userId, bool $startSession = true): bool
+    {
+        
+        $sessionFile = TEMPPATH . 'session/session-' . $userId;
+        
+        if (file_exists($sessionFile)) {
+            $rs = Database::select('LMB_UMGVAR',['NORM'],['FORM_NAME'=>'session_save_duration']);
+            $envVar = lmbdb_fetch_object($rs);
+            $sessionDurationMinutes = intval($envVar?->NORM);
+            $sessionDuration = $sessionDurationMinutes * 60;
+            
+            $data = json_decode(file_get_contents($sessionFile));
+            if (!isset($data->time) || time() - $data->time > $sessionDuration || empty($data->sessionData)) {
+                return false;
+            } elseif($startSession) {
+                Session::start(sessionData: unserialize($data->sessionData));
+                Session::load(useSessionId: $data->sessionId);
+                return true;
+            }
+            else {
+                return true;
+            }
         }
         
         return false;

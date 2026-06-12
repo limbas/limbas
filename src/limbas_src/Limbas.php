@@ -10,11 +10,18 @@
 namespace Limbas;
 
 use Exception;
+use Limbas\admin\tools\cron\CommandInterface;
+use Limbas\admin\tools\cron\CronJob;
+use Limbas\admin\tools\cron\JobType;
+use Limbas\admin\tools\cron\LimbasCron;
+use Limbas\admin\tools\cron\Scheduler;
+use Limbas\admin\tools\cron\Task;
 use Limbas\Controllers\DefaultController;
 use Limbas\lib\auth\Auth;
 use Limbas\lib\auth\Session;
 use Limbas\lib\db\Database;
 use Limbas\lib\general\Log\Log;
+use Limbas\lib\http\Route;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -54,7 +61,7 @@ class Limbas extends HttpKernel
         $context->fromRequest($request);
         $this->urlMatcher = new UrlMatcher($routes, $context);
         $requestStack = new RequestStack();
-        
+
         self::$context = $context;
         self::$routes = $routes;
 
@@ -104,6 +111,22 @@ class Limbas extends HttpKernel
         return $response;
     }
 
+    public static function get(bool $loadRoutes = true): self
+    {
+        if ($loadRoutes) {
+            $routes = require COREPATH . '/routes/routes.php';
+        } else {
+            $loadRoutes = Route::getRoutes();
+        }
+        $routes = require __DIR__ . '/routes/routes.php';
+        return new Limbas($routes);
+    }
+
+    public function load(): void
+    {
+        $this->loadMainIncludes();
+        $this->loadGlobalExtensions();
+    }
 
     private function authenticate(Request $request): void
     {
@@ -136,7 +159,7 @@ class Limbas extends HttpKernel
     private function checkIfInstalled(string $routeName): ?bool
     {
         global $DBA;
-        
+
         if (str_starts_with($routeName, 'install.')) {
             return null;
         }
@@ -145,7 +168,7 @@ class Limbas extends HttpKernel
         }
 
         require_once(COREPATH . 'lib/db/db_wrapper.lib');
-        
+
         return Database::checkIfInstalled();
     }
 
@@ -162,6 +185,8 @@ class Limbas extends HttpKernel
             define('IS_REST', true);
         } elseif (str_starts_with($routeName, 'install.')) {
             $this->needsAuthentication = false;
+        } elseif ($routeName === 'cron') {
+            $this->needsAuthentication = false;
         }
         return $routeName;
     }
@@ -169,6 +194,8 @@ class Limbas extends HttpKernel
     private function loadMainIncludes(bool $skipDb = false): void
     {
         global $DBA;
+
+        require_once(COREPATH . 'lib/include.lib');
 
         if (!$skipDb) {
             require_once(COREPATH . 'lib/db/db_wrapper.lib');
@@ -199,6 +226,19 @@ class Limbas extends HttpKernel
                 require_once($extfile);
             }
         }
+    }
+
+    public function runCron(): void
+    {
+        $this->load();
+        $limbasCron = new LimbasCron();
+        $limbasCron->run();
+    }
+
+    public function runCommand(int|string $command, array $args = []): int
+    {
+        $this->load();
+        return LimbasCron::runCommand($command, $args);
     }
 
 }

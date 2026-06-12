@@ -1355,11 +1355,16 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				}else{
 					$sqlquery .= $cdf[0]." ".$cdf[7]."(".$cdf[3].") ".$cdf[8]." ".$default;
 				}
-				if(lmb_strpos($cdf[5],"KEY") !== false){
-					$key = LMB_DBFUNC_PRIMARY_KEY."(".$cdf[0]."),"; $ktyp[] = $cdf[0];$kkey = $cdf[0];
+				if($cdf[5] == "PRIMARY KEY"){
+					$key = LMB_DBFUNC_PRIMARY_KEY."(".$cdf[0]."),";
+                    $ktyp[] = $cdf[0];
+                    $kkey = $cdf[0];
 					$sqlquery .= " NOT NULL,";
-				}
-				else{
+				}elseif($cdf[5] == "UNIQUE"){
+					$sqlquery .= " UNIQUE,";
+				}elseif($cdf[5] == "NOT NULL"){
+					$sqlquery .= " NOT NULL,";
+				}else{
 					$ktyp[] = 0;
 					$sqlquery .= ",";
 				}

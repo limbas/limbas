@@ -19,6 +19,8 @@ function files1($LEVEL){
 	global $userstruct;
 	global $umgvar;
 
+    $userstruct = lmb_getUserGroupList();
+
 	if($LEVEL){
 		echo "<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD WIDTH=\"20\">&nbsp;</TD><TD>\n";
 	}

@@ -505,7 +505,6 @@ function menu_get_admin_tools_backup(){
 	$menu1 = array();
 
 	if($LINK[183]){$menu0 = menu_get_standard(183,0);$menu1 = array_merge($menu1,$menu0);}
-	if($LINK[182]){$menu0 = menu_get_standard(182,1);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[181]){$menu0 = menu_get_standard(181,2);$menu1 = array_merge($menu1,$menu0);}
 
 	return $menu1;
@@ -519,7 +518,6 @@ function menu_get_admin_tools_indize(){
 
 	if($LINK[185]){$menu0 = menu_get_standard(185,0);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[187]){$menu0 = menu_get_standard(187,1);$menu1 = array_merge($menu1,$menu0);}
-    if($LINK[210]){$menu0 = menu_get_standard(210,1);$menu1 = array_merge($menu1,$menu0);}
 
 	return $menu1;
 }

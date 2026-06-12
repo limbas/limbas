@@ -625,9 +625,9 @@ if($pool){
 		$result_fieldselect['def'][$bzm] = lmbdb_result($rs, 'DEF');
 		$result_fieldselect['hide'][$bzm] = lmbdb_result($rs, 'HIDE');
 		$result_fieldselect['haslevel'][$bzm] = lmbdb_result($rs, 'HASLEVEL');
+        $result_fieldselect['color'][$bzm] = lmbdb_result($rs, 'COLOR');
 		if($typ == 'LMB_ATTRIBUTE') {
             $result_fieldselect['mandatory'][$bzm] = lmbdb_result($rs, 'MANDATORY');
-            $result_fieldselect['color'][$bzm] = lmbdb_result($rs, 'COLOR');
             $result_fieldselect['attrpool'][$bzm] = lmbdb_result($rs, 'ATTRPOOL');
             $result_fieldselect['type'][$bzm] = lmbdb_result($rs, 'TYPE');
             $result_fieldselect['hidetag'][$bzm] = lmbdb_result($rs, 'HIDETAG');

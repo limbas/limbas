@@ -60,7 +60,8 @@ class DatasyncMainHandler extends Datasync
         $LIM = array(
             'lim_url' => $url,
             'username' => $username,
-            'pass' => $password
+            'pass' => $password,
+            'cookie' => 'datasync'
         );
 
         $lmpar[0]['action'] = 'run_datasync';
@@ -136,16 +137,19 @@ class DatasyncMainHandler extends Datasync
         return true;
     }
 
-    private function endDataSync(bool $status, array $errors, int $timestamp = null): void
+    private function endDataSync(bool $success, array $errors, int $timestamp = null): void
     {
         // TODO: handle already successfully created records on client
-        $this->endTransaction($status);
+        $this->endTransaction($success);
         $this->writeErrorsToSyncLog($errors);
+        if($success) {
+            $this->setRecordsDone();
+        }
 
         if ($timestamp === null) {
             return;
         }
-        //clean up cache => all successfull removed
+        //clean up cache => all successfully removed
         $this->resetCache($timestamp);
     }
 
@@ -168,7 +172,8 @@ class DatasyncMainHandler extends Datasync
         $LIM = array(
             'lim_url' => $url,
             'username' => $username,
-            'pass' => $password
+            'pass' => $password,
+            'cookie' => 'datasync'
         );
         $lmpar[0]['action'] = 'socket_datasync';
         DatasyncLog::info('Initiating socket');

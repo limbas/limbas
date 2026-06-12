@@ -500,7 +500,7 @@ function pop_color($funcname=null,$fparams=null,$container=null){
     	$fparams = ",".$fparams;
     }
     
-    pop_closetop($container);
+    if ($container) pop_closetop($container);
     echo "<div class=\"lmbContextRow\"><div class=\"lmbContextItem\">";
 	$bzm1 = 1;
 	echo "<table border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tr>\n";

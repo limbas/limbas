@@ -453,7 +453,7 @@ class MaxDB76 extends DbFunction
             $col["length"][] = lmbdb_result($rs, "LEN");
             $col["scale"][] = trim(lmbdb_result($rs, "DEC"));
             $col["default"][] = lmbdb_result($rs, "DEFAULT");
-            $col["mode"][] = lmbdb_result($rs, "MODE"); # 1 / 0 if is primary key
+            $col["mode"][] = lmbdb_result($rs, "MODE"); # 1 / 0 if is primary key todo translate 1 to "PRIMARY KEY"
         }
 
         if (!empty($col)) {

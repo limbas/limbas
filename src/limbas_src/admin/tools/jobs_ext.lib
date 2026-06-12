@@ -131,7 +131,7 @@ function update_crontab(){
 		}
 		}
 		# --- schreiben neuer Inhalte ----
-		$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ACTIV = ".LMB_DBDEF_TRUE." ORDER BY ERSTDATUM";
+		$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ACTIVE = ".LMB_DBDEF_TRUE." ORDER BY ERSTDATUM";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		while(lmbdb_fetch_row($rs)){
@@ -185,7 +185,7 @@ function add_job($kategorie,$job_desc,$job_user,$job_template=null,$cron=null,$i
 
 		$NEXTID = next_db_id("LMB_CRONTAB");
 		
-		$sqlquery = "INSERT INTO LMB_CRONTAB (ID,KATEGORY,START,VAL,DESCRIPTION,ACTIV,JOB_USER) VALUES($NEXTID,'$kategorie','$cron[0];$cron[1];$cron[2];$cron[3];$cron[4]','$val','".parse_db_string($job_desc,60)."',".LMB_DBDEF_TRUE.",'".parse_db_string($job_user,50)."')";
+		$sqlquery = "INSERT INTO LMB_CRONTAB (ID,TYPE,START,CONFIG,DESCRIPTION,ACTIVE,USER_ID) VALUES($NEXTID,'$kategorie','$cron[0];$cron[1];$cron[2];$cron[3];$cron[4]','$val','".parse_db_string($job_desc,60)."',".LMB_DBDEF_TRUE.",'".parse_db_int($job_user,50)."')";
 
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}else{
@@ -244,6 +244,30 @@ function getasubdir($LEVEL,$s){
 		}
 	}
 	return $GLOBALS["subd"];
+}
+
+function getSubDirectory(int|string $currentLevel, bool $includeInitial = true): array
+{
+	static $results = [];
+	if ($includeInitial) {
+		$results = [$currentLevel];
+	}
+
+	global $file_struct;
+
+	if (!isset($file_struct['id'])) return $results;
+
+	foreach ($file_struct['id'] as $key => $id) {
+		if (($file_struct['level'][$key] ?? null) === $currentLevel) {
+			$results[] = $id;
+
+			if (in_array($id, $file_struct['level'], true)) {
+				getSubDirectory($id, false);
+			}
+		}
+	}
+
+	return array_unique($results);
 }
 
 /**
@@ -330,7 +354,7 @@ function fill_history($typ,$res,$time,$inum,$jnum,$msg){
 
 /**
 * Liste zu der Felder aus Cron-Tabelle
-* @param cronval Feld "VAL" aus DB, durch ";" getrennte zu indizierende Felder; Format: "field,fieldid,tabid" oder "file,Odnerid"
+* @param cronval Feld "CONFIG" aus DB, durch ";" getrennte zu indizierende Felder; Format: "field,fieldid,tabid" oder "file,Odnerid"
 * @return indize Array: [tab][]|[field][]
 */
 function field_list($cronval){
@@ -387,12 +411,12 @@ function get_cron_tab() {
 
 
     //get all limbas jobs
-    $sqlquery = "SELECT ID,KATEGORY,START,VAL,ERSTDATUM,ACTIV,DESCRIPTION,ALIVE,JOB_USER FROM LMB_CRONTAB WHERE ACTIV = ".LMB_DBDEF_TRUE;
+    $sqlquery = "SELECT ID,TYPE,START,CONFIG,ERSTDATUM,ACTIVE,DESCRIPTION,ALIVE,USER_ID FROM LMB_CRONTAB WHERE ACTIVE = ".LMB_DBDEF_TRUE;
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
     $cronStr = '';
     while(lmbdb_fetch_row($rs)){
-        $cronStr .= str_replace(";", " ", str_replace(";"," ",lmbdb_result($rs,"START"))." php \"".COREPATH."/cron.php\" ".lmbdb_result($rs,"ID")).' '.lmbdb_result($rs,"JOB_USER"). "\n";
+        $cronStr .= str_replace(";", " ", str_replace(";"," ",lmbdb_result($rs,"START"))." php \"".COREPATH."/cron.php\" ".lmbdb_result($rs,"ID")).' '.lmbdb_result($rs,"USER_ID"). "\n";
     }
 
 

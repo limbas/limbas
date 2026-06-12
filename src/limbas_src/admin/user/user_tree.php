@@ -97,8 +97,15 @@ function setxypos(evt,el) {
                     <input type="hidden" name="mid" VALUE="<?=$mid?>">
                 </FORM>
                 <?php
+
+
                 function files1($LEVEL){
-                    global $userstruct;
+                    static $userstruct;
+
+                    if(!$userstruct){
+                        $userstruct = lmb_getUserGroupList($mid);
+                    }
+
                     if($LEVEL){
                         if($LEVEL){$vis = "style=\"display:none\"";}else{$vis = "";}
                         echo "<div id=\"foldinglist\" $vis>\n";
@@ -137,7 +144,7 @@ function setxypos(evt,el) {
                             }
 
                             if($next){
-                                $tab = 20;files1($userstruct['id'][$bzm]);
+                                files1($userstruct['id'][$bzm]);
                             }else{
                                 echo "<div id=\"foldinglist\" style=\"display:none\"></div>\n";
                             }

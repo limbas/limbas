@@ -216,7 +216,7 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 
 		# ------- boolean dropdown -------
 		if($gfield[$gtabid]["field_type"][$key] == 10){
-			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
+			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" aria-labelledby=\"tdhead_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
 			echo "<option><option value=\"TRUE\" "; if($gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0] == "TRUE"){echo " selected";} echo ">$lang[867]";
 			echo "<option value=\"FALSE\" "; if($gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0] == "FALSE"){echo " selected";} echo ">$lang[866]";
 		
@@ -225,7 +225,7 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 			if($gfield[$gtabid]["field_type"][$key] == 4){$sl = "SELECT";}else{$sl = "ATTRIBUTE";}
 			$sqlquery = "SELECT ID,WERT FROM LMB_".$sl."_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$key]." AND HIDE = ".LMB_DBDEF_FALSE.($gfield[$gtabid]["select_sort"][$key] ? " ORDER BY ".$gfield[$gtabid]["select_sort"][$key] : '');
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
+			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" aria-labelledby=\"tdhead_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
 			echo "<option></option>";
 			while(lmbdb_fetch_row($rs)) {
 				echo "<option value=\"".lmbdb_result($rs,"WERT")."\" ";
@@ -240,7 +240,7 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
             $gsrres = substr($gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0],4);
             $rgresult = get_gresult($rgtabid,1,null,null,null,$onlyfield);
 
-		    echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
+		    echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" aria-labelledby=\"tdhead_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
 		    echo "<option>";
             foreach($rgresult[$rgtabid][$rfieldid] as $relkey => $ralval){
                 echo "<option value=\"#ID#" . $rgresult[$rgtabid]['id'][$relkey] . "\" ".($rgresult[$rgtabid]['id'][$relkey] == $gsrres ? 'selected' : '').">" . $ralval;
@@ -249,7 +249,7 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 
 		# -----
 		}elseif($gfield[$gtabid]["field_type"][$key] != 6 AND $gfield[$gtabid]["field_type"][$key] != 3) {
-            echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_" . $gtabid . "_" . $gfield[$gtabid]["field_id"][$key] . "\" $style name=\"gs[" . $gtabid . "][" . $gfield[$gtabid]["field_id"][$key] . "][0]\" $events>";
+            echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_" . $gtabid . "_" . $gfield[$gtabid]["field_id"][$key] . "\" aria-labelledby=\"tdhead_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[" . $gtabid . "][" . $gfield[$gtabid]["field_id"][$key] . "][0]\" $events>";
             echo "<option>";
             $sqlquery = "SELECT DISTINCT " . $gfield[$gtabid]["field_name"][$key] . " FROM " . $gtab["table"][$gtabid] . " ORDER BY " . $gfield[$gtabid]["field_name"][$key];
             $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
@@ -326,7 +326,7 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 			$disabled = '';
 			$name = "gs[".$gtabid."][".$key."][0]";
 		}
-		echo "<input class=\"gtabHeaderInputINP $aclass\" $style id=\"tdinp_".$gtabid."_".$key."\" type=\"text\" name=\"$name\" value=\"$val\" $onkeyup $events $disabled>";
+		echo "<input class=\"gtabHeaderInputINP $aclass\" $style id=\"tdinp_".$gtabid."_".$key."\" aria-labelledby=\"tdhead_".$gtabid."_".$key."\" type=\"text\" name=\"$name\" value=\"$val\" $onkeyup $events $disabled>";
 	}
 }
 

@@ -7,10 +7,13 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\admin\tools\cron\CronJob;
+use Limbas\admin\tools\cron\JobType;
 
 
 ?>
+<script src="assets/vendor/select2/select2.full.min.js"></script>
+<link href="assets/vendor/select2/select2.min.css" rel="stylesheet">
 
 <script language="JavaScript">
 var img3=new Image();img3.src="assets/images/legacy/outliner/plusonly.gif";
@@ -78,6 +81,28 @@ function index_refresh(val) {
 		document.form1.submit();
 	}
 }
+
+$(function () {
+    $('#job_user_input').select2({
+        placeholder: '<?=$lang[1242]?>',
+        multiple: false,
+        width: '100%',
+        ajax: {
+            delay: 250,
+            dataType: 'json',
+            url: 'main_dyns.php?actid=handleUserGroup&action=data',
+            processResults: function (data) {                
+                return {
+                    results: data.data.map(({ id, name }) => ({
+                        id,
+                        text: name
+                    }))
+                }
+            }
+        }
+    })
+})
+
 </script>
 
 
@@ -146,57 +171,57 @@ function index_refresh(val) {
                                 $cat['datasync'][lmbdb_result($rs,'ID')] = lmbdb_result($rs,'NAME');
                             }
 
-                            $sqlquery = "SELECT ID,KATEGORY,START,VAL,ERSTDATUM,ACTIV,DESCRIPTION,ALIVE,JOB_USER FROM LMB_CRONTAB WHERE KATEGORY = '" . lmb_strtoupper($kategoriedesc) . "' ORDER BY ERSTDATUM";
+                            $sqlquery = "SELECT ID,TYPE,START,CONFIG,ERSTDATUM,ACTIVE,DESCRIPTION,ALIVE,USER_ID FROM LMB_CRONTAB WHERE TYPE = '" . lmb_strtoupper($kategoriedesc) . "' ORDER BY ERSTDATUM";
                             $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-                            while(lmbdb_fetch_row($rs)):
-                                $tid = lmbdb_result($rs,"ID");
-                                $val = lmbdb_result($rs,"VAL");
-                                $category = lmbdb_result($rs,"KATEGORY") ;
+                            $cronJobs = CronJob::all(['TYPE'=>lmb_strtoupper($kategoriedesc)]);
+                            
+                            /** @var CronJob $cronJob */
+                            foreach($cronJobs as $cronJob):
+                                $val = $cronJob->config;
                                 $val0 = explode(";",$val);
                                 $color = '';
-                                if(lmbdb_result($rs,"KATEGORY") == "INDIZE"){
+                                if($cronJob->type === JobType::INDIZE){
                                     $color = "#7AB491";
                                 }
-                                $activ = '';
-                                if(lmbdb_result($rs,"ACTIV")){
-                                    $activ = "CHECKED";
+                                $active = '';
+                                if($cronJob->active){
+                                    $active = "CHECKED";
                                 }
                                 $template = '';
-                                if(lmbdb_result($rs,"KATEGORY") == "TEMPLATE" OR lmbdb_result($rs,"KATEGORY") == "STRUCTURESYNC" OR lmbdb_result($rs,"KATEGORY") == "RSYNC" OR lmbdb_result($rs,"KATEGORY") == "DATASYNC"){
+                                if($cronJob->type === JobType::TEMPLATE || $cronJob->type === JobType::STRUCTURE_SYNC || $cronJob->type === JobType::RSYNC || $cronJob->type === JobType::DATASYNC){
                                     $template = $val0[0];
                                 }
 
-                                if($category == "TEMPLATE"){
+                                if($cronJob->type === JobType::TEMPLATE){
                                     $template = $val0[0];
-                                }elseif($category == "STRUCTURESYNC"){
+                                }elseif($cronJob->type === JobType::STRUCTURE_SYNC){
                                     $template = $cat['structursync'][$val0[0]];
-                                }elseif($category == "DATASYNC" OR $category == "RSYNC"){
+                                }elseif($cronJob->type === JobType::DATASYNC || $cronJob->type === JobType::RSYNC){
                                     $template = $cat['datasync'][$val0[0]];
                                 }
-
 
 
                                 ?>
 
                                 <tr onclick="show_val('');show_val('<?=$val?>');">
-                                    <td><?=lmbdb_result($rs,"ID")?></td>
-                                    <td class="text-nowrap"><?=lmbdb_result($rs,"KATEGORY")?> </td>
+                                    <td><?=$cronJob->id?></td>
+                                    <td class="text-nowrap"><?=$cronJob->type->value?></td>
                                     <td><?=$template?></td>
-                                    <td><?=lmbdb_result($rs,"START")?></td>
-                                    <td><?=lmbdb_result($rs,"JOB_USER")?></td>
-                                    <td><?=lmbdb_result($rs,"DESCRIPTION")?></td>
-                                    <td><input type="checkbox" name="activ_<?=lmbdb_result($rs,"ID")?>" onclick="document.location.href='main_admin.php?&action=setup_indize_db&kategorie=<?=$kategorie?>&activate_job=<?=lmbdb_result($rs,"ID")?>'" <?=$activ?>></td>
-                                    <td><i class="lmb-icon lmb-action" name="activate_<?=lmbdb_result($rs,"ID")?>" OnClick="document.location.href='main_admin.php?&action=setup_indize_db&kategorie=<?=$kategorie?>&run_job=<?=lmbdb_result($rs,"ID")?>';limbasWaitsymbol(event,1);"></i></td>
-                                    <td><A HREF="main_admin.php?&action=setup_indize_db&kategorie=<?=$kategorie?>&del_job=<?=lmbdb_result($rs,"ID")?>"><i class="lmb-icon lmb-trash"></i></A></td>
+                                    <td><?=$cronJob->cronTime?></td>
+                                    <td><?=$cronJob->userName?></td>
+                                    <td><?=$cronJob->description?></td>
+                                    <td><input type="checkbox" name="activ_<?=$cronJob->id?>" onclick="document.location.href='main_admin.php?&action=setup_indize_db&kategorie=<?=$kategorie?>&activate_job=<?=$cronJob->id?>'" <?=$active?>></td>
+                                    <td><i class="lmb-icon lmb-action" name="activate_<?=$cronJob->id?>" OnClick="document.location.href='main_admin.php?&action=setup_indize_db&kategorie=<?=$kategorie?>&run_job=<?=$cronJob->id?>';limbasWaitsymbol(event,1);"></i></td>
+                                    <td><A HREF="main_admin.php?&action=setup_indize_db&kategorie=<?=$kategorie?>&del_job=<?=$cronJob->id?>"><i class="lmb-icon lmb-trash"></i></A></td>
                                 </tr>
 
                                 <?php
 
 
-                                #$cronvalue[] = str_replace(";"," ",lmbdb_result($rs,"START"))."\t php \"".$umgvar["pfad"]."/cron.php\" ".lmbdb_result($rs,"ID")." ".lmbdb_result($rs,"JOB_USER");
+                                #$cronvalue[] = str_replace(";"," ",lmbdb_result($rs,"START"))."\t php \"".$umgvar["pfad"]."/cron.php\" ".lmbdb_result($rs,"ID")." ".lmbdb_result($rs,"USER_ID");
 
-                                endwhile;
+                                endforeach;
                             ?>
 
                             </tbody>
@@ -227,12 +252,7 @@ function index_refresh(val) {
                                         <TD><INPUT TYPE="TEXT" NAME="cron[3]" VALUE="*" class="form-control form-control-sm"></TD>
                                         <TD><INPUT TYPE="TEXT" NAME="cron[4]" VALUE="*" class="form-control form-control-sm"></TD>
                                         <TD class="px-2">
-                                            <div class="input-group input-group-sm">
-                                            <span class="input-group-text">
-                                                <i class="lmb-icon lmb-user-alt cursor-pointer"></i>
-                                            </span>
-                                                <input id="job_user_input" type="text" class="form-control" name="job_user">
-                                            </div>
+                                            <select id="job_user_input" type="text" class="form-select" name="job_user"></select>
                                         </TD>
                                         <td class="text-end"><button type="submit" NAME="add_job" value="1" class="btn btn-primary btn-sm text-nowrap"><?=$lang[2079]?></button></td>
                                     </TR>

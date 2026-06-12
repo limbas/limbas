@@ -13,8 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 require_once(__DIR__ . '/bootstrap.php');
 
 $request = Request::createFromGlobals();
-$routes = require __DIR__ . '/routes/routes.php';
-$limbas = new Limbas($routes);
+$limbas = Limbas::get();
 
 extract($_GET, EXTR_SKIP);
 extract($_POST, EXTR_SKIP);

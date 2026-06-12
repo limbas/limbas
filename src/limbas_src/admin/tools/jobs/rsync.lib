@@ -7,36 +7,13 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-require_once(COREPATH . 'extra/lmbObject/log/LimbasLogger.php');
-require_once(COREPATH . 'admin/tools/datasync/filesync.lib');
-
-
-define("IS_RSYNC",1);
-
-
+use Limbas\admin\tools\cron\commands\Rsync;
 
 /**
- * Enter description here...
+ * @deprecated
  *
  * @param unknown_type $cronval
  */
 function periodic_job($cronval){
-    global $umgvar;
-    global $db;
-
-    $params = explode(';',$cronval);
-    $templateId = $params[0];
-    if(!$templateId){return false;}
-
-    $slaves = lmb_GetSyncSlaves();
-    if(is_array($slaves)){
-        foreach($slaves['slave_active'] as $slaveid => $sctive){
-            if(!$sctive){continue;}
-
-            // rsync files
-            lmb_fileSync_init($templateId,$slaveid);
-
-        }
-    }
-
+    (new Rsync())->handle(['config' => $cronval]);
 }

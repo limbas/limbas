@@ -218,7 +218,55 @@ function getGroupTree($name,$items,$selected=null,$LEVEL=0,$l=null){
 }
 
 
+function getUserList($user_id=null,$group_id=null,$mid=null){
+    global $umgvar;
+    global $db;
 
+    $sqlquery = "SELECT 
+    LMB_USERDB.USER_ID,
+    LMB_USERDB.USERNAME,
+    LMB_USERDB.VORNAME,
+    LMB_USERDB.NAME,
+    LMB_USERDB.GROUP_ID,
+    LMB_USERDB.SUB_GROUP,
+    LMB_USERDB.MULTITENANT,
+    LMB_GROUPS.NAME,
+    LMB_GROUPS.LEVEL
+    FROM LMB_USERDB,LMB_GROUPS
+    WHERE LMB_USERDB.GROUP_ID = LMB_GROUPS.GROUP_ID";
+
+    if($user_id){
+        $sqlquery .= " AND LMB_USERDB.USER_ID = ".$user_id;
+    }
+    if($group_id){
+        $sqlquery .= " AND LMB_USERDB.GROUP_ID = ".$group_id;
+    }
+
+    $user = array();
+
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+
+        // filter multitenants
+        if ($umgvar['multitenant'] && $mid) {
+            $multitenant = explode(';', lmbdb_result($rs1, "MULTITENANT"));
+            if (!in_array($mid, $multitenant)) {
+                continue;
+            }
+        }
+
+        $id = lmbdb_result($rs, "USER_ID");
+        $user['user_id'][$id] = lmbdb_result($rs, "USER_ID");
+        $user['user_name'][$id] = lmbdb_result($rs, "USERNAME");
+        $user['name'][$id] = lmbdb_result($rs, "VORNAME").' '.lmbdb_result($rs, "NAME");
+        $user['group_id'][$id] = lmbdb_result($rs, "GROUP_ID");
+        $user['sub_group'][$id] = explode(";", lmbdb_result($rs, "SUB_GROUP"));
+        $user['level'][$id] = lmbdb_result($rs, "LEVEL");
+
+    }
+
+    return $user;
+}
 
 
 ################### trigger #############################
@@ -849,14 +897,15 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 
     // specific foreign keys
 
-    // reminder
-    $spForKey['ftable'][] = 'LMB_REMINDER_GROUP';
-    $spForKey['ffield'][] = 'REMINDER_ID';
-    $spForKey['ptable'][] = 'LMB_REMINDER';
-    $spForKey['pfield'][] = 'ID';
-    $spForKey['ondelete'][] = 'CASCADE';
+    // reminder_group -> reminder
+    $spForKey['ftable'][0] = 'LMB_REMINDER_GROUP';
+    $spForKey['ffield'][0] = 'REMINDER_ID';
+    $spForKey['ptable'][0] = 'LMB_REMINDER';
+    $spForKey['pfield'][0] = 'ID';
+    $spForKey['ondelete'][0] = 'CASCADE';
 
     foreach($spForKey['ftable'] as $fkey => $ftable){
+        $f0 = null;
 
         # search foreign key
         foreach ($fkys["keyname"] as $key => $keyname){
@@ -864,7 +913,6 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
                 $fkys["columnname"][$key] == Dbf::handleCaseSensitive($spForKey['ffield'][$fkey]) &&
                 $fkys["reftablename"][$key] == Dbf::handleCaseSensitive($spForKey['ptable'][$fkey]) &&
                 $fkys["refcolumnname"][$key] == Dbf::handleCaseSensitive($spForKey['pfield'][$fkey])){
-
                 $f0 = $keyname;
             }
         }
@@ -1098,6 +1146,7 @@ function lmb_getForeignKeys($ftable=null,$fkname=null){
 		$fk["columnname"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"COLUMNNAME"));
 		$fk["reftablename"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"REFTABLENAME"));
 		$fk["refcolumnname"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"REFCOLUMNNAME"));
+        $fk["refondeleterule"][] = Dbf::handleCaseSensitive(lmbdb_result($rs,"ON_DELETE_RULE"));
 	}
 	return $fk;
 }
@@ -1193,25 +1242,28 @@ function lmb_dropAllConstraints($systemindex=null){
         $systemindex = lmb_getSystemConstraints();
     }
 
-    #echo "<pre>";
-    #print_r($systemindex);
+    // gat all ForeignKeys
+    $foreignKeys = lmb_getForeignKeys();
+    foreach($foreignKeys['tablename'] as $key => $table) {
+        $foreignKey[$table][$foreignKeys['columnname'][$key]] = 1;
+    }
 
     // drop unique constraints
-    $contraint = Dbf::getUniqueConstraints($DBA["DBSCHEMA"]);
-    if(is_array($contraint)){
-        foreach($contraint["TABLE_NAME"] as $key => $table){
+    $constraint = Dbf::getUniqueConstraints($DBA["DBSCHEMA"]);
+    if(is_array($constraint)){
+        foreach($constraint["TABLE_NAME"] as $key => $table){
 
             // check if is systemindex
-            if(!$systemindex[Dbf::handleCaseSensitive($table)][Dbf::handleCaseSensitive($contraint['COLUMN_NAME'][$key])]){continue;}
+            if(!$systemindex[Dbf::handleCaseSensitive($table)][Dbf::handleCaseSensitive($constraint['COLUMN_NAME'][$key])]){continue;}
 
-			$sqlquery = Dbf::dropConstraintSql(Dbf::handleCaseSensitive($contraint['TABLE_NAME'][$key]), Dbf::handleCaseSensitive($contraint['PK_NAME'][$key]));
+			$sqlquery = Dbf::dropConstraintSql(Dbf::handleCaseSensitive($constraint['TABLE_NAME'][$key]), Dbf::handleCaseSensitive($constraint['PK_NAME'][$key]));
             $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             if($rs) {
                 $ind[$md5tab][$ind_field] = 1;
-                Log::info('drop contraint '.$contraint['PK_NAME'][$key].' for '.$contraint['TABLE_NAME'][$key].' ('.$contraint['COLUMN_NAME'][$key].')');
+                Log::info('drop contraint '.$constraint['PK_NAME'][$key].' for '.$constraint['TABLE_NAME'][$key].' ('.$constraint['COLUMN_NAME'][$key].')');
             }else{
                 $commit = 1;
-                Log::error('drop contraint '.$contraint['PK_NAME'][$key].' for '.$contraint['TABLE_NAME'][$key].' ('.$contraint['COLUMN_NAME'][$key].') : '.lmbdb_errormsg($db));
+                Log::error('drop contraint '.$constraint['PK_NAME'][$key].' for '.$constraint['TABLE_NAME'][$key].' ('.$constraint['COLUMN_NAME'][$key].') : '.lmbdb_errormsg($db));
             }
         }
     }
@@ -1225,6 +1277,11 @@ function lmb_dropAllConstraints($systemindex=null){
         $tablename = Dbf::handleCaseSensitive(lmbdb_result($rs, "TABLENAME"));
         $fieldname = Dbf::handleCaseSensitive(lmbdb_result($rs, "COLUMNNAME"));
         $indexname = Dbf::handleCaseSensitive(lmbdb_result($rs, "INDEXNAME"));
+
+        // check if is part of foreignKey
+        if($foreignKey[$tablename][$fieldname]){
+            continue;
+        }
 
         // check if is systemindex
         if(!$systemindex[$tablename][$fieldname]){continue;}
@@ -1686,69 +1743,6 @@ function lmb_GetSyncSlaves($slaveID=null){
 }
 
 
-
-/**
- * soap client
- *
- * @param array $lmpar
- * @return result array
- */
-function soap_call_client($lmpar,$LIM){
-	global $lmbs;
-	global $umgvar;
-
-	$lmpar["lmbs"] = $lmbs["session"]["s_id"]; # Session OK
-	
-	# ----- Aktion ausführen ----------
-	if($lmpar) {
-		
-		$client = new SoapClient(NULL,
-		array(
-		"login" =>$LIM["username"], 
-		"password" => $LIM["pass"], 
-		"location" => trim($LIM['lim_url'],'/') . '/main_soap.php',
-		"uri" => "urn:xmethodsSoapServer",
-		"style" => SOAP_RPC,
-		"use" => SOAP_ENCODED,
-		"compression" => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_DEFLATE,
-		"encoding"=>$umgvar['charset']
-		));
-		
-		#"location" => $LIM["lim_url"]."/main_soap.php?".$lmbs["session"]["s_name"]."=".$lmbs["session"]["s_id"],
-
-
-        if($GLOBALS['umgvar']['soap_base64']) {
-            $lmpar = array(base64_encode(serialize($lmpar)));
-        }else {
-            $lmpar = array(serialize($lmpar));
-        }
-
-		try{
-			$lmb = $client->__soapCall("runlmb", $lmpar, array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
-		}catch(Exception $e){
-			//lmb_alert('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
-            Log::error('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
-			return false;
-		}
-
-		if($lmb){
-            if($GLOBALS['umgvar']['soap_base64']) {
-                $lmb = unserialize(base64_decode($lmb));
-            }else {
-                $lmb = unserialize($lmb);
-            }
-		}
-
-		if(is_array($lmb) AND array_key_exists('session', $lmb) AND array_key_exists('s_id', $lmb["session"])){
-			$lmbs["session"] = $lmb["session"];
-			$_SESSION["lmbs"] = $lmbs;
-		}
-		
-	}
-	
-	return $lmb;
-}
-
 /**
  * deletes ufile and ugtab from all users
  *
@@ -1756,7 +1750,7 @@ function soap_call_client($lmpar,$LIM){
  */
 function lmb_delete_user_filesave($userid=null){
 	global $db;
-	
+
 	$prepare_string = "UPDATE LMB_USERDB SET UFILE = ?,UGTAB = ?".($userid ? " WHERE USER_ID = ".parse_db_int($userid) : "");
 	lmb_PrepareSQL($prepare_string, array('',''), __FILE__, __LINE__);
 
@@ -1768,4 +1762,171 @@ function lmb_delete_user_filesave($userid=null){
     return true;
 
 }
+
+
+
+/**
+ * soap client
+ *
+ * @param array $lmpar
+ * @return result array
+ */
+function soap_call_client($lmpar,$LIM){
+	global $umgvar;
+
+    $LIM["session_name"] = "LMB_SESS_ID";
+    #$LIM['cookie'] = 'cookie_';
+
+	# ----- Aktion ausführen ----------
+	if($lmpar) {
+
+		# Cookie Session
+		if($LIM['cookie'] && $umgvar['session_save_duration']){
+			$cookie = lmbCookieGet($LIM);
+			if($cookie){
+				$LIM["session_id"] = $cookie;
+			}
+		}
+
+		$client = new SoapClient(NULL,
+		array(
+		"login" =>$LIM["username"],
+		"password" => $LIM["pass"],
+		"location" => trim($LIM['lim_url'],'/') . '/main_soap.php',
+		"uri" => "urn:xmethodsSoapServer",
+		"style" => SOAP_RPC,
+		"use" => SOAP_ENCODED,
+		"compression" => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_DEFLATE,
+		"encoding"=>$umgvar['charset']
+		));
+
+        if($cookie) {
+            #error_log($LIM["session_name"].'->'.$LIM["session_id"]);
+            $client->__setCookie($LIM["session_name"], $LIM["session_id"]);
+        }
+
+        if($GLOBALS['umgvar']['soap_base64']) {
+            $lmpar = array(base64_encode(serialize($lmpar)));
+        }else {
+            $lmpar = array(serialize($lmpar));
+        }
+
+		try{
+			$lmb = $client->__soapCall("runlmb", $lmpar, array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
+		}catch(Exception $e){
+            Log::error('can not access to '.$LIM["lim_url"].' - '.$e->getMessage());
+			return false;
+		}
+
+		if($lmb){
+            if($GLOBALS['umgvar']['soap_base64']) {
+                $lmb = unserialize(base64_decode($lmb));
+            }else {
+                $lmb = unserialize($lmb);
+            }
+
+            if(is_object($lmb)){
+                $s_name = $lmb->session['s_name'];
+                $s_id = $lmb->session['s_id'];
+            }elseif(is_array($lmb['session'])) {
+                $s_name = $lmb['session']['s_name'];
+                $s_id = $lmb['session']['s_id'];
+            }
+
+            if($LIM['cookie'] && $umgvar['session_save_duration'] && $s_id) {
+                lmbCookieSet($s_name, $s_id, $LIM);
+            }
+		}
+	}
+
+	return $lmb;
+}
+
+function lmbCookieGet($LIM){
+    global $umgvar;
+
+	$HTTP_HOST = gethostname();
+    $LIM["cookie_path"] = DEPENDENTPATH . 'TEMP/'.$LIM["cookie"].'.cookie';
+
+	# read cookie
+	if(file_exists($LIM["cookie_path"])){
+		$cookie = json_decode(file_get_contents($LIM["cookie_path"]),true);
+
+        #error_log(print_r($cookie,1));
+
+        if(is_array($cookie['host'])) {
+
+            foreach ($cookie['host'] as $key => $host) {
+
+                // drop expired cookie (min)
+                if (($umgvar['session_save_duration'] * 60) < (time() - $cookie['timestamp'][$key])) {
+                    continue;
+                }
+
+                // check if cookie already exists
+                if ($cookie['host'][$key] == $HTTP_HOST
+                    && $cookie['url'][$key] == $LIM['lim_url']
+                    && $cookie['user'][$key] == $LIM['username']
+                    && $cookie['session_name'][$key] == $LIM["session_name"]) {
+
+                    return $cookie['session_id'][$key];
+                }
+            }
+        }
+	}
+
+	return false;
+}
+
+
+function lmbCookieSet($s_name,$s_id,$LIM){
+    global $umgvar;
+
+    $HTTP_HOST = gethostname();
+    $LIM["cookie_path"] = DEPENDENTPATH . 'TEMP/'.$LIM["cookie"].'.cookie';
+
+	$cookie = array();
+
+	# read cookie
+	if(file_exists($LIM["cookie_path"])){
+		$cookie = json_decode(file_get_contents($LIM["cookie_path"]),true);
+	}
+
+    if(is_array($cookie['host'])){
+        foreach ($cookie['host'] as $key => $host){
+
+            // drop expired cookie (min)
+            if($umgvar['session_save_duration']*60 < (time() - $cookie['timestamp'][$key]) ){
+                unset($cookie[$key]);
+                continue;
+            }
+
+            // check if cookie already exists
+            if($cookie['host'][$key] == $HTTP_HOST
+                && $cookie['url'][$key] == $LIM['lim_url']
+                && $cookie['user'][$key] == $LIM['username']
+                && $cookie['session_name'][$key] == $s_name
+                && $cookie['session_id'][$key] == $s_id){
+                $host_exists = 1;
+            }
+        }
+    }
+
+    if($host_exists){
+        return true;
+    }
+
+    $cookie['host'][] = $HTTP_HOST;
+    $cookie['timestamp'][] = time();
+    $cookie['url'][] = $LIM['lim_url'];
+    $cookie['user'][] = $LIM['username'];
+    $cookie['session_name'][] = $s_name;
+    $cookie['session_id'][] = $s_id;
+
+	# write cookie
+	$fp = fopen($LIM["cookie_path"],"w");
+    fputs($fp,json_encode($cookie));
+	fclose($fp);
+}
+
 

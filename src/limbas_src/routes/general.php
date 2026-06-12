@@ -11,9 +11,10 @@ use Limbas\Controllers\ApiController;
 use Limbas\Controllers\DefaultController;
 use Limbas\lib\http\Route;
 
-Route::get('/', [DefaultController::class, 'index'], 'index');
-Route::post('/', [DefaultController::class, 'index'], 'index.post');
+Route::get('/', [DefaultController::class, 'index'])->name('index');
+Route::post('/', [DefaultController::class, 'index'])->name('index.post');
 
+Route::get('cron', [DefaultController::class, 'cron'])->name('cron');
 
 Route::all('api/{path}', ApiController::class, 'api',['path' => '.+']);
 

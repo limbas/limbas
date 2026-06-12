@@ -13,14 +13,20 @@ use Limbas\lib\general\Log\Logger;
 
 abstract class DatasyncLog extends Log
 {
-    protected static Logger $logger;
+    protected static ?Logger $logger;
     protected static string $logFile;
     
     protected static function init(): void
     {
-        if(!isset(static::$logger)) {
+        if(!isset(static::$logger) || !static::$logger instanceof Logger) {
             static::$logger = Logger::get('datasync', false, static::$logFile ?? null);
         }
+    }
+
+    public static function close(): void
+    {
+        static::$logger->close();
+        static::$logger = null;
     }
     
     public function appendLog(array $logMessages, string $prefix = ''): void

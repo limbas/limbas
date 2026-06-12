@@ -12,8 +12,8 @@ namespace Limbas\Controllers;
 
 use eftec\bladeone\BladeOne;
 use Exception;
-use Psr\Container\ContainerInterface;
 use SplFileInfo;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;

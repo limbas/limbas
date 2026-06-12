@@ -302,6 +302,9 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
             pop_submenu(132,'','');			# Formulare
             $l = 1;
         }
+        if($LINK[322] && !$gtab["menudisplay"][$gtabid][1][322]){
+            pop_submenu(322,'','');			# Mail
+        }
         if($GLOBALS["greportlist_exist"] && !$gtab["menudisplay"][$gtabid][2][315]){
             pop_submenu(315,'','');             # Berichte
             $l = 1;

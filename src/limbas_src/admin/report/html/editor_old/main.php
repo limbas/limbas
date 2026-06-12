@@ -107,7 +107,7 @@ color[10] = "<?=$farbschema['WEB10']?>";
     <i class="lmb-icon lmb-resizer" BORDER="0"></i>
 </div>
 
-<DIV ID="menu" class="lmbContextMenu lmbContextMenuMove" style="visibility:hidden;top:<?=$menuposy?>;left:<?=$menuposx?>;z-index:10002;">
+<DIV ID="menu" class="lmbContextMenu lmbContextMenuMove" style="display:none;top:<?=$menuposy?>;left:<?=$menuposx?>;z-index:10002;">
 <FORM NAME="form_menu">
 <TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD><?php pop_movetop('menu');?></TD></TR>

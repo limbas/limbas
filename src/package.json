@@ -1,6 +1,6 @@
 {
   "name": "limbas",
-  "version": "7.0.24",
+  "version": "7.1.7",
   "description": "Limbas is a low-code database framework for creating database-driven business applications. As a graphical database front-end, it enables the efficient processing of data stocks and the flexible development of comfortable database applications with hardly any programming knowledge.",
   "repository": {
     "type": "git",

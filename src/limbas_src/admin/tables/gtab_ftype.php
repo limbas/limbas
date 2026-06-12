@@ -43,7 +43,7 @@ $(function() {
             }
         }
     });
-    
+
     $('#argument-change').click(saveArgument);
     $('#argument-refresh').click(refreshArgument);
 
@@ -81,7 +81,7 @@ function convert_field(convert,fieldid,name,size) {
 	var message = '<?=$lang[2021]?>';
 	if(convert == 33 || convert == 34){message += '\nTake care of your referential integrity!';}
 	var desc = confirm("<?=$lang[2020]?> "+name+" ?\n"+message);
-	
+
 	if(desc){
 		document.form1.fieldid.value = fieldid;
 		document.form1.convert_value.value = convert;
@@ -159,12 +159,13 @@ function change_wysiwyg(fieldid,el){
 }
 
 function newwin(FIELDID,ATID,POOL,TYP) {
-fieldselect = open("main_admin.php?action=setup_fieldselect&fieldid=" + FIELDID + "&atid=" + ATID + "&pool=" + POOL + "&field_pool=" + POOL + "&typ=" + TYP ,"Auswahlfelder","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=1000,height=600");
+    const html = `<iframe class="w-100 h-100" style="min-height: 70vh" src="main_admin.php?action=setup_fieldselect&fieldid=${FIELDID}&atid=${ATID}&pool=${POOL}&field_pool=${POOL}&typ=${TYP}"></iframe>`;
+    showFullPageModal('', html, 'lg');
 }
 
 function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
-    
-    
+
+
     let data = {
         'actid': 'editFieldTypeArgument',
         'atid': ATID,
@@ -173,11 +174,11 @@ function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
         'fieldid': FIELDID,
         'type': ARGTYP
     };
-    
+
     if (ARGUMENT != null) {
         data['argument'] = ARGUMENT;
     }
-    
+
     $.ajax({
         url: 'main_dyns_admin.php',
         type: 'GET',
@@ -187,7 +188,7 @@ function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
 
             let $saveButton = $('#argument-change');
             let $refreshButton = $('#argument-refresh');
-            
+
             if (argumenteditor == null) {
                 argumenteditor = CodeMirror.fromTextArea(document.getElementById('fieldargument'), {
                     lineNumbers: true,
@@ -208,33 +209,33 @@ function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
                 if (ARGTYP == 15) {
                     argumenteditor.setOption("mode", 'text/x-php');
                     $('.phpargumentonly').removeClass('d-none');
-                    
+
                     let html = '<option></option>';
-    
+
                     for (let fid in data.fields) {
                         if (data.fields.hasOwnProperty(fid)) {
                             html += '<option value="#*' + fid + '#">' + data.fields[fid] + '</option>';
                         }
-                        
+
                     }
-                    
-                    
+
+
                     $('#phpargfields').html(html);
-                    
+
                 } else {
                     argumenteditor.setOption("mode", 'text/x-sql');
                     $('.phpargumentonly').addClass('d-none');
                 }
-    
+
                 argumenteditor.setValue(data.argument);
                 setTimeout(function() {
                     argumenteditor.refresh();
                 },1);
-                
+
                 $('#model-argument-title').text(data.title);
                 $('#argument-example').text(data.example);
                 $('#argument-refresh-ok').addClass('d-none');
-    
+
                 $saveButton.data('fieldid',FIELDID);
                 $saveButton.data('tabid',TABID);
                 $saveButton.data('atid',ATID);
@@ -245,22 +246,22 @@ function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
                 $refreshButton.data('atid',ATID);
                 $refreshButton.data('argtype',ARGTYP);
 
-            
+
                 $('#modal-argument').modal('show');
             }
-            
-            
-            
-            
+
+
+
+
         }
     });
-    
+
 }
 
     function insertArgumentText(val) {
         argumenteditor.replaceRange(val, argumenteditor.getCursor());
     }
-    
+
     function saveArgument() {
         let $this = $(this);
 
@@ -271,7 +272,7 @@ function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
             $this.data('argtype'),
             argumenteditor.getValue()
         );
-    
+
         $('#argument-change').addClass('btn-outline-primary').removeClass('btn-primary');
     }
 
@@ -279,7 +280,7 @@ function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
 
         let $saveButton = $('#argument-change');
         let $refreshButton = $('#argument-refresh');
-    
+
 
         $refreshButton.hide();
         $saveButton.prop('disabled',true);
@@ -312,18 +313,19 @@ function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
             $('#argument-refresh-progress').addClass('d-none');
         });
     }
-    
+
 function newwin4(FELD,TAB,ATID) {
 verknfield = open("main_admin.php?action=setup_verknfield&tab_group=<?= $tab_group ?>&typ=gtab_ftype&tabid=" + ATID + "&tab=" + TAB + "&fieldid=" + FELD + "" ,"Verknuepfung","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
 }
 function newwin5(FELD,ATID,VERKNID) {
     $('#relation-settings-frame').attr('src', 'main_admin.php?action=setup_verkn_editor&tabid=' + ATID + '&fieldid=' + FELD + '&verkntabid=' + VERKNID);
     $('#modal-relation-settings').modal('show');
-        
+
 }
 
 function newwin7(FIELDID,TABID) {
-grouping_editor = open("main_admin.php?action=setup_grouping_editor&tabid=" + TABID + "&fieldid=" + FIELDID + "" ,"Grouping_Edito","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
+    const html = `<iframe class="w-100 h-100" style="min-height: 70vh" src="main_admin.php?action=setup_grouping_editor&tabid=${TABID}&fieldid=${FIELDID}"></iframe>`;
+    showFullPageModal('', html, 'lg');
 }
 
 
@@ -341,8 +343,8 @@ document.getElementById("sys8").style.display="";
 
 function checkfiledtype(el,el2){
 	// || value == "49"  versiondesc
-	
-	
+
+
 	if(el){
 		var value = el[el.selectedIndex].value;
 		if(el[el.selectedIndex].id){var defaultsize=el[el.selectedIndex].id;}
@@ -365,9 +367,9 @@ function checkfiledtype(el,el2){
 	}else{
 		value = value2;
 	}
-	
+
 	document.getElementById("typ_size").style.visibility='hidden';
-	
+
 	if(defaultsize){
 		document.getElementById("typ_size").value=defaultsize;
 		document.getElementById("typ_size").style.visibility='visible';
@@ -471,8 +473,8 @@ if($table_typ[$bzm] == 5){$isview = 1;}
         </h3>
 
         <table id="fieldtable" class="table table-sm table-striped table-hover mb-0 border bg-contrast">
-            
-            
+
+
             <thead>
             <tr class="text-nowrap">
                 <th></th>
@@ -512,7 +514,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
             /* --- Ergebnisliste --------------------------------------- */
             if($result_fieldtype[$table_gtab[$bzm]]["field_id"]):
-            
+
             foreach ($result_fieldtype[$table_gtab[$bzm]]["field_id"] as $bzm1 => $val):
                 $style = '';
             if ($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 100) {
@@ -529,7 +531,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 <td>
                     <i onclick="activ_menu=1;ajaxEditField('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>')" class="lmb-icon lmb-cog-alt cursor-pointer"></i>
                 </td>
-                
+
                 <?php if(!$isview): ?>
                 <td>
                     <?php if(!((lmb_strtoupper($table_gtab[$bzm]) == "LDMS_FILES" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 33)
@@ -539,20 +541,20 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                     <?php endif; ?>
                 </td>
                 <?php endif; ?>
-                
-                
+
+
                 <?php
-                
-                
+
+
                 if($result_fieldtype[$table_gtab[$bzm]]["view_dependency"][$bzm1]){$color = 'text-info';}else{$color = '';}
                 ?>
 
-                
+
                 <td class="tabSortableHandle">
 					<span id="field<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" class="<?=$color?>"><?= $result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1] ?></span>&nbsp;
                 </td>
-                
-                
+
+
                 <td><input type="text"
                            size="25"
                            name="DESC_<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>"
@@ -567,7 +569,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                            onchange="this.form.fieldid.value='<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>';this.form.spelling.value=this.form.SPELLING_<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>.value;this.form.submit();"
                            class="form-control form-control-sm">
                 </td>
-                
+
                 <td class="text-nowrap">
                     <?php
                     # Typ
@@ -591,22 +593,22 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                     }
                     ?>
                 </td>
-                
+
                 <td>
                     <?php if($lmfieldtype["hassize"][$result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1]]): ?>
 
                         <input type="text" value="<?=$result_fieldtype[$table_gtab[$bzm]]["field_size"][$bzm1]?>" onchange="convert_field('<?=$result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1]?>','<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>','<?=$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1]?>',this.value);" class="form-control form-control-sm">
-                    
+
                     <?php endif; ?>
                 </td>
-                    
-                
-                
+
+
+
                     <?php if(!$isview): ?>
-                    
+
                     <td class="text-nowrap">
                 <?php
-                        
+
                         # defaultvalue
                         if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11 /* relation */){
                             $verknTabid = $result_fieldtype[$table_gtab[$bzm]]['verkntabid'][$bzm1];
@@ -654,18 +656,18 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                                 echo $result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1];
                             }
                         }
-                        
+
                         ?>
                     </td>
-                    
-                    
+
+
                 <?php
                     endif;
 
                     /* --- Argument --------------------------------------- */
                     if($result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1]){
                         $argInFields=true;
-                        
+
                         echo "<TD  ALIGN=\"RIGHT\" NOWRAP>";
                         if($result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1] == 15){
                             if($result_fieldtype[$table_gtab[$bzm]]["argument_edit"][$bzm1] == 1){$argument_edit = "CHECKED";}else{$argument_edit = " ";}
@@ -836,10 +838,10 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                     }
                     elseif($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 30){echo "<TD >&nbsp;</TD>";}
                     #}
-                    
+
                     ?>
 
-                
+
                 <td>
                     <?php
                     //--- Extension ------
@@ -852,10 +854,10 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                             <option value="<?=$value?>" <?=($result_fieldtype[$table_gtab[$bzm]]["ext_type"][$bzm1] == $value)?'selected':''?>><?=$value?></option>
                         <?php endforeach; ?>
                     </select>
-                    
+
                     <?php endif; ?>
                 </td>
-                
+
                 <td>
                     <?php // --- View-Rule ------ ?>
                     <input class="form-control form-control-sm" onchange="viewrule_field(this.value,'<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>');" value="<?=$result_fieldtype[$table_gtab[$bzm]]["view_rule"][$bzm1]?>">
@@ -863,7 +865,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <?php if(!$isview): ?>
                 <td>
-                    <?php // --- Edit-Rule ------  
+                    <?php // --- Edit-Rule ------
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1] != 47 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 20 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 47): ?>
                         <input class="form-control form-control-sm" onchange="editrule_field(this.value,'<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>');" value="<?=$result_fieldtype[$table_gtab[$bzm]]["edit_rule"][$bzm1]?>">
                     <?php endif; ?>
@@ -872,7 +874,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <?php if(!$isview && $gtrigger[$bzm]): ?>
                     <td>
-                        <?php // --- Trigger ------  
+                        <?php // --- Trigger ------
                         if($LINK[226] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22):?>
                             <SPAN STYLE="display:none;position:absolute;width:200px" ID="field_trigger_<?=$bzm1?>" OnClick="activ_menu=1;ajaxEditField('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>')">
                                 <ul class="list-group w-100">
@@ -900,7 +902,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
 
                 <td>
-                    <?php // --- Bezeichner ------  
+                    <?php // --- Bezeichner ------
                     if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 31 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
 
                         if($result_fieldtype[$table_gtab[$bzm]]['mainfield'][$bzm1] == 1){$mainfieldvalue = "CHECKED";} else{$mainfieldvalue = "";}
@@ -923,7 +925,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                             ?>
 
                             <INPUT TYPE="CHECKBOX" NAME="FIELDINDEX_<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" <?=$disabled?> <?=$indexvalue?> onclick="this.form.fieldid.value='<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>';this.form.fieldindex.value='fieldindex_<?=$indexvalue?>';this.form.column.value='<?=$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]?>';this.form.submit();">
-                        
+
                         <?php endif; ?>
                     </td>
                 <?php endif; ?>
@@ -931,7 +933,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <?php if(!$isview): ?>
                     <td>
-                        <?php // --- unique ------  
+                        <?php // --- unique ------
                         $disabled = '';
                         if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19
                             AND !($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 25 AND $result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] == 2)):
@@ -964,7 +966,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <?php if(!$isview): ?>
                     <td>
-                        <?php // --- dynamic search ------  
+                        <?php // --- dynamic search ------
                         if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 12 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 32 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
                             if($result_fieldtype[$table_gtab[$bzm]]["dynsearch"][$bzm1] == 1){$dynsearch = "CHECKED";}else{$dynsearch = "";}
                             ?>
@@ -986,7 +988,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 </td>
 
                 <td>
-                    <?php // --- Select ------  
+                    <?php // --- Select ------
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 25 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 27):
                         if($result_fieldtype[$table_gtab[$bzm]]["artleiste"][$bzm1] == 1){$artleistevalue = "CHECKED";}else{$artleistevalue = "";}
                         ?>
@@ -997,7 +999,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 </td>
 
                 <td>
-                    <?php // --- quicksearch ------  
+                    <?php // --- quicksearch ------
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
                         if($result_fieldtype[$table_gtab[$bzm]]["quicksearch"][$bzm1] == 1){$quicksearchvalue = "CHECKED";}else{$quicksearchvalue = "";}
                         ?>
@@ -1008,7 +1010,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 </td>
 
                 <td>
-                    <?php // --- fullsearch ------  
+                    <?php // --- fullsearch ------
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 33 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 20):
                         if($result_fieldtype[$table_gtab[$bzm]]["fullsearch"][$bzm1] == 1){$fullsearchvalue = "CHECKED";}else{$fullsearchvalue = "";}
                         ?>
@@ -1028,7 +1030,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 </td>
 
                 <td>
-                    <?php // --- Gruppierbar ------  
+                    <?php // --- Gruppierbar ------
                     if(($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100) && !($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 22 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 31 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 32 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 18  OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 13 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 16)):
                         if($result_fieldtype[$table_gtab[$bzm]]["groupable"][$bzm1] == 1){$groupablevalue = "CHECKED";}else{$groupablevalue = "";}
                         ?>
@@ -1039,7 +1041,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 </td>
 
                 <td>
-                    <?php // --- coll_replace ------  
+                    <?php // --- coll_replace ------
                     if(($result_fieldtype[$table_gtab[$bzm]]["parsetype"][$bzm1] != 100) && !($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND !$result_fieldtype[$table_gtab[$bzm]]["argument"][$bzm1] AND ($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 4 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 5 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 2 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 10 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 21 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 18))):
                         if($result_fieldtype[$table_gtab[$bzm]]["collreplace"][$bzm1] == 1){$collreplacevalue = "CHECKED";}else{$collreplacevalue = "";}
                         ?>
@@ -1081,12 +1083,12 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 </td>
                 <?php endif; ?>
             </TR>
-                
-                
+
+
                 <?php
 
                     endforeach;
-            
+
             endif;
 
             ?>
@@ -1217,11 +1219,11 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                     </td>
                 </TR>
                 </tfoot>
-    
+
             <?php endif; ?>
-            
-            
-            
+
+
+
 
 
         </table>

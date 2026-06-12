@@ -124,14 +124,20 @@ class Update7m0 extends Update
 
         $exists = $this->valueExistsInDb('LMB_UMGVAR', 'FORM_NAME', 'calendar_preview_hour_start');
         if (!$exists) {
-            $nid = next_db_id('lmb_umgvar');
-            $sqlQueries += ["INSERT INTO LMB_UMGVAR VALUES($nid,$nid,'calendar_preview_hour_start','2','events started x hours before current time are shown',2700)"];
+            $nextId = next_db_id('LMB_UMGVAR');
+            $sqlQueries += ["INSERT INTO LMB_UMGVAR VALUES($nextId,$nextId,'calendar_preview_hour_start','2','events started x hours before current time are shown',2700)"];
         }
 
+        //TODO: Update korrigieren
         $exists = $this->valueExistsInDb('LMB_UMGVAR', 'FORM_NAME', 'calendar_preview_hour_end');
         if (!$exists) {
-            $nid = next_db_id('lmb_umgvar');
-            $sqlQueries += ["INSERT INTO LMB_UMGVAR VALUES($nid,$nid,'calendar_preview_hour_end','24','events that start x hours after current time are shown',2700)"];
+            if(!isset($nextId)) {
+                $nextId = next_db_id('LMB_UMGVAR');
+            }
+            else {
+                $nextId++;
+            }
+            $sqlQueries += ["INSERT INTO LMB_UMGVAR VALUES($nextId,$nextId,'calendar_preview_hour_end','24','events that start x hours after current time are shown',2700)"];
         }
 
         return $this->databaseUpdate($sqlQueries);
@@ -214,7 +220,7 @@ class Update7m0 extends Update
         return $this->databaseUpdate('CREATE TABLE LMB_RULES_SETTINGS (
              ID ' . LMB_DBTYPE_INTEGER . ' NOT NULL ' . LMB_DBFUNC_PRIMARY_KEY . ',
              GROUP_ID ' . LMB_DBTYPE_INTEGER . ',
-             KEY ' . LMB_DBTYPE_VARCHAR . '(50),
+             SETTING ' . LMB_DBTYPE_VARCHAR . '(50),
              VALUE ' . LMB_DBTYPE_VARCHAR . '(400)
             )');
     }

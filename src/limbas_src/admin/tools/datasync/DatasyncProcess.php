@@ -137,7 +137,7 @@ class DatasyncProcess
         $this->updateHistoryEntry($client->id, $status);
 
         DatasyncLog::info('Sync finished' . ($status !== 1 ? ' with errors' : ''));
-
+        DatasyncLog::close();
     }
 
     /**

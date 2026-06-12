@@ -353,6 +353,7 @@ abstract class Update
         }, $tables);
 
 
+        require_once(COREPATH . 'lib/include_admin.lib');
         require_once(COREPATH . 'admin/tools/import.dao');
 
         $tempUserPath = USERPATH . $session['user_id'] . '/temp/';

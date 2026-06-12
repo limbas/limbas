@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\admin\tools\cron\commands\Indize;
 use Limbas\lib\db\functions\Dbf;
 
 require_once(COREPATH . 'admin/tools/jobs_ext.lib');
@@ -139,7 +140,7 @@ function prepare_memo_indize($indi){
             }
         }
 
-		if(!$umgvar["IS_CRON"]){updateProgressBar($stat_name, $bzm, $jobsum);}
+		if(!defined('IS_CRON')){updateProgressBar($stat_name, $bzm, $jobsum);}
 		$indi["words"] = null;
 		$bzm++;
 
@@ -150,7 +151,7 @@ function prepare_memo_indize($indi){
 			return $indi;
 		}
 	}
-    if(!$umgvar["IS_CRON"]){finishProgressBar($stat_name, $jobsum);}
+    if(!defined('IS_CRON')){finishProgressBar($stat_name, $jobsum);}
     if($commit){return false;}else{return $indi;}
 }
 
@@ -191,7 +192,7 @@ function prepare_filelevel_indize($level){
 	while(lmbdb_fetch_row($rs)) {
 
 		# status
-        if (!$umgvar['IS_CRON']) {updateProgressBar($stat_name, $bzm - 1, $fileCount, $folderName . ': ' . lmbdb_result($rs, 'NAME'));}
+        if (!defined('IS_CRON')) {updateProgressBar($stat_name, $bzm - 1, $fileCount, $folderName . ': ' . lmbdb_result($rs, 'NAME'));}
 
 		$indi["cacheId"] = null;
 		$indi["words"] = null;
@@ -302,7 +303,7 @@ function prepare_filelevel_indize($level){
 		# log
 		lmb_loghandle("indize.log",$folderName." : ".lmbdb_result($rs,"NAME")." : ".$inc,$zeit_main);
 	}
-    if(!$umgvar["IS_CRON"]){finishProgressBar($stat_name, $fileCount);}
+    if(!defined('IS_CRON')){finishProgressBar($stat_name, $fileCount);}
     if($commit){return false;}else{return $indi;}
 }
 
@@ -567,45 +568,13 @@ function del_file_index($fid){
 }
 
 /**
+ * @deprecated
+ * 
  * Starts periodic indexing
  * @param $cronval string value from LMB_CRONTAB.VAL
  */
 function periodic_job($cronval){
-	global $error_msg;
-	global $timeout;
-
-	$zeit_main = gettime();
-	# -------- Liste zu indizierenden Feldern --------
-	if($indize = field_list($cronval)){
-		# --- Feldliste ---
-		foreach($indize["id"] as $key => $value){
-			if($indize["field"][$key] AND $indize["tab"][$key] AND $indize["typ"][$key] == 'field'){
-				$indi = table_infos($indize["tab"][$key],$indize["field"][$key]);
-				$indi = prepare_memo_indize($indi);
-				$typ[] = "Databased Index";
-				if($timeout){break;}
-			}elseif($indize['typ'][$key] == 'file' AND $indize["file"][$key]){
-				$indi = prepare_filelevel_indize($indize["file"][$key]);
-				$typ[] = "Filestructure Index";
-				if($timeout){break;}
-			}
-		}
-
-		if($typ){
-			if(in_array("Filestructure Index",$typ) AND in_array("Databased Index",$typ)){$typ = "Mixed Index";}
-			else{$typ = $typ[0];}
-
-			$zeit_now = gettime();
-			$zeit_dauer = number_format(($zeit_now - $zeit_main),4,'.','');
-			# -------- History-Eintrag --------
-			if($indi["gnumf"]){$gnum = $indi["gnumf"];}elseif($indi["gnumfs"]){$gnum = $indi["gnumfs"];}
-			if($error_msg){
-				fill_history($typ,'FALSE',$zeit_dauer,$gnum,$indi["jnumfs"],"errors listed in TEMP/index_error.log");
-			}else{
-				fill_history($typ,'TRUE',$zeit_dauer,$gnum,$indi["jnumfs"],'');
-			}
-		}
-	}
+    (new Indize())->handle(['config' => $cronval]);
 }
 
 /**

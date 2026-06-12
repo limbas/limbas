@@ -10,10 +10,6 @@
 use Limbas\admin\report\PdfStandard;
 use Limbas\admin\setup\fonts\Font;
 
-set_time_limit(1200); #20min
-ini_set('memory_limit','1024M');
-
-
 # include extensions
 if($GLOBALS["gLmbExt"]["ext_report.inc"]){
 	foreach ($GLOBALS["gLmbExt"]["ext_report.inc"] as $key => $extfile){

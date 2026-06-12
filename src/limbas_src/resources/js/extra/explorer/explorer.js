@@ -1344,6 +1344,7 @@ function LmEx_open_dublicates() {
 
 function LmEx_closeIframeDialog() {
     if($('#LmEx_DetailFrame').hasClass('ui-dialog-content')){
+        $('#LmEx_DetailOpen').attr('src', 'about:blank');
         $('#LmEx_DetailFrame').dialog('destroy');
     }
 }

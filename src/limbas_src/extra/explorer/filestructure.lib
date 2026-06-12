@@ -1076,7 +1076,7 @@ function lmb_getMimetype(&$fl){
     global $umgvar;
 
     // file extension
-    $ext = end(explode(".",$fl["filename"]));
+    $ext = strtolower(end(explode(".",$fl["filename"])));
 
     # --- get real mimetype from file ----------------------------------------
     #$noupload AND $noupload != 3 AND
@@ -1806,8 +1806,8 @@ function upload_fromPath($level,$path=null,$type=null,$tabrelation=null,$backup=
 
 								// backup
 								if($backup){
-								    if(is_dir($umgvar['path'].'/dependent/'.$backup)){
-								        rename($files["path"][$id].$files["name"][$id], $umgvar['path'].'/dependent/'.$backup.'/'.$files["name"][$id]);
+								    if(is_dir(DEPENDENTPATH.$backup)){
+								        rename($files["path"][$id].$files["name"][$id], DEPENDENTPATH.$backup.'/'.$files["name"][$id]);
 								    }
 								}
 

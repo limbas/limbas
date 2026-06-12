@@ -37,6 +37,7 @@ class ReportController extends LimbasController
         global $lang;
         global $umgvar;
         global $tabgroup;
+        global $gtab;
         
         $reports = Report::all();
         

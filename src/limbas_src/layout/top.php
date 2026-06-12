@@ -129,18 +129,17 @@ if($umgvar["multitenant"] AND lmb_count($lmmultitenants['mid']) > 1){
 
 
 
-$profileMenuWrapper = '<li class="nav-item dropdown ps-lg-2 ms-lg-2 border-left" data-lmb-dptoggle="hover">
-                <a class="nav-link lmbMenuProfileDropdown d-flex flex-column gap-1 align-items-start" data-bs-toggle="dropdown">';
+$profileMenuWrapper = '<li class="nav-item dropdown ps-lg-2 ms-lg-2 border-left lmbMenuProfileDropdown" data-lmb-dptoggle="hover">' .
+                '<a class="nav-link h-100 d-flex gap-3 align-items-center" data-bs-toggle="dropdown">' .
+                    '<span class="h-100 d-flex flex-column justify-content-between align-items-center">' .
+                        '<span class="lmbMenuItemTop2Icon"><i class="fas fa-user"></i></span><span class="lmbMenuItemTop2Text">' . $lang[1242] . '</span>' .
+                    '</span>';
 
 if ($umgvar["multitenant"]) {
-    $profileMenuWrapper .= //'<div class="d-flex flex-column">'.
-                           '<span class="lmbMenuItemTop2Text">'.$session["vorname"].' '.$session["name"] . '</span>'.
-                           '<span class="active-tenant lmbMenuItemTop2Text fw-bold">'.$lmmultitenants['name'][$session["mid"]].'</span>';
-                        //TODO: Profile Pic <div class="col-3 text-end p-0"><img class="rounded-circle" src=""></div>
-                           //'</div>';
+    $profileMenuWrapper .= '<span class="d-flex flex-column gap-1 align-items-start"><span class="lmbMenuItemTop2Text">'.$session["vorname"].' '.$session["name"] . '</span>'.
+                           '<span class="active-tenant lmbMenuItemTop2Text fw-bold">'.$lmmultitenants['name'][$session["mid"]].'</span></span>';
 } else {
     $profileMenuWrapper .= '<span class="lmbMenuItemTop2Text align-middle">'.$session["vorname"].' '.$session["name"].'</span>';
-    //TODO: Profile Pic '<img class="rounded-circle" src="">';
 }
 
 $profileMenuWrapper .= '</a><div class="dropdown-menu rounded-0 border-light py-0 mt-0">%s</div></li>';

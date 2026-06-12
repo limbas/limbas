@@ -11,47 +11,36 @@ namespace Limbas\admin\tools\datasync;
 
 use Limbas\lib\db\Database;
 use DateTime;
+use PDO;
 use Throwable;
 
 class DatasyncClient
 {
     protected static string $tableName = 'LMB_SYNC_CLIENTS';
 
-    public int $id;
-    public $name;
-    public $url;
-    public $username;
-    public $pass;
-    public $rs_path;
-    public $rs_user;
-    public $rs_params;
-    public $active;
-    public $synced;
-    public $order;
+    private PDO $db;
 
-    private $db;
+    private object $currentStatus;
+    private object $lastStatus;
 
-    private $currentStatus;
-    private $lastStatus;
-
-    private $logPath;
+    private string $logPath;
 
     private array $processLogCache;
 
-    public function __construct(int $id, string $name, string $url, string $username, string $pass, string $rs_path, string $rs_user, string $rs_params, bool $active, bool $synced, int $order)
+    public function __construct(
+        public int $id,
+        public string $name,
+        public string $url,
+        public string $username,
+        public string $pass,
+        public string $rs_path,
+        public string $rs_user,
+        public string $rs_params,
+        public bool $active,
+        public bool $synced,
+        public int $order,
+        public ?int $syncCounter = null)
     {
-        $this->id = $id;
-        $this->name = $name;
-        $this->url = $url;
-        $this->username = $username;
-        $this->pass = $pass;
-        $this->rs_path = $rs_path;
-        $this->rs_user = $rs_user;
-        $this->rs_params = $rs_params;
-        $this->active = $active;
-        $this->synced = $synced;
-        $this->order = $order;
-
         $this->db = Database::get();
 
         $this->processLogCache = [];
@@ -69,7 +58,7 @@ class DatasyncClient
     public function getStatus(): object
     {
 
-        if (!$this->currentStatus) {
+        if (empty($this->currentStatus)) {
             $status = -1;
             $time = '-';
 
@@ -121,8 +110,7 @@ class DatasyncClient
             try {
                 $startTime = new DateTime(lmbdb_result($rs, 'START_TIME'));
                 $endTime = new DateTime(lmbdb_result($rs, 'END_TIME'));
-            } catch (Throwable $t) {
-            }
+            } catch (Throwable) {}
 
 
             $histId = (int)lmbdb_result($rs, 'ID');
@@ -149,7 +137,7 @@ class DatasyncClient
     public function lastStatus(): object
     {
 
-        if (!$this->lastStatus) {
+        if (empty($this->lastStatus)) {
             $status = -1;
             $time = 'Nie';
 
@@ -225,8 +213,9 @@ class DatasyncClient
                 lmbdb_result($rs, 'RS_USER') ?? '',
                 lmbdb_result($rs, 'RS_PARAMS') ?? '',
                 boolval(lmbdb_result($rs, 'ACTIVE')),
-                boolval(lmbdb_result($rs, 'ACTIVE')),
-                (int)lmbdb_result($rs, 'ACTIVE')
+                boolval(lmbdb_result($rs, 'SYNCED')),
+                (int)lmbdb_result($rs, 'SYNC_ORDER'),
+                (int)lmbdb_result($rs, 'SYNC_COUNTER')
             );
 
         }
@@ -260,8 +249,8 @@ class DatasyncClient
 
     /**
      * @param bool $onlyActive
-     * @param $id
-     * @param $synced
+     * @param int|null $id
+     * @param bool|null $synced
      * @return array
      */
     private static function getWhere(bool $onlyActive = false, int $id = null, bool $synced = null): array
@@ -347,7 +336,7 @@ class DatasyncClient
 
                     if (str_contains($line, 'Start sync')) {
                         $matches = [];
-                        preg_match('/\[(\d+)\]/', $line, $matches);
+                        preg_match('/\[(\d+)]/', $line, $matches);
                         if (array_key_exists(1, $matches)) {
                             $currentId = (int)$matches[1];
                         }
@@ -374,10 +363,26 @@ class DatasyncClient
      */
     public function setSynced(bool $synced): void
     {
+        $update = [];
         $this->synced = $synced;
-        $db = Database::get();
-        $sql = 'UPDATE LMB_SYNC_CLIENTS SET SYNCED = ' . ($synced ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE) . ' WHERE ID = ' . $this->id;
-        lmbdb_exec($db, $sql);
+        if(!$synced) {
+            $update['SYNCED'] = LMB_DBDEF_FALSE;
+        }
+        elseif(empty($this->syncCounter)) {
+            $update['SYNCED'] = LMB_DBDEF_TRUE;
+        }
+        else {
+            $syncCounter = $this->syncCounter - 1;
+            if($syncCounter < 0) {
+                $syncCounter = 0;
+            }
+            else {
+                $this->synced = false;
+            }
+            $update['SYNC_COUNTER'] = $syncCounter;
+        }
+        
+        Database::update(self::$tableName, $update,['ID' => $this->id]);
     }
 
     /**
@@ -385,11 +390,9 @@ class DatasyncClient
      */
     public static function resetAllSynced(): void
     {
-        $db = Database::get();
-
-        $sqlquery = 'UPDATE LMB_SYNC_CLIENTS SET SYNCED = ' . LMB_DBDEF_FALSE;
-
-        lmbdb_exec($db, $sqlquery);
+        global $umgvar;
+        $syncCounter = intval($umgvar['sync_rounds']);
+        Database::update(self::$tableName, ['SYNCED'=>LMB_DBDEF_FALSE,'SYNC_COUNTER'=>$syncCounter], []);
     }
 
 
@@ -404,7 +407,8 @@ class DatasyncClient
         $LIM = array(
             'lim_url' => $this->url,
             'username' => $this->username,
-            'pass' => $this->pass
+            'pass' => $this->pass,
+            'cookie' => 'datasync'
         );
 
         $result = soap_call_client($lmpar, $LIM);

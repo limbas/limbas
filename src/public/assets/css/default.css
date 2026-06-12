@@ -2620,11 +2620,11 @@ textarea.form-control-lg {
   --bs-btn-border-color: #9fe900;
   --bs-btn-hover-color: #000;
   --bs-btn-hover-bg: #adec26;
-  --bs-btn-hover-border-color: #a9eb1a;
+  --bs-btn-hover-border-color: #a9eb19;
   --bs-btn-focus-shadow-rgb: 135, 198, 0;
   --bs-btn-active-color: #000;
   --bs-btn-active-bg: #b2ed33;
-  --bs-btn-active-border-color: #a9eb1a;
+  --bs-btn-active-border-color: #a9eb19;
   --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
   --bs-btn-disabled-color: #000;
   --bs-btn-disabled-bg: #9fe900;
@@ -18597,6 +18597,10 @@ html, body.nav {
 .lmbMenuProfileDropdown {
   white-space: nowrap;
 }
+.lmbMenuProfileDropdown .dropdown-menu {
+  right: 0;
+  left: auto;
+}
 .lmbMenuProfileDropdown img {
   max-height: 2.5rem;
 }
@@ -19637,6 +19641,18 @@ table select.form-select:not(.fgtabchange) {
   cursor: pointer;
 }
 /* Sonstiges */
+.icon-button {
+  all: unset;
+  display: inline-block;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+}
 /*ajax container*/
 DIV.ajax_container {
   z-index: 99999;

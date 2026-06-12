@@ -19,7 +19,7 @@ $layouts = Layout::getAvailableLayouts();
 if($regenerate && $id){
     $colorSchema = ColorSchema::get(intval($id));
     if ($colorSchema && $colorSchema->regenerate) {
-        $regenStat = $colorSchema->reset();
+        $regenStat = $colorSchema->generateCss();
     	if ($regenStat !== true) {
         	$scerrormsg = 'CSS konnte nicht generiert werden:<br>'.$regenStat;
         }

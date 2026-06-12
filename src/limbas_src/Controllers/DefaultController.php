@@ -9,6 +9,7 @@
 
 namespace Limbas\Controllers;
 
+use Limbas\admin\tools\cron\LimbasCron;
 use Limbas\layout\Layout;
 use Limbas\lib\general\StackTrace;
 use Symfony\Component\HttpFoundation\Request;
@@ -91,4 +92,19 @@ class DefaultController extends AbstractController
 
         return $this->render('errors.' . $view,compact('stackTrace','title', 'message', 'code', 'error', 'request'));
     }
+    
+    
+    public function cron(Request $request): Response
+    {
+        global $umgvar;
+
+        if(empty($umgvar['cron_token']) || $request->get('t') !== $umgvar['cron_token']) {
+            return $this->error(403);
+        }
+        
+        $limbasCron = LimbasCron::class;
+        $limbasCron->run();
+        return (new Response())->setContent('OK')->setStatusCode(Response::HTTP_OK);
+    }
+    
 }

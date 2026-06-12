@@ -7,22 +7,13 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
+use Limbas\admin\tools\cron\commands\Template;
 
 /**
- * Enter description here...
+ * @deprecated
  *
  * @param unknown_type $cronval
  */
 function periodic_job($cronval){
-	global $umgvar;
-	$cronval = explode(";",$cronval);
-	$template = $cronval[0];
-	if(is_file($umgvar["pfad"].$template)){
-		require_once($umgvar["pfad"].$template);
-	}
-}
-
-
-?>
+	(new Template())->handle(['config' => $cronval]);
+} 

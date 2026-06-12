@@ -176,6 +176,7 @@ elseif($remoteimport AND $merge_import AND $exptable){
 	$LIM["username"] = $_SESSION['lmbs']['LIM']['username'];
 	$LIM["pass"] = $_SESSION['lmbs']['LIM']['pass'];
 	$LIM["lim_url"] = $_SESSION['lmbs']['LIM']['lim_url'];
+    #$LIM["cookie"] = 'remote_export';
 
 	$lmpar[0]["action"] = "setup_remote_exportfiles";
 	$lmpar[0]["exptables"] = $exptable;

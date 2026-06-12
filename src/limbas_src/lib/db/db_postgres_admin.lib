@@ -13,8 +13,8 @@ use Limbas\lib\general\Log\Log;
 
 ############# Domain Tables ########################
 
-$DBA["DOMAINTABLE"] = array("tables","views","columns","key_column_usage","constraint_table_usage","triggers","pg_constraint","pg_index","pg_indexes","pg_stats","pg_settings");
-$DBA["DOMAINSCHEMA"] = array("information_schema","information_schema","information_schema","information_schema","information_schema","information_schema","pg_catalog","pg_catalog","pg_catalog","pg_catalog","pg_catalog");
+$DBA["DOMAINTABLE"] = array("tables","views","columns","key_column_usage","constraint_table_usage","triggers","pg_constraint","pg_index","pg_indexes","pg_stats","pg_stat_activity","pg_settings","pg_proc");
+$DBA["DOMAINSCHEMA"] = array("information_schema","information_schema","information_schema","information_schema","information_schema","information_schema","pg_catalog","pg_catalog","pg_catalog","pg_catalog","pg_catalog","pg_catalog","pg_catalog");
 
 /**
  * db version

@@ -1288,18 +1288,6 @@ function sql_14_c(&$vgtabid,$verkn,&$linklevel=array(),$gformid=null,$order=null
 
     return $gresult;
 
-
-    /*
-	# show only not deleted
-	if($hide_del){
-		$squery["swhere"][] = $verkn["tab"].".DEL = ".LMB_DBDEF_FALSE;
-	}
-	# show only active version
-	if($gtab["versioning"][$verkn["tabid"]] AND $hide_version){
-		$squery["swhere"][] = $verkn["tab"].".VACT = ".LMB_DBDEF_TRUE;
-	}
-	*/
-
 }
 
 
@@ -1883,13 +1871,11 @@ function hide_data($gtabid,$ID,$typ='trash'){
     global $LINK;
 
     // permission check
-    if(($typ == 'archive' && !$gtab['hide'][$gtabid] && $LINK[313]) OR ($typ == 'trash' && !$gtab['trash'][$gtabid] && $LINK[164])){
-        Log::limbasError($typ.'_data - permission denied for type1 '.$typ, $GLOBALS["lang"][114], $gtabid, null, $ID);
-        return false;
-    }
-
-    if((!$gtab['trash'][$gtabid] && !$gtab['hide'][$gtabid]) OR !$ID OR !$GLOBALS["LINK"][11]){
-        Log::limbasError($typ.'_data - permission denied for type2 '.$typ, $GLOBALS["lang"][114], $gtabid, null, $ID);
+    if(($typ == 'archive' && (!$gtab['hide'][$gtabid] OR !$LINK[313]))
+        OR ($typ == 'trash' && (!$gtab['trash'][$gtabid] OR !$LINK[164]))
+        OR ($typ == 'restore' && ( (!$gtab['trash'][$gtabid] && !$gtab['hide'][$gtabid]) OR !$LINK[166]))
+    ){
+        Log::limbasError($typ.'_data - permission denied for '.$typ, $GLOBALS["lang"][114], $gtabid, null, $ID);
         return false;
     }
 
@@ -3463,12 +3449,20 @@ function copy_record($gtabid,$copyid,$ID,$version=null,$norelation=null,$verkn=n
                     if ($gfield[$gtabid]['verkntabletype'][$key] == 2) {
 
                         $VKN_FIELD = $gfield[$gfield[$gtabid]["verkntabid"][$key]]["md5tab"][$gfield[$gtabid]["hasrecverkn"][$key]];
-                        $VKN_TABLE = $gfield[$gtabid]['verkntabid'][$key];
-                        $ID_FIELD = $gfield[$gtabid]['hasrecverkn'][$key];
 
-                        // prevent relation endless loop
+                        $sqlquery1 = "SELECT $VKN_FIELD FROM " . $gtab['table'][$gtabid] . " WHERE ID = $copyid AND $VKN_FIELD > 0";
+                        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $GLOBALS['action'], __FILE__, __LINE__);
+                        if($VERKN_ID = lmbdb_result($rs1, $VKN_FIELD)) {
+                            $cpy[] = "$VKN_FIELD = $VERKN_ID";
+                        }
+
+                        /*
+                        #$VKN_TABLE = $gfield[$gtabid]['verkntabid'][$key];
+                        #$ID_FIELD = $gfield[$gtabid]['hasrecverkn'][$key];
+                        # prevent relation endless loop
                         if($norelation != $VKN_FIELD) {
                             $sqlquery1 = "SELECT $VKN_FIELD FROM " . $gtab['table'][$gtabid] . " WHERE ID = $copyid AND $VKN_FIELD > 0";
+                            error_log($sqlquery1);
                             $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $GLOBALS['action'], __FILE__, __LINE__);
                             if (!$rs1) {$commit = 1;}
                             if($VERKN_ID = lmbdb_result($rs1, $VKN_FIELD)) {
@@ -3476,6 +3470,7 @@ function copy_record($gtabid,$copyid,$ID,$version=null,$norelation=null,$verkn=n
                                 set_joins($gtabid, $verknp);
                             }
                         }
+                        */
 
                     # default relation
                     } else {
@@ -5261,9 +5256,21 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
 
             foreach($gsr[$fgtabid] as $key => $val){
                 if(!$key){continue;}
+
+                // field spezific search rule extension
+                if($gsfunc = $gfield[$fgtabid]['searchrule'][$key]){
+                    $gsfunc = 'LmbExt_'.$gsfunc;
+                    if(function_exists($gsfunc)) {
+                        $gsresult = $gsfunc($fgtabid, $key, $gsr, $extension);
+                    }
+                    if($gsresult !== true){
+                        continue;
+                    }
+                }
+
+                // global gsr parser
                 $qu = get_where($key,$fgtabid,$gsr);
 
-                # falls Suchkriterium
                 if(lmb_count($qu["where"])>0){
 
                     // override version or validity filter by searching in this field
@@ -5484,7 +5491,10 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
         # no view
         if($gtab["typ"][$fgtabid] != 5){
             //----------------- filterstatus - trash / archive -------------------
-            if($filter["status"][$gtabid] == -1 OR defined('LMB_SYNC_PROC')) {
+
+            if($verkn["showonly"] && $gfield[$verkn["tabid"]]["verkntabletype"][$verkn["fieldid"]] == 2 && ($verkn['typ'] == 25 OR $gfield[$verkn["tabid"]]["unique"][$verkn["fieldid"]])){
+                // show relation independent of status
+            }elseif($filter["status"][$gtabid] == -1 OR defined('LMB_SYNC_PROC')) {
                 // get all datasets (sync)
             }elseif($filter["status"][$gtabid]) {
                 $where[] = $gtab["table"][$gtabid].".LMB_STATUS = ".parse_db_int($filter["status"][$gtabid]);
@@ -5541,6 +5551,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
                             AND " . $gtab["table"][$verkn['tabid']] . ".ID = " . $verkn["id"];
                             $from[] = $gtab["table"][$verkn['tabid']];
                         }
+
                     }else {
                         // right to left join
                         if($verkn["verknpf"] == 2) {
@@ -6025,7 +6036,7 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
     if(!$filter){$filter = array();}
 
     # echo $query["sql"]."<br><br>";
-    # error_log($query["sql"]);
+    # error_log($query["count"]);
     # error_log(' ');
     $rs = lmbdb_exec($db,$query["sql"]) or errorhandle(lmbdb_errormsg($db),$query["sql"],'result_query',__FILE__,__LINE__);
 
@@ -6200,14 +6211,6 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
 
                         }
 
-                        /*----------------- argument -------------------*/
-                        if(is_array($argument)){
-                            foreach($argument as $akey => $avalue){
-                                lmbGetArgumentValue($avalue['gtabid'], $avalue['fieldid'], $avalue['value'], $gresult, $avalue['row']);
-                            }
-                            $argument = null;
-                        }
-
                     }
                     /*----------------- system fields -------------------*/
                     # only view
@@ -6249,6 +6252,14 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
                     #------------------- Wiedervorlage --------------------------------
                     if($LINK[109] && $single && !$filter['report'][$gtabid] && !defined('LMB_SYNC_PROC')){
                         $gresult[$fgtabid]["REMINDER"][$i] = lmb_getReminder($fgtabid,$id);
+                    }
+
+                    /*----------------- argument -------------------*/
+                    if(is_array($argument)){
+                        foreach($argument as $akey => $avalue){
+                            lmbGetArgumentValue($avalue['gtabid'], $avalue['fieldid'], $avalue['value'], $gresult, $avalue['row']);
+                        }
+                        $argument = null;
                     }
 
                 }
@@ -6413,8 +6424,6 @@ function calc_numrows($gtabid,&$gresult,&$filter){
         $filter["anzahl"][$gtabid] = $gresult[$gtabid]["res_count"];
     }
 }
-
-
 # ---------------------------------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -6527,9 +6536,9 @@ function lmbGetArgumentValue($gtabid, $fieldid, $ID, &$gresult, $row=0, $force=f
 
     if(!$ID){return true;}
 
-    if(!$gresult) {
-        $gresult = get_gresult($gtabid, 1, null, null, null, null, $ID);
-    }
+    #if(!$gresult) {
+    #    $gresult = get_gresult($gtabid, 1, null, null, null, null, $ID);
+    #}
 
     if($gresult[$gtabid][$fieldid][$row] && $gfield[$gtabid]["argument_edit"][$fieldid] && !$force) {
         return true;

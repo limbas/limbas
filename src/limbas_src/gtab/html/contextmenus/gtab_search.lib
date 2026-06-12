@@ -221,6 +221,11 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         }
         echo "<option value=\"7\"" . ($gsrresParent["txt"][$filterIndex] == 7 ? " selected" : "") . ">$lang[2681]"; // empty
         echo "<option value=\"8\"" . ($gsrresParent["txt"][$filterIndex] == 8 ? " selected" : "") . ">$lang[2682]"; // not empty
+
+        echo "<option value=\"12\"" . ($gsrresParent["txt"][$filterIndex] == 12 ? " selected" : "") . ">$lang[711]"; // greater
+        echo "<option value=\"13\"" . ($gsrresParent["txt"][$filterIndex] == 13 ? " selected" : "") . ">$lang[712]"; // less
+        echo "<option value=\"14\"" . ($gsrresParent["txt"][$filterIndex] == 14 ? " selected" : "") . ">$lang[711] $lang[713]"; // greater or equal
+        echo "<option value=\"15\"" . ($gsrresParent["txt"][$filterIndex] == 15 ? " selected" : "") . ">$lang[712] $lang[713]"; // less or equal
         echo "</optgroup>";
 
         echo "</select>";
@@ -237,7 +242,9 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
 
     // ###################### searchvalue ########################
 
-    echo "<td valign=\"top\" nowrap>";
+    echo "<td nowrap>";
+
+    $infoText = '';
 
     #------- BOOLEAN -------
     if ($searchvalue == 'boolean') {
@@ -267,7 +274,7 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         if (!$gfield[$gtabid]['select_sort'][$fieldid]) {
             $gfield[$gtabid]['select_sort'][$fieldid] = "SORT";
         }
-        
+
         $sqlquery = "SELECT DISTINCT WERT ".($gfield[$gtabid]['select_sort'][$fieldid] ? ','.$gfield[$gtabid]['select_sort'][$fieldid] : '')." FROM $selectTable WHERE POOL = {$gfield[$gtabid]['select_pool'][$fieldid]} ".($gfield[$gtabid]["select_sort"][$fieldid] ? " ORDER BY ".$gfield[$gtabid]["select_sort"][$fieldid] : '');
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         while (lmbdb_fetch_row($rs)) {
@@ -314,6 +321,93 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         </div>
 
         <?php
+        $infoText = <<<HTML
+          <table class="table mb-0">
+              <tbody>
+                <tr>
+                  <td><code>#NULL#</code>, <code>#NOTNULL#</code></td>
+                  <td>Finds records where the date field is empty or contains any value.</td>
+                </tr>
+                <tr>
+                  <td><code>KW 50.2021</code>, <code>cw3.23</code>, <code>kw12</code></td>
+                  <td>Finds all records within that specific week (Monday to Sunday).</td>
+                </tr>
+                <tr>
+                  <td><code>2023</code>, <code>99</code></td>
+                  <td>Finds all records within that specific year.</td>
+                </tr>
+                <tr>
+                  <td><code>04.2023</code>, <code>2023-11</code></td>
+                  <td>Finds all records within that specific month.</td>
+                </tr>
+                <tr>
+                  <td><code>24.12.2023</code>, <code>2023-01-01</code></td>
+                  <td>Finds records matching that specific day.</td>
+                </tr>
+                <tr>
+                  <td><code>01.01.2023 14:30</code></td>
+                  <td>Finds records matching that exact timestamp.</td>
+                </tr>
+                <tr>
+                  <td><code>30d</code>, <code>2w</code>, <code>6m</code>, <code>1y</code></td>
+                  <td>Finds records exactly X units in the future from now.</td>
+                </tr>
+                <tr>
+                  <td><code>-30d</code>, <code>-2w</code>, <code>-6m</code>, <code>-1y</code></td>
+                  <td>Finds records exactly X units in the past from now.</td>
+                </tr>
+                <tr>
+                  <td><code>15mi</code>, <code>-3ho</code></td>
+                  <td>Finds records exactly X minutes or hours in the past or future.</td>
+                </tr>
+              </tbody>
+          </table>
+        HTML;
+
+        $infoTextGerman = <<<HTML
+            <table class="table mb-0">
+              <tbody>
+                <tr>
+                  <td><code>#NULL#</code>, <code>#NOTNULL#</code></td>
+                  <td>Findet Datensätze, bei denen das Feld leer ist oder einen Wert enthält.</td>
+                </tr>
+                <tr>
+                  <td><code>KW 50.2021</code>, <code>cw3.23</code>, <code>kw12</code></td>
+                  <td>Findet alle Datensätze innerhalb der angegebenen Woche (Montag bis Sonntag).</td>
+                </tr>
+                <tr>
+                  <td><code>2023</code>, <code>99</code></td>
+                  <td>Findet alle Datensätze innerhalb des angegebenen Jahres.</td>
+                </tr>
+                <tr>
+                  <td><code>04.2023</code>, <code>2023-11</code></td>
+                  <td>Findet alle Datensätze innerhalb des angegebenen Monats.</td>
+                </tr>
+                <tr>
+                  <td><code>24.12.2023</code>, <code>2023-01-01</code></td>
+                  <td>Findet Datensätze, die genau diesem Tag entsprechen.</td>
+                </tr>
+                <tr>
+                  <td><code>01.01.2023 14:30</code></td>
+                  <td>Findet Datensätze mit diesem exakten Zeitstempel.</td>
+                </tr>
+                <tr>
+                  <td><code>30t</code>, <code>2w</code>, <code>6m</code>, <code>1j</code></td>
+                  <td>Findet Datensätze genau X Einheiten in der Vergangenheit.</td>
+                </tr>
+                <tr>
+                  <td><code>-30t</code>, <code>-2w</code>, <code>-6m</code>, <code>-1j</code></td>
+                  <td>Findet Datensätze genau X Einheiten in der Zukunft.</td>
+                </tr>
+                <tr>
+                  <td><code>15mi</code>, <code>-3st</code></td>
+                  <td>Findet Datensätze genau X Minuten oder Stunden in der Vergangenheit oder Zukunft.</td>
+                </tr>
+              </tbody>
+            </table>
+        HTML;
+
+
     } elseif ($searchvalue == 'text') {
         echo "<input class='form-control form-control-sm' type=\"text\" id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" value=\"{$gsrres}\">";
     }
@@ -325,6 +419,29 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
     if ($filterIndex == 0) {
         $color = 'color: red';
     }
+    if ($infoText && false) # todo: remove the && false to enable info button
+    {
+        echo <<<HTML
+            <script>
+                document.querySelectorAll('[data-bs-toggle="popover"]').forEach(el => {
+                    new bootstrap.Popover(el, {
+                        html: true,        
+                        sanitize: false,   
+                        boundary: 'viewport',
+                        template: '<div class="popover" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body p-0"></div></div>'
+                    });
+                });
+            </script>
+        HTML;
+
+        echo <<<HTML
+            <td class="align-top">
+                <i class="lmb-icon lmb-info-circle-alt2 p-2 cursor-pointer" data-bs-html="true" data-bs-toggle="popover" data-bs-title="Input Examples" data-bs-content='$infoText'></i>
+            </td>
+        HTML;
+
+    }
+
     echo "<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;$color\" onclick=\"limbasHideFilterRow(this, '{$originStr}{$gtabid}_{$fieldid}', $filterIndex)\"></td>";
 
     echo '</tr>';

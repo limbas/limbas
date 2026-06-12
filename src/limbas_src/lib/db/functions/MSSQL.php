@@ -570,7 +570,7 @@ class MSSQL extends DbFunction
             $col["columnname_lower"][] = $this->handleCaseSensitive(trim(lmbdb_result($rs, "COLUMN_NAME")));
             $col["length"][] = trim(lmbdb_result($rs, "PRECISION"));
             $col["scale"][] = trim(lmbdb_result($rs, "SCALE"));
-            $col["mode"][] = $key[lmb_strtolower(trim(lmbdb_result($rs, "COLUMN_NAME")))];
+            $col["mode"][] = $key[lmb_strtolower(trim(lmbdb_result($rs, "COLUMN_NAME")))]; # todo translate to "PRIMARY KEY"
 
             $datatype = explode(' ', trim(lmbdb_result($rs, "TYPE_NAME")));
             $col["datatype"][] = $datatype[0];

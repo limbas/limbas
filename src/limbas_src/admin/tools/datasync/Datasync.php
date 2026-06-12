@@ -162,7 +162,7 @@ abstract class Datasync
                                 $datasyncRecordData->addUpdate($fieldId, $syncCacheId, $createdAt);
                                 continue;
                             } elseif ($type === DataSyncType::DELETE && $datasyncRecordData->created) {
-                                // if this update belongs to a created entry, ignore it
+                                // if this delete belongs to a created entry, ignore it
                                 $datasyncRecordData->setDeleted($syncCacheId);
                                 continue;
                             }
@@ -785,6 +785,9 @@ abstract class Datasync
 
             }
         } catch (Throwable $t) {
+            if(!empty($syncCacheId)) {
+                $datasyncData->addError($syncCacheId, DatasyncError::APPLYING_RELATIONS_FAILED, $t->getMessage());
+            }
             return $t;
         }
 
@@ -906,6 +909,18 @@ abstract class Datasync
 
     }
 
+    
+    protected function setRecordsDone(): void
+    {
+        Database::update('LMB_SYNC_CACHE', 
+            [
+                'DONE'=>LMB_DBDEF_TRUE
+            ], 
+            [
+                'ERROR' => null,
+                'PROCESS_KEY' => $this->cacheTimestamp
+            ]);
+    }
 
     /**
      * Delete all handled records from sync cache
@@ -1072,13 +1087,11 @@ abstract class Datasync
             $limit = 'LIMIT ' . $maxRecords;
         }
         
-
         if ($this->isMain || $maxRecords !== false) {
             $sqlQuery = 'UPDATE LMB_SYNC_CACHE
         SET PROCESS_KEY = ' . $this->cacheTimestamp . ',
         ERROR = ' . LMB_DBDEF_NULL . ',
-        TRY_COUNT = COALESCE(TRY_COUNT,0) + 1,
-        DONE = ' . LMB_DBDEF_TRUE . '
+        TRY_COUNT = COALESCE(TRY_COUNT,0) + 1
         WHERE ID IN (
         SELECT LMB_SYNC_CACHE.ID
           FROM LMB_SYNC_CACHE
@@ -1088,7 +1101,7 @@ abstract class Datasync
 
         } else {
             // no filter and limit needed on client => update all records
-            $sqlQuery = 'UPDATE LMB_SYNC_CACHE SET PROCESS_KEY = ' . $this->cacheTimestamp . ', TRY_COUNT = COALESCE(TRY_COUNT,0) + 1, ERROR = ' . LMB_DBDEF_NULL . ', DONE = ' . LMB_DBDEF_TRUE . ' WHERE ' . $doneSql . $maxAttemptsSql;
+            $sqlQuery = 'UPDATE LMB_SYNC_CACHE SET PROCESS_KEY = ' . $this->cacheTimestamp . ', TRY_COUNT = COALESCE(TRY_COUNT,0) + 1, ERROR = ' . LMB_DBDEF_NULL . ' WHERE ' . $doneSql . $maxAttemptsSql;
         }
 
 
@@ -1126,26 +1139,23 @@ abstract class Datasync
             $update["$tabId,VDESC,$id"] = "'" . $data['VDESC'] . "'";
         }
 
-        // TODO: versioning VPID not working / same record versioned on both sides
-        if (!$wasCreated) {
-            $vpid = null;
-            if (array_key_exists('VPID', $data) && !empty(trim($data['VPID']))) {
-                $vpid = intval($data['VPID']);
-                if ($this->isMain) {
-                    // TODO: error handling
-                    $vpid = $this->convertID($tabId, $vpid, $this->currentClient);
-                }
-                if (!empty($vpid)) {
-                    $update["$tabId,VPID,$id"] = $vpid;
-                }
+        // TODO: same record versioned on both sides
+        $versionId = null;
+        if (array_key_exists('VPID', $data) && !empty(intval($data['VPID']))) {
+            $versionId = intval($data['VPID']);
+            if ($this->isMain) {
+                $versionId = $this->convertID($tabId, $versionId, $this->currentClient);
             }
-            if (!empty($vpid) && array_key_exists('VACT', $data)) {
-                $update["$tabId,VACT,$id"] = $data['VACT'] ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE;
+            if (!empty($versionId)) {
+                $update["$tabId,VPID,$id"] = $versionId;
+            }
+        }
+        if (!empty($versionId) && array_key_exists('VACT', $data)) {
+            $update["$tabId,VACT,$id"] = $data['VACT'] ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE;
 
-                //set all old versions to if updating active version
-                if ($data['VACT'] && $vpid !== null) {
-                    $this->setVersionsInactive($tabId, $vpid);
-                }
+            //set all old versions to if updating active version
+            if ($data['VACT']) {
+                $this->setVersionsInactive($tabId, $versionId);
             }
         }
 
@@ -1224,7 +1234,7 @@ abstract class Datasync
      */
     private function hasConflict(int $tabId, int $recordId, int $fieldId, int $timestamp): bool|ConflictMode
     {
-        $conflictMode = ConflictMode::from(intval($this->template['conflict_mode']['global']));
+        $conflictMode = $this->template['conflict_mode']['global'] instanceof ConflictMode ? $this->template['conflict_mode']['global'] : ConflictMode::from(intval($this->template['conflict_mode']['global']));
 
 
         $conflictMode = $this->template['conflict_mode'][$tabId][$fieldId] ?? $conflictMode;
@@ -1241,10 +1251,11 @@ abstract class Datasync
         if ($this->isMain) {
             $where['SLAVE_ID'] = $this->currentClient;
         }
-        $rs = Database::select('LMB_SYNC_CACHE', [
-            'ID',
-            'ERSTDATUM'
-        ], $where);
+
+        $doneSql = ' AND (DONE = ' . LMB_DBDEF_FALSE . ' OR DONE IS NULL)';
+        $whereString = implode(' AND ', array_map(fn($key) => "$key => ?", array_keys($where)));
+        $sql = 'SELECT ID, ERSTDATUM FROM LMB_SYNC_CACHE WHERE ' . $whereString . $doneSql;
+        $rs = Database::query($sql, array_values($where));
 
         
         if (lmbdb_num_rows($rs) <= 0) {

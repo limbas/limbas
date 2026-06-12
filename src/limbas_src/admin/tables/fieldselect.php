@@ -269,10 +269,9 @@
                                 ?>
                                 <th><?= $lang[27] ?></th>
                                 <th><?= $lang[1614] ?></th>
-
+                                <th><?= $lang[294] ?></th>
                                 <?php if ($typ == 'LMB_ATTRIBUTE') {?>
                                     <th><?= $lang[2211] ?></th>
-                                    <th><?= $lang[294] ?></th>
                                     <th><?= $lang[2955] ?></th>
                                     <th><?= $lang[2720] ?></th>
                                 <?php } ?>
@@ -327,6 +326,12 @@
                                             &nbsp;&nbsp;
                                         <?php } ?>
                                     </td>
+
+                                    <TD>
+                                        <div id="select_color_div_<?= $entryID ?>" OnClick="selectColor(this, event,'<?=$entryID?>')" STYLE="cursor:pointer;width:20px;height:20px;border:1px solid black;background-color:<?= $result_fieldselect['color'][$key];?>"></div>
+                                        <input type="hidden" name="select_color[<?= $entryID ?>]" id="select_color_<?= $entryID ?>" value="<?= $result_fieldselect['color'][$key] ?>">
+                                    </TD>
+
                                     <?php if ($typ == 'LMB_ATTRIBUTE') :
                                         ?>
                                     
@@ -340,11 +345,6 @@
                                                 ?>
                                             </div>
                                         </td>
-
-                                        <TD>
-                                            <div id="select_color_div_<?= $entryID ?>" OnClick="selectColor(this, event,'<?=$entryID?>')" STYLE="cursor:pointer;width:20px;height:20px;border:1px solid black;background-color:<?= $result_fieldselect['color'][$key];?>"></div>
-                                            <input type="hidden" name="select_color[<?= $entryID ?>]" id="select_color_<?= $entryID ?>" value="<?= $result_fieldselect['color'][$key] ?>">
-                                        </TD>
 
                                         <td>
                                             <?php if($result_fieldselect['type'][$key] > 0){?>

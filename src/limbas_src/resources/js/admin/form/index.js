@@ -58,7 +58,7 @@ function saveForm() {
             if ($table.length <= 0) {
                 const tableName = $newFormTable.find('option:selected').text();
                 $table = $('<tbody id="table-' + tabId + '"><tr class="table-section"><td colspan="12">' + tableName + '</td></tr></tbody>');
-                $('#table-reports').append($table);
+                $('#table-forms').append($table);
             }
 
             $('.table-success').removeClass('table-success');

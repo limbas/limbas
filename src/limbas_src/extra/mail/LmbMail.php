@@ -339,7 +339,7 @@ class LmbMail
         if(!empty($imageTags) && is_array($imageTags[0]) && !empty($imageTags[0])) {
             foreach($imageTags[0] as $key => $imageTag) {
                 $src = $imageTags[1][$key];
-                $cid = 'lmb' . $cidCounter;
+                $cid = 'lmb' . $cidCounter . '@limbas';
                 if(str_contains($src, 'main.php?action=download')) {
                     $fileId = intval(preg_replace('/\D/i', '', $src));
                     $images[$cid] = new DmsMailAttachment($fileId);

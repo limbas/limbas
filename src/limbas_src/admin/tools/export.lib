@@ -846,16 +846,32 @@ function lmbExport_Dump($format,$struct_only=false){
 	$config_datei = fopen(BACKUPPATH.date("d_m_y").$ext."/export.conf","w+");
 	$info = lmbExport_infotext();
 	/* ---> conf */ fputs($config_datei,$info);
+    /* ---> conf */ fputs($config_datei,"<encoding ".$umgvar['charset'].">\n\n");
 
 	/* --- Tabellen_Liste --------------------------------------------- */
 	$odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE'");
 	foreach($odbc_table["table_name"] as $tkey => $table) {
 
+        // all
+        if (!$struct_only) {
+            $e = true;
+        // project structure only
+        }elseif ($struct_only == 1 && (lmb_strtolower(lmb_substr($table, 0, 4)) == 'lmb_' or lmb_strtolower(lmb_substr($table, 0, 5)) == 'ldms_')) {
+            $e = true;
+        // project data only
+        }elseif ($struct_only == 2){
+            if(lmb_strtolower(lmb_substr($table, 0, 4)) == 'lmb_' or lmb_strtolower(lmb_substr($table, 0, 5)) == 'ldms_') {
+                continue;
+            }else{
+                $e = true;
+            }
+        }else{
+            $e = false;
+        }
+
 		unset($COLUM);
 		unset($line);
 		$table_datei = fopen(BACKUPPATH.date("d_m_y").$ext."/$table","w+");
-
-		/* ---> conf */ fputs($config_datei,"<encoding ".$umgvar['charset'].">\n\n");
 
 		/* ---> conf */ fputs($config_datei,"<begin tabledefinition::$table>\n");
 
@@ -874,10 +890,10 @@ function lmbExport_Dump($format,$struct_only=false){
 				$DEFAULT_ = explode("::",trim($col["default"][$ckey]));
 				$DEFAULT = trim($DEFAULT_[0],"'");
 
-				if($DEFAULT OR $DEFAULT == '0'){
-					if($DATATYPE == "INTEGER" OR $DATATYPE == "SMALLINT" OR $DATATYPE == "FLOAT" OR $DATATYPE == "FIXED"){
+				if($DEFAULT or $DEFAULT == '0'){
+					if($DATATYPE == "INTEGER" or $DATATYPE == "SMALLINT" or $DATATYPE == "FLOAT" or $DATATYPE == "FIXED"){
 						$DEFAULT = parse_db_int($DEFAULT);
-					}elseif($DATATYPE == "BOOLEAN" OR $DATATYPE == "TIMESTAMP" OR $DATATYPE == 'DATE' OR $DATATYPE == 'TIME'){
+					}elseif($DATATYPE == "BOOLEAN" or $DATATYPE == "TIMESTAMP" or $DATATYPE == 'DATE' or $DATATYPE == 'TIME'){
                         $DEFAULT = lmb_strtoupper($DEFAULT);
 						if(defined ("LMB_DBREDEF_".$DEFAULT)){
 					        ### PSQL maching ###
@@ -889,7 +905,7 @@ function lmbExport_Dump($format,$struct_only=false){
 				}
 
 				# workaround for stupid timestamp default value
-				if($GLOBALS['DBA']['DB'] == 'mysql' AND $DEFAULT == '0000-00-00 00:00:00'){
+				if($GLOBALS['DBA']['DB'] == 'mysql' and $DEFAULT == '0000-00-00 00:00:00'){
 					$DEFAULT = '';
 				}
 				
@@ -904,33 +920,38 @@ function lmbExport_Dump($format,$struct_only=false){
 		/* ---> conf */ fputs($config_datei,"<end tabledefinition>\n\n");
 
         /* --- Inhalt_Liste --------------------------------------------- */
-        if (lmb_substr($table, 0, 10) != "LMB_INDIZE" AND lmb_substr($table, 0, 11) != "LMB_HISTORY") {
-            if (!$struct_only OR lmb_strtolower(lmb_substr($table, 0, 4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table, 0, 5)) == 'ldms_') {
-                $sqlquery = "SELECT * FROM $table ";
-                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-                if (!$rs) {
-                    $commit = 1;
-                }
-                while (lmbdb_fetch_row($rs)) {
-                    $line = array();
-                    $bzm2 = 0;
-                    while (isset($COLUM[$bzm2])) {
-                        $erg = lmbdb_result($rs, $COLUM[$bzm2]);
 
-                        if ($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00') {
-                            $erg = '';
-                        }
-                        #/* ---> tab  */ fputs($table_datei,$erg."\t");
-                        $line[] = $erg;
-                        $bzm2++;
+        // skip large log & indize tables
+        if (lmb_substr($table, 0, 10) == "LMB_INDIZE" OR lmb_substr($table, 0, 11) == "LMB_HISTORY") {
+            continue;
+        }
+
+        if ($e) {
+            $sqlquery = "SELECT * FROM $table ";
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+            while (lmbdb_fetch_row($rs)) {
+                $line = array();
+                $bzm2 = 0;
+                while (isset($COLUM[$bzm2])) {
+                    $erg = lmbdb_result($rs, $COLUM[$bzm2]);
+
+                    if ($GLOBALS['DBA']['DB'] == 'mysql' and $erg == '0000-00-00 00:00:00') {
+                        $erg = '';
                     }
-                    #/* ---> tab  */ fputs($table_datei,"\n");
-                    /* ---> tab  */
-                    lmb_fputcsv($table_datei, $line, 1);
-                    $result_exp_dat++;
+                    #/* ---> tab  */ fputs($table_datei,$erg."\t");
+                    $line[] = $erg;
+                    $bzm2++;
                 }
+                #/* ---> tab  */ fputs($table_datei,"\n");
+                /* ---> tab  */
+                lmb_fputcsv($table_datei, $line, 1);
+                $result_exp_dat++;
             }
         }
+
 
 
         $result_exp_tabs = $bzm;
@@ -938,49 +959,56 @@ function lmbExport_Dump($format,$struct_only=false){
 	}
 
 
-	/* --- Index_Liste --------------------------------------------- */
-	/* ---> conf */ fputs($config_datei,"<begin indexdefinition>\n");
-	$sqlquery = Dbf::getIndicesSql($DBA["DBSCHEMA"], null, null, null, true, 'lmb');
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	while(lmbdb_fetch_row($rs)) {
-		$REFTABLENAME = lmbdb_result($rs, "TABLENAME");
-		$REFCOLUMNNAME = lmbdb_result($rs, "COLUMNNAME");
-		#$TYPE = lmbdb_result($rs, "TYPE");
-		$TYPE = "";
-		$SORT = "ASC";
-		/* ---> conf */ fputs($config_datei,"$REFTABLENAME::$REFCOLUMNNAME::$TYPE::$SORT\n");
-	}
-	/* ---> conf */ fputs($config_datei,"<end indexdefinition>\n\n");
+    // skip if only data export
+    if ($struct_only != 2) {
 
-	/* --- Views --------------------------------------------- */
-	/* ---> conf */ fputs($config_datei,"<begin viewdefinition>\n");
-	$sqlquery = Dbf::getExistingViewsSql($DBA['DBSCHEMA']);
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$vname = array();
-	while(lmbdb_fetch_row($rs)) {
-		$VIEWNAME = lmb_strtoupper(lmbdb_result($rs, "VIEWNAME"));
-		if(!$vname[$VIEWNAME]){
-			$vname[$VIEWNAME] = 1;
-			$DEFINITION = str_replace("\t"," ",str_replace("\n","",lmb_getViewDef($VIEWNAME)));
-			$DEFINITION = preg_replace("/[ ]{1,}/"," ",$DEFINITION);
-			if(lmb_strpos($DEFINITION,"CREATE VIEW $VIEWNAME AS") !== false){
-				$DEFINITION = str_replace("CREATE VIEW $VIEWNAME AS","",$DEFINITION);
-				$DEFINITION = str_replace($DBA["DBSCHEMA"].".","",$DEFINITION);
-				$DEFINITION = trim($DEFINITION);
-				$DEFINITION = ltrim($DEFINITION,"(");
-				$DEFINITION = rtrim($DEFINITION,")");
-				$DEFINITION = trim($DEFINITION);
-			}
-			#$DEFINITION = str_replace("::text","",$DEFINITION); # for postgresql export
-            // MYSQL needs upper case for system views
-            if(strtoupper(substr($VIEWNAME,0,5)) == 'VERK_'){
-			    $DEFINITION = strtoupper($DEFINITION);
+        /* --- Index_Liste --------------------------------------------- */
+        /* ---> conf */ fputs($config_datei,"<begin indexdefinition>\n");
+        $sqlquery = Dbf::getIndicesSql($DBA["DBSCHEMA"], null, null, null, true, 'lmb');
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        while(lmbdb_fetch_row($rs)) {
+            $REFTABLENAME = lmbdb_result($rs, "TABLENAME");
+            $REFCOLUMNNAME = lmbdb_result($rs, "COLUMNNAME");
+            #$TYPE = lmbdb_result($rs, "TYPE");
+            $TYPE = "";
+            $SORT = "ASC";
+            /* ---> conf */ fputs($config_datei,"$REFTABLENAME::$REFCOLUMNNAME::$TYPE::$SORT\n");
+        }
+        /* ---> conf */ fputs($config_datei,"<end indexdefinition>\n\n");
+
+        /* --- Views --------------------------------------------- */
+
+        /* ---> conf */
+        fputs($config_datei, "<begin viewdefinition>\n");
+        $sqlquery = Dbf::getExistingViewsSql($DBA['DBSCHEMA']);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $vname = array();
+        while (lmbdb_fetch_row($rs)) {
+            $VIEWNAME = lmb_strtoupper(lmbdb_result($rs, "VIEWNAME"));
+            if (!$vname[$VIEWNAME]) {
+                $vname[$VIEWNAME] = 1;
+                $DEFINITION = str_replace("\t", " ", str_replace("\n", "", lmb_getViewDef($VIEWNAME)));
+                $DEFINITION = preg_replace("/[ ]{1,}/", " ", $DEFINITION);
+                if (lmb_strpos($DEFINITION, "CREATE VIEW $VIEWNAME AS") !== false) {
+                    $DEFINITION = str_replace("CREATE VIEW $VIEWNAME AS", "", $DEFINITION);
+                    $DEFINITION = str_replace($DBA["DBSCHEMA"] . ".", "", $DEFINITION);
+                    $DEFINITION = trim($DEFINITION);
+                    $DEFINITION = ltrim($DEFINITION, "(");
+                    $DEFINITION = rtrim($DEFINITION, ")");
+                    $DEFINITION = trim($DEFINITION);
+                }
+                #$DEFINITION = str_replace("::text","",$DEFINITION); # for postgresql export
+                // MYSQL needs upper case for system views
+                if (strtoupper(substr($VIEWNAME, 0, 5)) == 'VERK_') {
+                    $DEFINITION = strtoupper($DEFINITION);
+                }
+                /* ---> conf */
+                fputs($config_datei, $VIEWNAME . "::" . $DEFINITION . "\n");
             }
-			/* ---> conf */ fputs($config_datei,$VIEWNAME."::".$DEFINITION."\n");
-		}
-	}
-	/* ---> conf */ fputs($config_datei,"<end viewdefinition>\n\n");
+        }
+	    /* ---> conf */ fputs($config_datei,"<end viewdefinition>\n\n");
+    }
 
 	/* --- Trigger --------------------------------------------- */
 	#/* ---> conf */ fputs($config_datei,"<begin triggerdefinition>\n");
@@ -1124,6 +1152,7 @@ function lmbExport_remoteSync($toSync, $remoteHost, $remoteUser, $remotePass, $p
         'username' => $remoteUser,
         'pass' => $remotePass
     );
+    #'cookie' => 'remote_export'
 
     # trigger sync import of tar.gz via soap /
     # send local sync_export_bundle.tar.gz to client and get diff.html as response
@@ -1153,7 +1182,7 @@ function lmb_availableSyncModules(){
         'currency'=>array('name'=>$lang[1883],'title'=>'lmb_currency','group'=>2),
         'colorscheme'=>array('name'=>$lang[623],'title'=>'lmb_colorschemes','group'=>2),
         'usercolors'=>array('name'=>$lang[1567],'title'=>'mb_user_colors','group'=>2),
-        'crontab'=>array('name'=>$lang[1864],'title'=>'lmb_crontab','group'=>2),
+        'crontab'=>array('name'=>$lang[1582],'title'=>'lmb_crontab','group'=>2),
         'trigger'=>array('name'=>'Trigger','title'=>'lmb_trigger','group'=>2),
         'links'=>array('name'=>$lang[435],'title'=>'lmb_action_depend lmb_custmenu lmb_custmenu_list','group'=>2),
         'pools'=>array('name'=>$lang[2771],'title'=>'lmb_select_p, lmb_select_w, lmb_attribute_p, lmb_attribute_w','group'=>2),
@@ -1175,10 +1204,10 @@ function lmb_availableSyncModules(){
         'funcproz'=>array('name'=>$lang[2652],'title'=>'','group'=>3),
         'funcmenurefresh'=>array('name'=>$lang[1056],'title'=>'','group'=>3),
         'functablerefresh'=>array('name'=>$lang[1054],'title'=>'','group'=>3),
+        'funcchecksum'=>array('name'=>$lang[3156].' '.$lang[1136],'title'=>'','group'=>3),
         'funcdelsession'=>array('name'=>$lang[1057],'title'=>'','group'=>3),
         'extensions'=>array('name'=>$lang[1813],'title'=>'','group'=>3),
         'source'=>array('name'=>'source','title'=>'','group'=>3),
-
         'synccallextensionfunction'=>array('name'=>'source','title'=>'','group'=>4),
         'backup'=>array('name'=>'source','title'=>'','group'=>4),
     );

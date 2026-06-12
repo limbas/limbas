@@ -501,6 +501,21 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                         endif;
                         endif; ?>
 
+                    <?php // Search-Rule
+                    if (!$isview):
+                        if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["argument_typ"][1] != 47 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 20 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 47):
+                    ?>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3238]?></label>
+                        <div class="col-sm-8">
+                            <textarea onchange="document.form2.val.value=this.value+' ';ajaxEditField('<?=$fieldid?>','search_rule')" rows="3" class="form-control form-control-sm"><?=$result_fieldtype[$table_gtab[$bzm]]['search_rule'][1]?></textarea>
+                            <small class="form-text text-muted"><?=$lang[3239]?></small>
+                        </div>
+                    </div>
+                    <?php
+                        endif;
+                        endif; ?>
+
 
                     <?php // trigger
                     if (!$isview && $gtrigger[$bzm]):
@@ -550,7 +565,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
 
 
                     <?php // Bezeichner
-                    if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 31 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16):
+                    if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 31 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16):
                     ?>
                     <div class="mb-3 row">
                         <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2235]?></label>
@@ -791,7 +806,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                         <?php endif; ?>
 
                         <?php // md5 checksum
-                        #if($result_fieldtype[$table_gtab[$bzm]]["sync_slave"][1] OR $result_fieldtype[$table_gtab[$bzm]]["sync_master"][1]){
+                        if($result_fieldtype[$table_gtab[$bzm]]["parsetype"][1] != 100 && $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 11 && $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 18 && $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 31 && $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 32 && $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 46){
                             ?>
                             <div class="mb-3 row">
                                 <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3156]?></label>
@@ -800,7 +815,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                     <small class="form-text text-muted"><?=$lang[3154]?></small>
                                 </div>
                             </div>
-                        <?php #}?>
+                        <?php }?>
 
                         <?php // in sync template
                         if($result_fieldtype[$table_gtab[$bzm]]["sync_slave"][1] OR $result_fieldtype[$table_gtab[$bzm]]["sync_master"][1]){
@@ -994,7 +1009,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                 <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['wysiwyg'][1] == 1)?'checked':''?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','wysiwyg')">
                             </div>
                         </div>
-                        <?php if($result_fieldtype[$table_gtab[$bzm]]['wysiwyg'][1]):
+                        <?php if($result_fieldtype[$table_gtab[$bzm]]['wysiwyg'][1]){
                         global $LINK_ID;
                         $tinyMceConfigs = TinyMceConfig::all();
                         ?>                    
@@ -1011,7 +1026,22 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                     </select>
                                 </div>
                             </div>
-                        <?php endif; ?>
+
+                            <?php
+                            }else{
+                            ?>
+                                <div class="mb-3 row">
+                                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2100]?></label>
+                                    <div class="col-sm-8">
+                                        <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['textwrap'][1] == 1)?'checked':''?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','textwrap')">
+                                    </div>
+                                </div>
+
+                            <?php
+                            }
+                            ?>
+
+
                         <div class="mb-3 row">
                             <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2795]?></label>
                             <div class="col-sm-8">
@@ -1019,7 +1049,11 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                 <small class="form-text text-muted"><?=$lang[2857]?></small>
                             </div>
                         </div>
-                    
+
+
+
+
+
                     <?php endif; ?>
 
 

@@ -325,6 +325,7 @@ function lmb_getRemoteSyncValidate($cliID,$table,$phase,$filter){
         'lim_url' => $slave['slave_url'][$cliID],
         'username' => $slave['slave_username'][$cliID],
         'pass' => $slave['slave_pass'][$cliID],
+        'cookie' => 'validate_datasync'
     );
 
     $lmpar[0]['action'] = 'validate_datasync';
@@ -523,6 +524,7 @@ function lmb_SyncValidateRebuildToSlave($cliID,$table,$diff){
         'lim_url' => $slave['slave_url'][$cliID],
         'username' => $slave['slave_username'][$cliID],
         'pass' => $slave['slave_pass'][$cliID],
+        'cookie' => 'validate_datasync'
     );
 
     $lmpar[0]['action'] = 'validate_datasync';

@@ -218,6 +218,7 @@ function ind_sort(val){
                         <th class="border-top-0"><?= $lang[168] ?></th>
                         <th class="border-top-0"><?= $lang[2727] ?></th>
                         <th class="border-top-0"><?= $lang[2728] ?></th>
+                        <th class="border-top-0">rule</th>
                         <th class="border-top-0"><input type="checkbox" onclick="checkall(this,'use_fkey')"></th>
                     </tr>
 
@@ -241,6 +242,7 @@ function ind_sort(val){
                                 <td><?=$fkey["columnname"][$key]?></td>
                                 <td><?=$fkey["reftablename"][$key]?></td>
                                 <td><?=$fkey["refcolumnname"][$key]?></td>
+                                <td <?=(strtolower($fkey["refondeleterule"][$key]) == 'cascade' ? 'class="text-danger"' : '')?> > <?=$fkey["refondeleterule"][$key]?></td>
                                 <td>
                                     <input type="checkbox" class="use_fkey" name="use_fkey[<?=$fkey["keyname"][$key]?>]" value="<?=$fkey["tablename"][$key]."#".$fkey["columnname"][$key]?>">
                                 </td>

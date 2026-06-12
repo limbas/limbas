@@ -2,32 +2,47 @@
 
 namespace Limbas\Controllers;
 
+use Symfony\Component\HttpFoundation\Request;
+
 class UserGroupController extends LimbasController
 {
 
-    public function handleRequest(array $request): array
+    public function handleRequest(Request|array $request): array
     {
-        return match ($request['action']) {
-            'data' => $this->getUsers(),
+        return match ($request->get('action')) {
+            'data' => $this->getUsers($request),
             'groups' => $this->getGroups(),
             default => ['success' => false],
         };
     }
 
-    public function getUsers(): array
+    public function getUsers(Request $request = null): array
     {
         global $userdat;
         $data = array();
-        foreach($userdat["username"] as $key => $value) {
+        $term = '';
+        if($request !== null) {
+            $term = $request->get('term');
+            if ($term) {
+                $term = strtolower($term);
+            }
+        }
 
-            // filter hidden user
-            if($userdat["hidden"][$key]){continue;}
+        foreach ($userdat['username'] as $key => $value) {
+            if ($userdat['hidden'][$key]) {
+                continue;
+            }
 
-            $data[] = array(
-                "id" => $key,
-                "name" => $userdat["bezeichnung"][$key],
-                "type" => "user"
-            );
+            $name = $userdat['bezeichnung'][$key];
+            if ($term && !str_contains(strtolower($name), $term)) {
+                continue;
+            }
+
+            $data[] = [
+                'id' => $key,
+                'name' => $name,
+                'type' => 'user'
+            ];
         }
         return ['success' => true, 'data' => $data];
     }

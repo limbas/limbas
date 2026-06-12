@@ -54,8 +54,20 @@ function limbasAjxColorSelect(evt, formname, gtabid, fieldid, id) {
 
 // Ajax color select output
 function limbasAjxColorSelectPost(result, evt) {
-	document.getElementById("lmbAjaxContainer").innerHTML = result;
-	limbasDivShow('', evt, "lmbAjaxContainer");
+	$('<div>').html('<div id="lmb_colorselect">' + result + '</div>').children('div').css('width', '100%').css({
+		'position': 'relative',
+		'left': '0',
+		'top': '0',
+		'width': '100%'
+	}).dialog({
+		appendTo: "#form1",
+		resizable: true,
+		modal: true,
+		width: '200',
+		close: function () {
+			$(this).dialog('destroy').remove();
+		}
+	});
 }
 
 // Ajax color select action
@@ -66,7 +78,7 @@ function limbasColorSelectSet(val, formname, gtabid, fieldid, id) {
 }
 
 /* --- dynsPress ----------------------------------- */
-function lmbAjax_dynsearch(evt, el, actid, fname, par1, par2, par3, par4, par5, par6, gformid, formid, datatype, nextpage) {
+function lmbAjax_dynsearch(evt, el, actid, fname, par1, par2, par3, par4, par5, par6, gformid, formid, datatype, nextpage,search) {
 	if (evt === 'object') {
 		if (evt.keyCode == 27) {
 			var el = document.getElementById(el.name + "l");
@@ -94,6 +106,8 @@ function lmbAjax_dynsearch(evt, el, actid, fname, par1, par2, par3, par4, par5, 
 	if (!el) {
 		el = document.getElementsByName(fname + "_ds")[0];
 	}
+	
+	$(el).attr('aria-expanded', true);
 
 	if (typeof evt === 'string') {
 		dyns_value = evt;
@@ -103,7 +117,7 @@ function lmbAjax_dynsearch(evt, el, actid, fname, par1, par2, par3, par4, par5, 
 
 	if (dyns_value.length > 1 || dyns_value == '*' || nextpage) {
 		url = "main_dyns.php";
-		actid = actid + "&form_name=" + fname + "&form_value=" + dyns_value + "&par1=" + par1 + "&par2=" + par2 + "&par3=" + par3 + "&par4=" + par4 + "&par5=" + par5 + "&par6=" + par6 + "&gformid=" + gformid + "&formid=" + formid + "&nextpage=" + nextpage;
+		actid = actid + "&form_name=" + fname + "&form_value=" + dyns_value + "&par1=" + par1 + "&par2=" + par2 + "&par3=" + par3 + "&par4=" + par4 + "&par5=" + par5 + "&par6=" + par6 + "&gformid=" + gformid + "&formid=" + formid + "&nextpage=" + nextpage + "&search=" + search;
 		mainfunc = function (result) {
 			lmbAjax_dynsearchPost(result, el);
 		};
@@ -2081,7 +2095,10 @@ function aktivateRows(activ) {
 	} else {
 		for (var key in selected_rows) {
 			if (selected_rows[key]) {
-				aktivateSingleRow(key, 0);
+                if($('#chkb'+key) && $('#chkb'+key).is(':checked')) {
+                    continue;
+                }
+                aktivateSingleRow(key, 0);
 			}
 		}
 	}
@@ -2186,7 +2203,7 @@ function lmbOpenForm(evt, gtabid, id, params) {
 	if (!params) {
 		params = new Array();
 	}
-	return newwin7(evt, lmbUndefToNull(params['action']), gtabid, lmbUndefToNull(params['v_tabid']), lmbUndefToNull(params['v_fieldid']), lmbUndefToNull(params['v_id']), id, lmbUndefToNull(params['formid']), lmbUndefToNull(params['formdimension']), lmbUndefToNull(params['v_formid']), lmbUndefToNull(params['formopenas']), lmbUndefToNull(params['readonly']), lmbUndefToNull(params['dataAction']), lmbUndefToNull(params['force']));
+	return newwin7(evt, lmbUndefToNull(params['action']), gtabid, lmbUndefToNull(params['v_tabid']), lmbUndefToNull(params['v_fieldid']), lmbUndefToNull(params['v_id']), id, lmbUndefToNull(params['formid']), lmbUndefToNull(params['formdimension']), lmbUndefToNull(params['v_formid']), lmbUndefToNull(params['formopenas']), lmbUndefToNull(params['readonly']), lmbUndefToNull(params['dataAction']), lmbUndefToNull(params['force']), lmbUndefToNull(params['formviewmode']));
 }
 
 
@@ -2209,7 +2226,7 @@ function lmbOpenForm(evt, gtabid, id, params) {
  * params['dataAction'] : copy / versioning
  * params['dataAction'] : force / force settings
  */
-function newwin7(evt, action, gtabid, v_tabid, v_fieldid, v_id, id, formid, formdimension, v_formid, inframe, readonly, dataAction, force) {
+function newwin7(evt, action, gtabid, v_tabid, v_fieldid, v_id, id, formid, formdimension, v_formid, inframe, readonly, dataAction, force, formviewmode) {
 
 	divclose();
 
@@ -2224,9 +2241,14 @@ function newwin7(evt, action, gtabid, v_tabid, v_fieldid, v_id, id, formid, form
 		v_id = '';
 	}
 
+    // viewmode
+    if(!formviewmode) {
+        formviewmode = jsvar["detailform_viewmode_" + gtabid];
+    }
+
 	// default action
 	if (action != 'gtab_erg' && action != 'gtab_neu' && action != 'gtab_form') {
-		if (jsvar["detailform_viewmode_" + gtabid] == 1) {
+		if (formviewmode == 1) {
 			action = 'gtab_deterg';
 		} else {
 			action = 'gtab_change';
@@ -2299,7 +2321,7 @@ function newwin7(evt, action, gtabid, v_tabid, v_fieldid, v_id, id, formid, form
 	// resize window if window in window
 	if (!force && (inframe == 'iframe' || inframe == 'div')) {
 		// check if modal already exists
-		if ($('#lmbSbmClose_' + v_tabid + '_' + v_id).is(':visible')) {
+		if (jsvar['detail_isopenas'] == 'iframe' || jsvar['detail_isopenas'] == 'div') {
 			// size of modal
 			if (jsvar["modal_level"] == 'nested') {
 				x = (x - 60);
@@ -2471,7 +2493,11 @@ function newwin7(evt, action, gtabid, v_tabid, v_fieldid, v_id, id, formid, form
 		});
 		// show in dialog as iframe
 	} else if (inframe == 'iframe') {
+        if($('#lmb_gtabDetailIFrame')) {
+            $('#lmb_gtabDetailIFrame').attr('src', 'about:blank');
+        }
 		$("#" + layername).remove();
+
 		$("body").append("<div id='" + layername + "' style='position:absolute;display:none;z-index:9999;overflow:hidden;width:" + x + "px;height:" + y + "px;padding:0;'><iframe id='lmb_gtabDetailIFrame' name='lmb_gtabDetailIFrame' style='width:100%;height:100%;overflow:auto;'></iframe></div>");
 		$("#" + layername).css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
 			width: x,
@@ -2483,8 +2509,7 @@ function newwin7(evt, action, gtabid, v_tabid, v_fieldid, v_id, id, formid, form
 				$('#lmb_gtabDetailIFrame').attr("src", "main.php?action=" + action + "&verkn_showonly=" + verkn_showonly + "&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&detail_isopenas='+inframe+'&readonly=' + readonly + use_typ);
 			},
 			close: function () {
-				//lmb_gtabDetailIFrame.document.form1.action.value = 'gtab_change';
-				//lmb_gtabDetailIFrame.send_form(1, 0, 1);
+				$('#lmb_gtabDetailIFrame').attr('src', 'about:blank');
 				$("#" + layername).dialog('destroy').remove();
 			}
 		});

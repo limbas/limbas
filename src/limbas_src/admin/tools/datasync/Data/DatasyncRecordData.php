@@ -229,9 +229,9 @@ class DatasyncRecordData
 
         foreach ($systemFields as $systemField) {
             // convert id on main to client id before send
-            /*if ($this->is_main && $systemField === 'VPID' && !empty(trim($value[0]))) {
-                $value[0] = $this->convertID($tabid, $value[0], 1);
-            }*/
+            if ($isMain && $systemField === 'VPID' && !empty(intval($record[$systemField]))) {
+                $record[$systemField] = $this->convertID($this->tabId, intval($record[$systemField]), $currentClient, self::MAIN_TO_CLIENT);
+            }
             $this->data[$systemField] = $record[$systemField];
             if ($systemField === 'LMB_SYNC_ID') {
                 $clientId = intval($record[$systemField]) ?: null;
@@ -326,44 +326,7 @@ class DatasyncRecordData
     }
 
 
-    /**
-     * Collects values of attribute field type
-     *
-     * @param int $tabId
-     * @param int $fieldId
-     * @param int $recordId
-     * @param $wid
-     * @return string
-     */
-    private function getAttributeValue(int $tabId, int $fieldId, int $recordId, $wid): string
-    {
-        global $db;
 
-        $sql = "SELECT VALUE_STRING,VALUE_NUM,VALUE_DATE FROM LMB_ATTRIBUTE_D WHERE LMB_ATTRIBUTE_D.W_ID = $wid AND LMB_ATTRIBUTE_D.TAB_ID = $tabId AND LMB_ATTRIBUTE_D.FIELD_ID = $fieldId AND LMB_ATTRIBUTE_D.DAT_ID = $recordId";
-
-
-        $rs1 = lmbdb_exec($db, $sql);
-        if (!$rs1) {
-            return '';
-        }
-
-        while (lmbdb_fetch_row($rs1)) {
-
-            $string_value = lmbdb_result($rs1, 'VALUE_STRING');
-            $num_value = lmbdb_result($rs1, 'VALUE_NUM');
-            $date_value = lmbdb_result($rs1, 'VALUE_DATE');
-
-            if (!empty($string_value)) {
-                return 's' . $string_value;
-            } elseif (!empty($date_value)) {
-                return 'd' . $date_value;
-            } elseif (!empty($num_value) || $num_value === 0 || $num_value === '0') {
-                return 'n' . $num_value;
-            }
-        }
-
-        return '';
-    }
 
 
 }

@@ -8,11 +8,16 @@
  */
 
 global $DBA;
+global $result_exp_tabs;
+global $result_exp_dat;
 
 use Limbas\lib\db\functions\Dbf;
 
 ?>
 
+
+<script src="assets/vendor/select2/select2.full.min.js"></script>
+<link href="assets/vendor/select2/select2.min.css" rel="stylesheet">
 
 <script>
 
@@ -164,50 +169,60 @@ $slaves = lmb_GetSyncSlaves();
                         <INPUT TYPE="hidden" NAME="make_package" VALUE="0">
                         
                         <div class="row mb-3">
-                            
-                            <div class="col-md-5">
-                                <p class="fw-bold"><?=$lang[961]?></p>
-                                <select NAME="exptable[]" MULTIPLE class="form-select form-select-sm" size="16" >
-                                    <?php
-                                    $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE','VIEW'");
-                                    foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-                                        if($exptable){
-                                            if(in_array($tvalue,$exptable)){$slct = "SELECTED";}else{$slct = "";}
+                            <div class="col-md-7">
+                                <label for="id_label_multiple" style="width: 100%">
+                                    <?=$lang[961]?>
+
+                                    <select name="exptable[]" id="select_export-table" multiple class="form-select form-select-sm">
+                                        <?php
+                                        $odbc_table = Dbf::getTableList($DBA["DBSCHEMA"],null,"'TABLE','VIEW'");
+                                        foreach($odbc_table["table_name"] as $tkey => $tvalue) {
+                                            if($exptable){
+                                                if(in_array($tvalue,$exptable)){$slct = "SELECTED";}else{$slct = "";}
+                                            }
+                                            echo "<option value=\"".$tvalue."\" $slct>".$tvalue;
                                         }
-                                        echo "<OPTION VALUE=\"".$tvalue."\" $slct>".$tvalue;
-                                    }
-                                    ?>
-                                </select>
+                                        ?>
+                                    </select>
+                                </label>
+                                <script>$('#select_export-table').select2();</script>
                             </div>
 
-                            <div class="col-md-5">
-                                <p class="fw-bold"><?=$lang[925]?></p>
+                            <div class="col-md-3">
+
+
+
                                 <?php
                                 if(!$format){
                                     $format = 'system';
                                 }
                                 ?>
-                                
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="format" id="part-exp-excel" value="excel" <?=($format == 'excel')?'checked':''?>>
-                                    <label class="form-check-label" for="part-exp-excel">
-                                        <i class="lmb-icon lmb-excel-alt2" title="<?=$lang[962]?>"></i>
-                                    </label>
-                                </div>
 
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="format" id="part-exp-txt" value="txt" <?=($format == 'txt')?'checked':''?>>
-                                    <label class="form-check-label" for="part-exp-txt">
-                                        <i class="lmb-icon lmb-file-text" title="<?=$lang[963]?>"></i>
-                                    </label>
-                                </div>
-                                
-                                <div class="form-check mb-4">
-                                    <input class="form-check-input" type="radio" name="format" id="part-exp-system" value="system" <?=($format == 'system')?'checked':''?>>
-                                    <label class="form-check-label" for="part-exp-system">
-                                        <img src="assets/images/logo.svg" title="<?=$lang[964]?>" alt="<?=$lang[964]?>" style="height: 1.1em">
-                                    </label>
-                                </div>
+                                <label class="form-check-label" for="part-exp-system">
+                                    <?=$lang[925]?>
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="format" id="part-exp-system" value="system" <?=($format == 'system')?'checked':''?>>
+                                        <label class="form-check-label" for="part-exp-system">
+                                            <img src="assets/images/logo.svg" title="<?=$lang[964]?>" alt="<?=$lang[964]?>" style="height: 1.1em"> <?=$lang[964]?>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="format" id="part-exp-excel" value="excel" <?=($format == 'excel')?'checked':''?>>
+                                        <label class="form-check-label" for="part-exp-excel">
+                                            <i class="lmb-icon lmb-excel-alt2" title="<?=$lang[962]?>"></i> <?=$lang[962]?>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="format" id="part-exp-txt" value="txt" <?=($format == 'txt')?'checked':''?>>
+                                        <label class="form-check-label" for="part-exp-txt">
+                                            <i class="lmb-icon lmb-file-text" title="<?=$lang[963]?>"></i> <?=$lang[963]?>
+                                        </label>
+                                    </div>
+
+                                </label>
 
                             </div>
                             
@@ -242,25 +257,37 @@ $slaves = lmb_GetSyncSlaves();
                     <FORM METHOD="post" name="form2">
                         <INPUT TYPE="hidden" NAME="action" VALUE="setup_export">
                         <INPUT TYPE="hidden" NAME="openTab" VALUE="2">
-
-                        <p class="fw-bold"><?=$lang[966]?></p>
-                        
                         
                         <div class="form-check mb-2">
                             <input class="form-check-input" type="radio" name="format" id="full-exp-system" value="system" checked>
                             <label class="form-check-label" for="full-exp-system">
-                                <img src="assets/images/logo.svg" title="<?=$lang[964]?>" alt="<?=$lang[964]?>" style="height: 1.1em">
+                                <img src="assets/images/logo.svg" title="<?=$lang[964]?>" alt="<?=$lang[964]?>" style="height: 1.1em"> <?=$lang[964]?>
                             </label>
-                        </div>                        
+                        </div>
+
+                        <hr>
 
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="1" id="struct-only" name="struct_only">
-                                    <label class="form-check-label" for="struct-only">
-                                        Nur Struktur
+                                    <input class="form-check-input" type="radio" <?= (!$struct_only ? 'checked' : '') ?> value="0" name="struct_only" id="struct_only1">
+                                    <label class="form-check-label" for="struct-struct_only1">
+                                        <?=$lang[1037]?>
                                     </label>
                                 </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" <?= ($struct_only == 1 ? 'checked' : '') ?> value="1" name="struct_only" id="struct_only2">
+                                    <label class="form-check-label" for="struct-struct_only2">
+                                       <?=$lang[1036]?>
+                                    </label>
+                                </div>
+                                    <div class="form-check">
+                                    <input class="form-check-input" type="radio" <?= ($struct_only == 2 ? 'checked' : '') ?> value="2" name="struct_only" id="struct_only3">
+                                    <label class="form-check-label" for="struct-struct_only3">
+                                       <?=$lang[3241]?>
+                                    </label>
+                                </div>
+
                             </div>
                             <div class="col-6 text-end">
                                 <button class="btn btn-primary" type="submit" value="1" name="dump_export"><?=$lang[979]?></button>
@@ -280,7 +307,6 @@ $slaves = lmb_GetSyncSlaves();
                         <INPUT TYPE="hidden" NAME="format" VALUE="group">
 
                         <p class="fw-bold"><?=$lang[2462]?></p>
-
 
                         <?php
                         

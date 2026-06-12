@@ -389,6 +389,9 @@ use Limbas\gtab\export\TableExportTypes;
         #pop_submenu(131,'','',0);			# Berichte
         pop_submenu(315,'','',0);
     }
+    if($LINK[322] && !$gtab["menudisplay"][$gtabid][1][322]){
+        pop_submenu(322,'','',0);			# Mail
+    }
     if($gdiaglist[$gtabid]["id"] && !$gtab["menudisplay"][$gtabid][1][232]){
         pop_submenu(232,'','',0);			# Diagramme
         pop_line();

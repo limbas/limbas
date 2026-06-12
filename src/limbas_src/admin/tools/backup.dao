@@ -55,7 +55,7 @@ function delete_backup($server,$location,$path=null,$job=null){
 function delete_backup_cronjob($del_job){
     global $db;
 
-	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = ".parse_db_int($del_job)." AND KATEGORY = 'BACKUP'";
+	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = ".parse_db_int($del_job)." AND TYPE = 'BACKUP'";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
@@ -165,7 +165,7 @@ function add_backup_cronjob($path1,$path2,$cron,$art=1,$device=1,$medium=1,$aliv
 	$val = "int_backup,1;device,$device;art,$art;medium,$medium;path1,$path1;path2,$path2";
 
 	$NEXTID = next_db_id("LMB_CRONTAB");
-	$sqlquery = "INSERT INTO LMB_CRONTAB (ID,KATEGORY,START,VAL,DESCRIPTION,ACTIV,ALIVE) VALUES($NEXTID,'BACKUP','$cron[1];$cron[2];$cron[3];$cron[4];$cron[5]','$val','$desc',".LMB_DBDEF_TRUE.",$alive)";
+	$sqlquery = "INSERT INTO LMB_CRONTAB (ID,TYPE,START,CONFIG,DESCRIPTION,ACTIVE,ALIVE) VALUES($NEXTID,'BACKUP','$cron[1];$cron[2];$cron[3];$cron[4];$cron[5]','$val','$desc',".LMB_DBDEF_TRUE.",$alive)";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	#if(!update_backup_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
@@ -183,24 +183,7 @@ function set_backup_path($medium,$path1,$path2,$typ){
 
 	# --- File ---
 	if($medium == "1" AND $path1){
-		$pos = lmb_strpos($path1,":");
-		$path['server'] = lmb_substr($path1,0,$pos);
-		# remote Server
-		if((preg_match("/^[0-9]/",lmb_substr($path["server"],0,1)) OR preg_match("/@[0-9]/",$path["server"])) AND lmb_strtolower($path["server"]) != "localhost" AND $path["server"] != $DBA["LMHOST"]){
-			$path["path"] = TEMPPATH . $path["filename"];
-			$path["scp"] = $path1."/";
-			$path["scppath"] = $path1."/".$path["filename"];
-		# lokaler Server
-		}else{
-			if($path["server"] == $DBA["LMHOST"]){
-				$path["path"] = lmb_substr($path1,$pos+1,200)."/".$path["filename"];
-			}elseif(lmb_strtolower($path['server']) == "localhost"){
-				$path["path"] = lmb_substr($path1,$pos+1,200)."/".$path["filename"];
-			}else{
-				$path["path"] = "/".$path1."/".$path["filename"];
-				$path["path"] = str_replace("//","/",$path["path"]);
-			}
-		}
+		$path["path"] = $path1."/".$path["filename"];
 		$path['type'] = "FILE";
 		$path['size'] = "0";
 		$path['over'] = "YES";
@@ -242,7 +225,7 @@ function update_backup_crontab(){
 		}
 		}
 		# --- schreiben neuer Inhalte ----
-		$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ACTIV = ".LMB_DBDEF_TRUE." ORDER BY ERSTDATUM";
+		$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ACTIVE = ".LMB_DBDEF_TRUE." ORDER BY ERSTDATUM";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		while(lmbdb_fetch_row($rs)){
@@ -263,9 +246,8 @@ function lmb_backup_database($path1=null,$path2=null,$medium=1,$device=1,$art=1)
     global $message;
     global $DBA;
 
-
-    if (!$path1 or $path1 == "localhost") {
-        $path1 = "localhost:" . DEPENDENTPATH . "BACKUP";
+    if (!$path1) {
+        $path1 = DEPENDENTPATH . "BACKUP";
     }
 
     if ($device == 1) {
@@ -286,13 +268,6 @@ function lmb_backup_database($path1=null,$path2=null,$medium=1,$device=1,$art=1)
             $out = Dbf::backupData($medium, $path, $typ ?? '');
             $out2 = Dbf::deleteMedium($path["medname"], $typ ?? '');
         }
-        if ($path["scp"] and $path["path"]) {
-            $sys = "scp " . $path["path"] . ".gz " . $path["scp"];
-            $ex = `$sys`;
-            if (file_exists($path["path"] . ".gz")) {
-                unlink($path["path"] . ".gz");
-            }
-        }
         if ($message = fill_backup_history($out, $path, $typ)) {
             $message = implode("<br>", $message);
         }
@@ -311,11 +286,7 @@ function lmb_backup_database($path1=null,$path2=null,$medium=1,$device=1,$art=1)
         $out[10] = $path["medname"];
         fill_backup_history($out, $path, "TXT");
         if ($DBA["DBHOST"] != $DBA["LMHOST"]) {
-            if ($path['scp'] and $path["scppath"]) {
-                $sys = "scp " . $path_backup . " " . $path["scppath"] . ".tar";
-                $ex = `$sys`;
-                unlink($path_backup);
-            } elseif ($path["path"]) {
+            if ($path["path"]) {
                 $sys = "mv " . $path_backup . " " . $path["path"] . ".tar";
                 $ex = `$sys`;
             }
