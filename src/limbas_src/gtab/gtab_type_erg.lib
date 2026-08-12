@@ -986,7 +986,7 @@ function cftyp_10($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 		        dftyp_11($ID,$gresult,$field_id,$gtabid,'gtabBodyINP',1,null,$typ,'listmode',$event,$gformid,$formid);
 		    # show details
             }elseif($row_ AND $gfield[$gtabid]["listing_viewmode"][$field_id] == 2){
-				echo "<div>".implode($row_, $gfield[$gtabid]["listing_cut"][$field_id]).'</div>';
+				echo "<div>".implode($gfield[$gtabid]["listing_cut"][$field_id],$row_).'</div>';
 				$row_ = null;
 			# show count
 			}else{

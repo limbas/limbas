@@ -1896,36 +1896,49 @@ function lmbCookieSet($s_name,$s_id,$LIM){
         foreach ($cookie['host'] as $key => $host){
 
             // drop expired cookie (min)
-            if($umgvar['session_save_duration']*60 < (time() - $cookie['timestamp'][$key]) ){
-                unset($cookie[$key]);
+            if(($umgvar['session_save_duration'] * 60) < (time() - $cookie['timestamp'][$key])){
                 continue;
-            }
-
-            // check if cookie already exists
-            if($cookie['host'][$key] == $HTTP_HOST
+            // check if cookie already exists - do nothing
+            }else if($cookie['host'][$key] == $HTTP_HOST
                 && $cookie['url'][$key] == $LIM['lim_url']
                 && $cookie['user'][$key] == $LIM['username']
                 && $cookie['session_name'][$key] == $s_name
                 && $cookie['session_id'][$key] == $s_id){
-                $host_exists = 1;
+                $cookie_exists = 1;
+                break;
+
+            // drop if host already exists
+            }else if($cookie['host'][$key] == $HTTP_HOST
+                && $cookie['url'][$key] == $LIM['lim_url']
+                && $cookie['user'][$key] == $LIM['username']
+                && $cookie['session_name'][$key] == $s_name){
+                continue;
             }
+
+            $cookie_['host'][] = $cookie['host'][$key];
+            $cookie_['timestamp'][] = $cookie['timestamp'][$key];
+            $cookie_['url'][] = $cookie['url'][$key];
+            $cookie_['user'][] = $cookie['user'][$key];
+            $cookie_['session_name'][] = $cookie['session_name'][$key];
+            $cookie_['session_id'][] = $cookie['session_id'][$key];
+
         }
     }
 
-    if($host_exists){
+    if($cookie_exists){
         return true;
     }
 
-    $cookie['host'][] = $HTTP_HOST;
-    $cookie['timestamp'][] = time();
-    $cookie['url'][] = $LIM['lim_url'];
-    $cookie['user'][] = $LIM['username'];
-    $cookie['session_name'][] = $s_name;
-    $cookie['session_id'][] = $s_id;
+    $cookie_['host'][] = $HTTP_HOST;
+    $cookie_['timestamp'][] = time();
+    $cookie_['url'][] = $LIM['lim_url'];
+    $cookie_['user'][] = $LIM['username'];
+    $cookie_['session_name'][] = $s_name;
+    $cookie_['session_id'][] = $s_id;
 
 	# write cookie
 	$fp = fopen($LIM["cookie_path"],"w");
-    fputs($fp,json_encode($cookie));
+    fputs($fp,json_encode($cookie_));
 	fclose($fp);
 }
 

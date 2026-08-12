@@ -747,7 +747,7 @@ function dyns_syncValidate($par){
     if($par['phase'] == 2 && $par['rebuild']){
         echo json_encode(lmb_SyncValidateRebuildPhase2($par['syncid'],$par['table'],$par['type'],$filter));
     }else if($par['phase'] == 4 && $par['rebuild']){
-        echo json_encode(lmb_SyncValidateRebuildPhase4($par['syncid'],$par['table'],$par['type'],$filter));
+        echo json_encode(lmb_SyncValidateRebuildPhase4($par['syncid'],$par['table'],$par['type'],$par['masterID'],$par['clientID'],$filter));
     }else if($par['phase'] == 2) {
         echo json_encode(lmb_SyncValidatePhase2($par['syncid'], $par['table'],$filter));
     }else if ($par['phase'] == 3){
@@ -755,7 +755,7 @@ function dyns_syncValidate($par){
     }else if ($par['phase'] == 4){
         echo json_encode(lmb_SyncValidatePhase4( $par['syncid'],$par['table'],$filter));
     }else if ($par['phase'] == 5) {
-        echo lmb_SyncValidatePhase5($par['syncid'], $par['table'], $par['clientID'], $par['masterID']);
+        echo lmb_SyncValidatePhase5($par['syncid'], $par['table'], $par['clientID'], $par['masterID'], $par['type']);
     }else{
         echo json_encode(lmb_SyncValidateDashboard($par['syncid'],$filter));
     }

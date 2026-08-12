@@ -22,6 +22,8 @@
  * @return unknown
  */
 
+use Limbas\lib\general\Log\Log;
+
 function pool_select_list($gtabid,$field_id,$ID,$find_wert,$find_keyw,$num_result,&$start){
 	global $db,$gfield,$level_id,$umgvar,$session;
 
@@ -902,16 +904,25 @@ function pool_select_prepare($gtabid,$field_id,$ID,$fs_sel){
 
 	}
 
-    if($commit){return false;}
+    if($commit){
+        Log::limbasError('update data multiselect - prepare error', null, $gtabid, $field_id, $ID);
+        return false;
+    }
 	return true;
 }
 
 
+/**
+ * @param $gtabid
+ * @param $field_id
+ * @param $ID
+ * @param $change_array
+ * @param $defaultupdate - true if from default update / no permission or precheck
+ * @return bool
+ */
 
 
-
-
-function pool_select_update($gtabid,$field_id,$ID,$change_array){
+function pool_select_update($gtabid,$field_id,$ID,$change_array,$ignorepermission=false){
 	global $db;
 	global $session;
 	global $gtab;
@@ -943,7 +954,10 @@ function pool_select_update($gtabid,$field_id,$ID,$change_array){
     $query_dataid = array($field_id => $fs_sel);
     $query_result=null;
     $triggerResult=null;
-    if(!update_data_precheck($gtabid,$ID,$query_dataid,$query_result,$old_gresult,$triggerResult)){return false;}
+    if($ignorepermission === false && !update_data_precheck($gtabid,$ID,$query_dataid,$query_result,$old_gresult,$triggerResult)){
+        Log::limbasError('update data multiselect - data_precheck failed', null, $gtabid, $field_id, $ID);
+        return false;
+    }
 
     foreach($change_array as $key => $change_part){
 
@@ -974,7 +988,10 @@ function pool_select_update($gtabid,$field_id,$ID,$change_array){
            $que_mode .= " AND ID = $selectID";
         }
 
-        if(!$selectWID){return false;}
+        if(!$selectWID){
+            Log::limbasError('update data multiselect - missing WID', null, $gtabid, $field_id, $ID);
+            return false;
+        }
 
         // get history value description
         $sqlquery1 = "SELECT WERT FROM {$tabtyp}_W WHERE POOL = {$gfield[$gtabid]['select_pool'][$field_id]} AND ID = $selectWID";
@@ -1044,11 +1061,15 @@ function pool_select_update($gtabid,$field_id,$ID,$change_array){
         }
         // postcheck routine
         $query_dataid[$field_id] = $history_value;
-        if(!update_data_postcheck($gtabid,$ID,$query_dataid,$old_gresult,$triggerResult)){return false;}
+        if($ignorepermission === false && !update_data_postcheck($gtabid,$ID,$query_dataid,$old_gresult,$triggerResult)){
+            Log::limbasError('update data multiselect - data_postcheck failed', null, $gtabid, $field_id, $ID);
+            return false;
+        }
 
         return true;
     }
 
+    Log::limbasError('update data multiselect - SQL error', null, $gtabid, $field_id, $ID);
     return false;
 }
 

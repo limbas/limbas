@@ -412,12 +412,12 @@ function parse_action($lmpar){
                     return lmb_getSyncValidatePhase4(null, $lmpart['table'],null,$lmpart['filter']);
                 }elseif($lmpart['phase'] == 5){
                     // detail dataset comparison
-                    return lmb_getSyncValidatePhase5(null, $lmpart['table'],$lmpart['ID']);
+                    return lmb_getSyncValidatePhase5(null, $lmpart['table'],$lmpart['filter']);
                 } elseif($lmpart['phase'] == 20){
                     // rebuild sync cashe of missing datasets
-                    return lmb_SyncValidateRebuildCache($lmpart['table'],$lmpart['diff'],2);
+                    return lmb_SyncValidateRebuildCachePhase2($lmpart['table'],$lmpart['diff'],2);
                 } elseif($lmpart['phase'] == 40){
-                    // rebuild sync cashe of dataset comparison (fieldvalues)
+                    // rebuild sync cashe of dataset comparison
                     return lmb_SyncValidateRebuildCachePhase4($lmpart['table'],$lmpart['diff'],2);
                 }
 

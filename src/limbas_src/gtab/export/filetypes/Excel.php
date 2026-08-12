@@ -170,7 +170,8 @@ class Excel extends FiletypeExporter
                 }
             }
 
-            $backgroundColorRow = '';
+            $backgroundColorRow = null;
+            $rowStyle = null;
             if(is_array($gresult[$gtabid]["indicator"]["color"][$resultCounter])){
                 # indicator color
                 $backgroundColorRow = average_color($gresult[$gtabid]["indicator"]["color"][$resultCounter]);
@@ -179,9 +180,10 @@ class Excel extends FiletypeExporter
                 $backgroundColorRow = $gresult[$gtabid]["color"][$resultCounter];
             }
 
-            $backgroundColorRow = strtoupper(str_replace('#', '', $backgroundColorRow));
-
-            $rowStyle = (new Style())->setBackgroundColor($backgroundColorRow);
+            if($backgroundColorRow) {
+                $backgroundColorRow = strtoupper(str_replace('#', '', $backgroundColorRow));
+                $rowStyle = (new Style())->setBackgroundColor($backgroundColorRow);
+            }
 
             $writer->addRow(Row::fromValuesWithStyles($row, rowStyle: $rowStyle, columnStyles: $styles));
         }

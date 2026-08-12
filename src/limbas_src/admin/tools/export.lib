@@ -601,6 +601,9 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 			if($col = Dbf::getColumns($DBA["DBSCHEMA"],$table,null, false, false, 1)){
 				foreach ($col["columnname"] as $ckey => $cname){
 					$COLUM[] = $col["columnname"][$ckey];
+                    if(!defined("LMB_DBRETYPE_".trim(lmb_strtoupper($col["datatype"][$ckey])))){
+                        continue;
+                    }
 					$DATATYPE = constant("LMB_DBRETYPE_".trim(lmb_strtoupper($col["datatype"][$ckey])));
 					$LEN = $col["length"][$ckey];
 					if (lmb_strtolower($DATATYPE) == 'boolean')

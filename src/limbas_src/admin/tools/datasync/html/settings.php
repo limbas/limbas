@@ -167,10 +167,8 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
                 text += '<span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" data-bs-html="true" data-bs-toggle="popover" data-bs-trigger="hover" title="slave:' + result['slave'][i] + ' / master:' + result['master'][i] + '"><div data-bs-toggle="modal" data-bs-target="#SynValidatePhase2Modal" onclick="lmb_validatePhase2('+syncid+',\''+i+'\')">Σ ' + result['diff'][i] + '</div></span>&nbsp;';
             }
             if(s) {
-                text += '<span class="rounded-pill badge bg-secondary text-wrap w-25 cursor-pointer" data-bs-html="true" data-bs-toggle="popover" data-bs-trigger="hover" title="Checksum is different!"><div data-bs-toggle="modal" data-bs-target="#SynValidatePhase4Modal" onclick="lmb_validatePhase4('+syncid+',\''+i+'\')"><i class="fa-solid fa-not-equal"></i></div></span>';
+                text += '<span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" data-bs-html="true" data-bs-toggle="popover" data-bs-trigger="hover" title="Checksum is different!"><div data-bs-toggle="modal" data-bs-target="#SynValidatePhase4Modal" onclick="lmb_validatePhase4('+syncid+',\''+i+'\')"><i class="fa-solid fa-not-equal"></i></div></span>';
             }
-            //text += '(<span class="cursor-pointer" id="validateDiff_1_'+syncid+'_'+i+'" onclick="lmb_validateRebuild('+syncid+',\''+i+'\',1)" title="sync to master">' + result['slave'][i] + '<i class="lmb-icon lmb-arrow-right" border="0"></i></span> / ';
-            //text += '<span class="cursor-pointer" id="validateDiff_2_'+syncid+'_'+i+'" onclick="lmb_validateRebuild('+syncid+',\''+i+'\',2)" title="sync to slave">' + result['master'][i] + ' <i class="lmb-icon lmb-arrow-right" border="0"></i></span>)';
             text += '</div>';
 
             i++;
@@ -191,6 +189,8 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
         $('#SynValidatePhase2ModalTitle').html(' ('+table+')');
         $('#detailMasterPhase2').html('');
         $('#detailClientPhase2').html('');
+        $('#SynValidatePhase5Modal').attr('data-masterID', '');
+        $('#SynValidatePhase5Modal').attr('data-clientID', '');
 
         postfunc = function(result){lmb_validatePhase2Detail(result,syncid,table);};
         ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=2&syncid='+syncid+'&table='+table,null,'postfunc',null,null,null,1);
@@ -242,11 +242,14 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
         lmbShowWarningMsg('added to sync process!');
     }
 
-    function lmb_validateRebuildPhase4(type,dataID){
-        var syncid = $('#SynValidatePhase2Modal').attr('data-syncid');
-        var table = $('#SynValidatePhase2Modal').attr('data-table');
-        postfunc = function(result){lmb_validateRebuildPhase2Post(result,syncid,table,type);};
-        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=4&rebuild=1&type='+type+'&syncid='+syncid+'&table='+table+'dataID='+dataID,null,'postfunc',null,null,null,1);
+    function lmb_validateRebuildPhase4(type){
+        var syncid = $('#SynValidatePhase4Modal').attr('data-syncid');
+        var table = $('#SynValidatePhase4Modal').attr('data-table');
+        var masterID = $('#SynValidatePhase5Modal').attr('data-masterID');
+        var clientID = $('#SynValidatePhase5Modal').attr('data-clientID');
+
+        postfunc = function(result){lmb_validateRebuildPhase4Post(result,syncid,table,type);};
+        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=4&rebuild=1&type='+type+'&syncid='+syncid+'&table='+table+'&masterID='+masterID+'&clientID='+clientID,null,'postfunc',null,null,null,1);
     }
 
     function lmb_validateRebuildPhase4Post(result,syncid,table,type) {
@@ -258,6 +261,8 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
         $('#SynValidatePhase4Modal').attr('data-syncid', syncid);
         $('#SynValidatePhase4Modal').attr('data-table', table);
         $('#SynValidatePhase4ModalTitle').html(' ('+table+')');
+        $('#SynValidatePhase5Modal').attr('data-masterID', '');
+        $('#SynValidatePhase5Modal').attr('data-clientID', '');
         $('#detailPhase4').html('');
 
         postfunc = function(result){lmb_validatePhase4Detail(result,syncid,table);};
@@ -270,7 +275,7 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
 
         $('#detailPhase4').append('<ul class="list-group w-100">');
         for (var i in result['descriptor']) {
-            $('#detailPhase4').append('<li class="list-group-item d-flex justify-content-between align-items-center">'+result['date'][i]+' - '+result['descriptor'][i]+'<span data-bs-toggle="modal" data-bs-target="#SynValidatePhase5Modal" onclick="lmb_validatePhase5('+syncid+',\''+table+'\','+i+','+result['masterID'][i]+')" title="compare data" class="badge bg-primary rounded-pill cursor-pointer">'+i+'</span></li>');
+            $('#detailPhase4').append('<li class="list-group-item d-flex justify-content-between align-items-center">'+result['date'][i]+' - '+result['descriptor'][i]+ ' (M:'+result['masterID'][i]+' S:'+i+') <span><span data-bs-toggle="modal" data-bs-target="#SynValidatePhase5Modal" onclick="lmb_validatePhase5('+syncid+',\''+table+'\','+i+','+result['masterID'][i]+')" title="show difference" class="badge bg-primary rounded-pill cursor-pointer">&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-not-equal"></i>&nbsp;&nbsp;&nbsp;</span>  <span data-bs-toggle="modal" data-bs-target="#SynValidatePhase5Modal" onclick="lmb_validatePhase6('+syncid+',\''+table+'\','+i+','+result['masterID'][i]+')" title="compare data" class="badge bg-primary rounded-pill cursor-pointer">&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-code-compare"></i>&nbsp;&nbsp;&nbsp;</span> </span> </li>');
         }
 
         $('#detailPhase4').append('</ul">');
@@ -278,14 +283,25 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
         $('.lmbWaitSymbol').hide();
     }
 
-    function lmb_validatePhase5(syncid,table,clientID,masterID) {
+    function lmb_validatePhase5(syncid,table,clientID,masterID,type='diff') {
+        $('.lmbWaitSymbol').show();
+        $('#SynValidatePhase5Modal').attr('data-syncid', syncid);
+        $('#SynValidatePhase5Modal').attr('data-table', table);
+        $('#SynValidatePhase5Modal').attr('data-masterID', masterID);
+        $('#SynValidatePhase5Modal').attr('data-clientID', clientID);
+        $('#SynValidatePhase5ModalTitle').html(' ('+table+')');
+        $('#detailPhase5').html('');
         postfunc = function(result){lmb_validatePhase5Detail(result,syncid,table);};
-        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=5&syncid='+syncid+'&table='+table+'&clientID='+clientID+'&masterID='+masterID,null,'postfunc',null,null,null,1);
+        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=5&syncid='+syncid+'&table='+table+'&clientID='+clientID+'&masterID='+masterID+'&type='+type,null,'postfunc',null,null,null,1);
     }
 
     function lmb_validatePhase5Detail(result,syncid,table) {
         $('#detailPhase5').html(result);
         $('.lmbWaitSymbol').hide();
+    }
+
+    function lmb_validatePhase6(syncid,table,clientID,masterID) {
+        lmb_validatePhase5(syncid,table,clientID,masterID,'compare');
     }
 
 
@@ -320,13 +336,14 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
       <div class="modal-body" id="detailElementPhase2">
           <div class="row row-cols-2">
               <div class="col h5"><span class="SynValidatePhase2ModalTitleRow"><?=$lang[722]?></span> <?=$lang[3139]?> <u>Master</u>
-                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+                  <span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
               </div>
               <div class="col h5"><span class="SynValidatePhase2ModalTitleRow"><?=$lang[722]?></span> <?=$lang[3139]?> <u>Client</u>
-                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+                  <span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
               </div>
               <div class="col" id="detailMasterPhase2"></div><div id="detailClientPhase2" class="col"></div>
           </div>
+
       </div>
       <div class="modal-footer" style="justify-content: left">
           <ul class="list-group list-group-flush">
@@ -340,7 +357,7 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
 </div>
 
 <div class="modal fade" id="SynValidatePhase4Modal" tabindex="-1" data-table="" data-syncid="">
-  <div class="modal-dialog  modal-lg" >
+  <div class="modal-dialog modal-lg" >
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><?=$lang[3071]?> <span id="SynValidatePhase4ModalTitle"></span></h5>
@@ -349,12 +366,13 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
       <div class="modal-body" id="detailElementPhase4">
           <div class="row row-cols-2">
               <div class="col h5"><?=$lang[3157]?> <u>Master</u>
-                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+                  <span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" onclick="lmb_validateRebuildPhase4(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
               </div>
               <div class="col h5"><?=$lang[3157]?> <u>Client</u>
-                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+                  <span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" onclick="lmb_validateRebuildPhase4(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
               </div>
           </div>
+          <hr>
           <div class="col" id="detailPhase4"></div>
       </div>
       <div class="modal-footer" style="justify-content: center">
@@ -364,7 +382,7 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
   </div>
 </div>
 
-<div class="modal fade" id="SynValidatePhase5Modal" tabindex="-1" data-table="" data-syncid="">
+<div class="modal fade" id="SynValidatePhase5Modal" tabindex="-1" data-table="" data-syncid="" data-masterID="" data-clientID="">
   <div class="modal-dialog modal-lg" >
     <div class="modal-content">
       <div class="modal-header">
@@ -374,15 +392,19 @@ use Limbas\admin\tools\datasync\Enums\ConflictMode;
       <div class="modal-body" id="detailElementPhase5">
           <div class="row row-cols-2">
               <div class="col h5"><?=$lang[3157]?> <u>Master</u>
-                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+                  <span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" onclick="lmb_validateRebuildPhase4(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
               </div>
               <div class="col h5"><?=$lang[3157]?> <u>Client</u>
-                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+                  <span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" onclick="lmb_validateRebuildPhase4(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
               </div>
           </div>
+          <hr>
           <div class="col" id="detailPhase5"></div>
       </div>
       <div class="modal-footer" style="justify-content: center">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
+                  onclick="$('#SynValidatePhase4Modal').modal('show');$('#SynValidatePhase5Modal').attr('data-masterID', '');$('#SynValidatePhase5Modal').attr('data-clientID', '');"
+           ><?=$lang[3222]?></button>
         <i class='lmbWaitSymbol'></i>
       </div>
     </div>

@@ -2879,7 +2879,7 @@ function getDefaultValues($gtabid,$ID,&$dflt_v,&$dflt_i){
 
                 if ($fres) {
                     require_once(COREPATH . 'gtab/sql/add_select.dao');
-                    pool_select_update($gtabid, $key, $ID, $fres);
+                    pool_select_update($gtabid, $key, $ID, $fres, 1);
                 }
 
             }
@@ -2993,7 +2993,7 @@ function insert_newdata($gtabid,$ID,$copyid,$version,$insertdata=null){
     }else{
         # trigger after insert record
         if($gtab["trigger"][$gtabid] AND $gtabid != $gtab["argresult_id"]["LDMS_FILES"]){
-            if(execute_trigger("INSERT","AFTER",$gtabid,null,$gtab["trigger"][$gtabid],$ID) === false){return false;}
+            if(execute_trigger("INSERT","AFTER",$gtabid,null,$gtab["trigger"][$gtabid],$ID, null,$copyid) === false){return false;}
         }
 
         # --- sync cache entry ----
@@ -3691,7 +3691,7 @@ function update_data_precheck($gtabid,$dataid,&$query_dataid,&$query_result,&$ol
     # --- Edit Permission from Table-Rule ----
     if($gtab["editrule"][$gtabid]){
         if(check_GtabRules($dataid,$gtabid,null,$gtab["editrule"][$gtabid],0,$old_gresult)){
-            Log::limbasError('update_data - permission denied for multitenant rule', $lang[1317], $gtabid, null, $dataid);
+            Log::limbasError('update_data - permission denied for editrule rule', $lang[1317], $gtabid, null, $dataid);
             return false;
         }
     }
@@ -3778,7 +3778,13 @@ function update_data_postcheck($gtabid,$dataid,&$query_dataid,&$old_gresult,&$tr
     $logging = 0;
 
     // ignore if SYNC Process
-    if(defined('LMB_SYNC_PROC')){return true;}
+    if(defined('LMB_SYNC_PROC')){
+        // create data cashe
+        if($gtab["checksum"][$gtabid] && $gfield[$gtabid]['checksum']) {
+            lmb_calculateChecksum($gtabid, $dataid);
+        }
+        return true;
+    }
 
     # --- trigger after update table ----
     if ($gtab["trigger"][$gtabid] AND !$notrigger) {
@@ -3790,7 +3796,7 @@ function update_data_postcheck($gtabid,$dataid,&$query_dataid,&$old_gresult,&$tr
 
     # --- rebuild php argument ---------
     foreach($gfield[$gtabid]['argument_typ'] as $argfieldid => $argument_typ) {
-        if($argument_typ == 15 && !$gfield[$gtabid]['argument_modus']){
+        if($argument_typ == 15 && !$gfield[$gtabid]['argument_modus']){ // execute only on onchange modus
             lmbGetArgumentValue($gtabid, $argfieldid, $dataid, $old_gresult);
         }
     }
@@ -6204,8 +6210,8 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
                                 $gresult[$fgtabid][$value][$i] = 0;
                             }
 
-                            // calculate php argument
-                            if($gfield[$fgtabid]["argument_typ"][$value] == 15 && $gfield[$fgtabid]["argument_modus"][$value] == 1){
+                            // php argument list
+                            if($gfield[$fgtabid]["argument_typ"][$value] == 15 && $gfield[$fgtabid]["argument_modus"][$value] == 1){ // only on always modus
                                 $argument[] = array('gtabid'=>$fgtabid,'fieldid'=>$value,'row'=>$i,'value'=>lmbdb_result($rs, $gtab["keyfield"][$fgtabid]));
                             }
 
@@ -6249,12 +6255,12 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
                     #------------------- get primary keyfield --------------------------------
                     $gresult[$fgtabid]["id"][$i] = $id;
 
-                    #------------------- Wiedervorlage --------------------------------
+                    #------------------- reminder --------------------------------
                     if($LINK[109] && $single && !$filter['report'][$gtabid] && !defined('LMB_SYNC_PROC')){
                         $gresult[$fgtabid]["REMINDER"][$i] = lmb_getReminder($fgtabid,$id);
                     }
 
-                    /*----------------- argument -------------------*/
+                    /*----------------- execute php argument -------------------*/
                     if(is_array($argument)){
                         foreach($argument as $akey => $avalue){
                             lmbGetArgumentValue($avalue['gtabid'], $avalue['fieldid'], $avalue['value'], $gresult, $avalue['row']);
@@ -6374,7 +6380,6 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
 function get_gresult($gtabid,$utyp=1,$filter=null,$gsr=null,$verkn=null,$onlyfield=null,$single=null,$extension=null,$pointer=null,$get_sqlquery=null,$detailmode=null){
 
     if($lmb_query = get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield,$single,$extension)) {
-//error_log(print_r($lmb_query,1));
         // global sql query for grouping /  table
         if($get_sqlquery){
             global $get_sqlquery;
@@ -6533,12 +6538,19 @@ function lmbGetArgumentValue($gtabid, $fieldid, $ID, &$gresult, $row=0, $force=f
     global $gtab;
     global $gfield;
     global $db;
+    static $recursive;
 
     if(!$ID){return true;}
 
-    #if(!$gresult) {
-    #    $gresult = get_gresult($gtabid, 1, null, null, null, null, $ID);
-    #}
+    // recursive prevention
+    if($recursive[$gtabid][$fieldid][$ID]){
+        return true;
+    }
+    $recursive[$gtabid][$fieldid][$ID] = 1;
+
+    if(!$gresult) {
+        $gresult = get_gresult($gtabid, 1, null, null, null, null, $ID);
+    }
 
     if($gresult[$gtabid][$fieldid][$row] && $gfield[$gtabid]["argument_edit"][$fieldid] && !$force) {
         return true;

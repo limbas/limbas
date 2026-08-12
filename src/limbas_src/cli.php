@@ -9,10 +9,12 @@
 
 
 use Limbas\Limbas;
+use Symfony\Component\HttpFoundation\Request;
 
 require_once(__DIR__ . '/bootstrap.php');
 
-$limbas = Limbas::get();
+$request = Request::createFromGlobals();
+$limbas = Limbas::get($request);
 
 $command = $argv[1];
 if(empty($command)) {

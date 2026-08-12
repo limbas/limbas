@@ -384,4 +384,13 @@ class Update7m1 extends Update
         
     }
 
+    /**
+     * bug fixes
+     * @return bool
+     */
+    protected function patch15(): bool
+    {
+        return true;   
+    }
+
 }

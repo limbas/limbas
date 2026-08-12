@@ -45,7 +45,7 @@ class DefaultController extends AbstractController
         return new Response(ob_get_clean() ?: '');
     }
 
-    public function error(int $code, Throwable $error = null, Request $request = null): Response
+    public function error(int|string $code, Throwable $error = null, Request $request = null): Response
     {
         global $session;
 

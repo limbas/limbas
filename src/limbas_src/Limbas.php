@@ -51,16 +51,17 @@ class Limbas extends HttpKernel
     public static RequestContext $context;
     public static RouteCollection $routes;
 
+    private static ?RequestStack $globalRequestStack = null;
+
     private bool $needsAuthentication;
     private UrlMatcher $urlMatcher;
 
-    public function __construct(RouteCollection $routes)
+    public function __construct(Request $request, RouteCollection $routes)
     {
-        $request = Request::createFromGlobals();
         $context = new RequestContext();
         $context->fromRequest($request);
         $this->urlMatcher = new UrlMatcher($routes, $context);
-        $requestStack = new RequestStack();
+        self::$globalRequestStack = new RequestStack();
 
         self::$context = $context;
         self::$routes = $routes;
@@ -69,10 +70,10 @@ class Limbas extends HttpKernel
         $argumentResolver = new ArgumentResolver();
 
         $dispatcher = new EventDispatcher();
-        $dispatcher->addSubscriber(new RouterListener($this->urlMatcher, $requestStack, debug: false));
+        $dispatcher->addSubscriber(new RouterListener($this->urlMatcher, self::$globalRequestStack, debug: false));
         $dispatcher->addSubscriber(new ResponseListener('UTF-8'));
 
-        parent::__construct($dispatcher, $controllerResolver, $requestStack, $argumentResolver);
+        parent::__construct($dispatcher, $controllerResolver, self::$globalRequestStack, $argumentResolver);
     }
 
     public function handle(Request $request, int $type = HttpKernelInterface::MAIN_REQUEST, bool $catch = true): Response
@@ -111,7 +112,7 @@ class Limbas extends HttpKernel
         return $response;
     }
 
-    public static function get(bool $loadRoutes = true): self
+    public static function get(Request $request, bool $loadRoutes = true): self
     {
         if ($loadRoutes) {
             $routes = require COREPATH . '/routes/routes.php';
@@ -119,7 +120,17 @@ class Limbas extends HttpKernel
             $loadRoutes = Route::getRoutes();
         }
         $routes = require __DIR__ . '/routes/routes.php';
-        return new Limbas($routes);
+        return new self($request,$routes);
+    }
+
+    public static function request(): ?Request
+    {
+        return self::$globalRequestStack?->getCurrentRequest();
+    }
+
+    public static function requestStack(): ?RequestStack
+    {
+        return self::$globalRequestStack;
     }
 
     public function load(): void

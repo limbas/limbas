@@ -18,6 +18,7 @@ use Limbas\extra\rest\classes\RequestHandlers\Patch\PatchRelationRequestHandler;
 use Limbas\extra\rest\classes\RequestHandlers\Post\PostRelationRequestHandler;
 use Limbas\extra\rest\classes\RequestHandlers\Post\PostTableRequestHandler;
 use Limbas\extra\rest\classes\RequestHandlers\RequestHandler;
+use Limbas\Limbas;
 
 class Request {
 
@@ -126,32 +127,40 @@ class Request {
         }
 
         # get request data
+        $request = Limbas::request();
+
         switch ($this->method) {
             case 'GET':
-                $this->request_data = array();
+                $this->request_data = [];
                 break;
 
             case 'POST':
-                if (!empty($_POST)) {
-                    $this->request_data = &$_POST;
+                if ($request->request->count() > 0) {
+                    $this->request_data = $request->request->all();
                     break;
                 }
-                $this->request_data = json_decode(file_get_contents("php://input"),true);
+
+                $this->request_data = json_decode($request->getContent(), true);
+
                 if (!is_array($this->request_data)) {
                     throw new RestException('Could not parse request body', 400);
                 }
+
                 break;
+
             case 'PATCH':
             case 'DELETE':
-                $input = file_get_contents("php://input");
-                if ($_SERVER["CONTENT_TYPE"] === 'application/json') {
-                    $this->request_data = json_decode($input,true);
+                $input = $request->getContent();
+                if ($request->getContentTypeFormat() === 'json') {
+                    $this->request_data = json_decode($input, true);
                 } else {
                     parse_str($input, $this->request_data);
                 }
-                if (!is_array($this->request_data) && $this->method != 'DELETE') {
+
+                if (!is_array($this->request_data) && $this->method !== 'DELETE') {
                     throw new RestException('Could not parse request body', 400);
                 }
+
                 break;
         }
     }
